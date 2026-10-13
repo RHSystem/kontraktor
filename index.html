@@ -344,6 +344,29 @@ label.btn:focus-within{outline:2px solid var(--info);outline-offset:2px}
 .phgrid .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .phgrid.view{margin-top:14px}
 .phx{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center;cursor:pointer}
+
+.sm3{grid-template-columns:repeat(3,1fr)!important;margin-bottom:6px}
+.scurve{width:100%;height:auto;display:block;margin-top:6px}
+.scurve .sg-g{stroke:var(--line);stroke-width:1}
+.scurve .sg-a{stroke:var(--muted);stroke-width:1}
+.scurve .sg-t{fill:var(--muted);font-size:9px;font-family:var(--f-body)}
+.scurve .sg-p{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4}
+.scurve .sg-r{fill:none;stroke:var(--pos);stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round}
+.scurve .sg-n{stroke:var(--accent);stroke-width:1.5}
+.scurve .sg-e{stroke:var(--ink);stroke-width:1;stroke-dasharray:2 3;opacity:.5}
+.gantt{padding:8px 16px 12px}
+.gr{display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.gl{font-size:13.5px;font-weight:600;line-height:1.25}.gl small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.gb{position:relative;height:14px;background:var(--soft);border-radius:4px}
+.gb i{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--info) 35%,transparent);border-radius:4px;overflow:hidden}
+.gb i.late{background:color-mix(in srgb,var(--neg) 35%,transparent)}
+.gb i b{display:block;height:100%;background:var(--pos)}
+.sigbox{position:relative;border:1.5px dashed var(--line);border-radius:10px;background:#fff;height:190px;touch-action:none;margin-bottom:12px}
+.sigbox canvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.sighint{position:absolute;inset:auto 0 12px;text-align:center;color:#9AA3B3;font-size:13px;pointer-events:none}
+.sigbox.on .sighint{display:none}
+.sgimg{display:block;max-height:64px;max-width:180px;margin:4px auto 2px}
+#sync.off{background:var(--warn);color:#fff}
 </style>
 </head>
 <body>
@@ -559,13 +582,14 @@ async function pullAll(){
 }
 function setSync(st){
   SYNC=st;const el=$('#sync');if(!el)return;
+  if(S&&(OFFLINE||!navigator.onLine)){el.hidden=false;el.className='off';el.textContent=(dirty||st!=='ok')?_tr('Offline – perubahan tersimpan di HP'):_tr('Offline');return}
   if(st==='ok'){el.hidden=true;return}
   el.hidden=false;el.className=st==='error'?'err':'';el.textContent=st==='error'?_tr('Gagal menyimpan, mencoba lagi…'):_tr('Menyimpan…');
 }
 function save(){
   if(!S||!COMPANY||ROLE==='viewer')return;
   ensureClients();
-  dirty=true;clearTimeout(saveT);saveT=setTimeout(push,600);setSync('saving');
+  dirty=true;clearTimeout(saveT);saveT=setTimeout(push,600);setSync('saving');cacheSoon();
 }
 const flush=()=>push();
 async function push(){
@@ -587,17 +611,17 @@ async function push(){
         if(error)throw error;ids.forEach(id=>SNAP.delete(c+'/'+id));
       }
     }
-    setSync(dirty?'saving':'ok');
+    setSync(dirty?'saving':'ok');cacheSoon();
   }catch(e){dirty=true;setSync('error');clearTimeout(saveT);saveT=setTimeout(push,6000)}
   finally{pushing=false;if(dirty&&SYNC!=='error'){clearTimeout(saveT);saveT=setTimeout(push,300)}}
 }
-window.addEventListener('beforeunload',e=>{if(dirty||pushing){e.preventDefault();e.returnValue=''}});
+window.addEventListener('beforeunload',e=>{if((dirty||pushing)&&!CACHED){e.preventDefault();e.returnValue=''}});
 function unsub(){try{if(CHAN&&SB)SB.removeChannel(CHAN)}catch(e){}CHAN=null}
 function subscribe(){
   unsub();
   CHAN=SB.channel('rec-'+COMPANY.id).on('postgres_changes',{event:'*',schema:'public',table:'records',filter:'company_id=eq.'+COMPANY.id},onRemote).subscribe();
 }
-function scheduleRender(){clearTimeout(rT);rT=setTimeout(()=>{if(S)render()},250)}
+function scheduleRender(){clearTimeout(rT);rT=setTimeout(()=>{if(S)render()},250);cacheSoon()}
 function onRemote(p){
   if(!S)return;
   const r=p.eventType==='DELETE'?p.old:p.new;if(!r||!r.coll)return;
@@ -753,6 +777,7 @@ async function boot(){
     const {data}=await SB.auth.getSession();
     if(data&&data.session&&AUTHTAB!=='newpw'){USER=data.session.user;await enterApp();return}
   }catch(e){}
+  if(!S&&AUTHTAB!=='newpw'&&!navigator.onLine&&await offlineEnter())return;
   if(!S&&AUTHTAB!=='newpw'){if(LANDING_ON)showLanding();else showAuth('login')}
 }
 function onAuth(ev,session){
@@ -771,14 +796,17 @@ async function enterApp(){
     if(!COMPANIES.length){showCompanySetup();return}
     let last=null;try{last=localStorage.getItem('mandor-co-'+USER.id)}catch(e){}
     await openCompany(COMPANIES.find(x=>x.company_id===last)||COMPANIES[0]);
-  }catch(e){showAuth('login');authErr(errMsg(e))}
+  }catch(e){if(await offlineEnter())return;showAuth('login');authErr(errMsg(e))}
   finally{ENTERING=false}
 }
 async function openCompany(m){
   unsub();
   COMPANY={id:m.company_id,name:(m.companies&&m.companies.name)||''};ROLE=m.role;
   try{localStorage.setItem('mandor-co-'+USER.id,COMPANY.id)}catch(e){}
-  S=await pullAll();
+  let _cache=null;try{_cache=await IDB.get(ckey())}catch(e){}
+  try{S=await pullAll();OFFLINE=false}catch(e){if(!_cache||!_cache.S)throw e;const d0=defaults();S=Object.assign(d0,_cache.S,{settings:Object.assign(d0.settings,_cache.S.settings||{})});SNAP=new Map(_cache.snap||[]);OFFLINE=true}
+  const _pend=OFFLINE?0:mergePending(_cache);
+  try{await IDB.set('last',{user:{id:USER.id,email:USER.email,user_metadata:USER.user_metadata||{}},companies:COMPANIES,companyId:COMPANY.id})}catch(e){}
   if(ensureClients()&&ROLE!=='viewer')save();
   if(!SNAP.has('meta/settings')&&ROLE!=='viewer'){
     S.settings.company=COMPANY.name||S.settings.company;
@@ -786,6 +814,8 @@ async function openCompany(m){
     save();
   }
   subscribe();startApp();
+  if(_pend){save();toast(_tr('Perubahan offline dikirim ke server'))}
+  cacheSoon();if(OFFLINE)setSync(dirty?'error':'ok');setTimeout(()=>{notifyDue();storeDue()},2500);
 }
 async function switchCompany(id){
   await push();const m=COMPANIES.find(x=>x.company_id===id);if(!m)return;
@@ -798,6 +828,7 @@ function resetLocal(){
 async function doLogout(){
   try{await push()}catch(e){}
   unsub();try{await SB.auth.signOut()}catch(e){}
+  try{await IDB.clear()}catch(e){}
   resetLocal();closeModal();$('#preview').hidden=true;showAuth('login');
 }
 async function loadTeam(){
@@ -918,9 +949,9 @@ function docTotals(d){
   return{sub,disc,base,tax,total:base+tax};
 }
 const paid=v=>sumBy(v.payments||[],p=>p.amount);
-const balance=v=>Math.max(0,docTotals(v).total-paid(v));
+const balance=v=>Math.max(0,docTotals(v).total-pphAmt(v)-paid(v));
 function invState(v){
-  const t=docTotals(v).total,p=paid(v);
+  const t=netDue(v),p=paid(v);
   if(t>0&&p>=t-0.5)return 'Lunas';
   if(v.status==='draft'&&p===0)return 'Draft';
   if(v.dueDate&&v.dueDate<todayStr())return 'Jatuh tempo';
@@ -986,6 +1017,9 @@ function viewBeranda(){
     ...(wagesDue>0?[_h`<button class="item" data-act="go-att"><div class="main2"><div class="t">Upah tukang belum dibayar</div><div class="s">${rp(wagesDue)} dari absensi yang belum dibayarkan</div></div>${chip(_tr('Upah'),'info')}</button>`]:[]),
     ...overBills.slice(0,3).map(b=>_h`<button class="item" data-act="bill-open" data-id="${b.id}"><div class="main2"><div class="t">Bayar ${esc(vName(b.vendorId)||'vendor')}</div><div class="s">${esc(b.desc)} · sisa ${rp(billBal(b))} · jatuh tempo ${fmtD(b.due)}</div></div>${chip(_tr('Hutang'),'bad')}</button>`),
     ...lateTasks.slice(0,4).map(x=>_h`<button class="item" data-act="edit-task" data-id="${x.id}"><div class="main2"><div class="t">${esc(x.title)}</div><div class="s">Terlambat sejak ${fmtD(x.due)}${x.projectId?' · '+esc(projName(x.projectId)):''}</div></div>${chip(_tr('Tugas'),'warn')}</button>`),
+    ...S.projects.filter(p=>{const w=warrantyState(p);return w&&w.left<=14&&w.left>=-30&&(p.terms||[]).some(x=>!x.invoiceId&&/retensi|retention|tahanan/i.test(x.name||''))}).map(p=>_h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">Garansi ${esc(p.name)} ${warrantyState(p).left<0?_tr('sudah berakhir'):_tr('segera berakhir')}</div><div class="s">${fmtD(wEnd(p))} · tagih retensi</div></div>${chip(_tr('Garansi'),'warn')}</button>`),
+    ...S.projects.flatMap(p=>(p.claims||[]).filter(c=>c.status!=='done').map(c=>_h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">Klaim garansi: ${esc(c.desc)}</div><div class="s">${esc(p.name)} · ${fmtD(c.date)}</div></div>${chip(_tr('Garansi'),'bad')}</button>`)).slice(0,3),
+    ...S.projects.filter(p=>p.status==='active'&&(schedState(p)||{}).tone==='bad').slice(0,3).map(p=>{const s=schedState(p);return _h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">${esc(p.name)} terlambat dari jadwal</div><div class="s">Rencana ${Math.round(s.pl)}% · realisasi ${s.ac}%</div></div>${chip(_tr('Jadwal'),'bad')}</button>`}),
     ...L('po').filter(o=>o.need&&o.need<=addDays(t,1)&&poState(o)!=='Diterima').slice(0,3).map(o=>_h`<button class="item" data-act="po-open" data-id="${o.id}"><div class="main2"><div class="t">${esc(o.no)} belum diterima</div><div class="s">${esc(projName(o.projectId))} · dibutuhkan ${fmtD(o.need)}</div></div>${chip(_tr('Material'),'warn')}</button>`),
     ...L('changes').filter(x=>x.status==='sent').slice(0,3).map(x=>_h`<button class="item" data-act="change-open" data-id="${x.id}"><div class="main2"><div class="t">${esc(x.no)} menunggu persetujuan klien</div><div class="s">${esc(projName(x.projectId))} · ${x.type==='less'?'-':'+'}${rp(x.amount)}</div></div>${chip(_tr('Perubahan'),'info')}</button>`),
     ...sentQ.slice(0,3).map(q=>_h`<button class="item" data-act="doc-open" data-kind="quote" data-id="${q.id}"><div class="main2"><div class="t">${esc(q.number)} menunggu jawaban</div><div class="s">${esc(q.client)} · ${rpd(docTotals(q).total,q)}</div></div>${chip(_tr('Penawaran'),'info')}</button>`)
@@ -1023,6 +1057,7 @@ function viewProyek(){
 function viewProyekDetail(id){
   const p=S.projects.find(x=>x.id===id);
   if(!p)return pageHead(_tr('Proyek tidak ditemukan'),'',_tr('<a class="btn" href="#proyek">Kembali</a>'));
+  logProg(p);
   const st=pStats(p),tk=S.tasks.filter(x=>x.projectId===id),tx=S.tx.filter(x=>x.projectId===id).sort((a,b)=>b.date.localeCompare(a.date));
   const qs=S.quotes.filter(x=>x.projectId===id),iv=S.invoices.filter(x=>x.projectId===id);
   const bt=budgetTotal(p),real=realisasi(p),realT=sumBy(Object.values(real),x=>x),hut=sumBy(S.bills.filter(b=>b.projectId===id),billBal);
@@ -1046,7 +1081,7 @@ function viewProyekDetail(id){
     <div class="panel" style="padding:16px"><h2 style="font-size:21px;margin-bottom:10px">Biaya vs anggaran</h2>${bt>0?_h`<div class="bar ${realT>bt?'over':''}"><i style="width:${Math.min(100,realT/bt*100)}%"></i></div><div class="muted" style="margin-top:6px;font-size:14px">${rp(realT)} dari ${rp(bt)} (${Math.round(realT/bt*100)}%)${realT>bt?_tr(' – melebihi anggaran'):''}</div>`:_tr('<div class="muted" style="font-size:14px">Atur anggaran (RAB) untuk memantau pemakaian biaya.</div>')}${hut>0?_h`<div style="margin-top:8px;font-size:14px">Hutang vendor belum dibayar: <b class="num neg">${rp(hut)}</b></div>`:''}</div>
   </div>
   <div class="panel section"><div class="ph"><h2>Anggaran (RAB)</h2><button class="btn sm" data-act="rab-edit" data-id="${id}">${ic('edit',16)}Atur anggaran</button></div>${rabRows||_tr('<div class="empty" style="border-top:1px solid var(--line)"><b>Anggaran belum diatur</b>Isi rencana biaya per kategori untuk dibandingkan dengan realisasi.</div>')}${rabRows?_h`<div class="cat" style="background:var(--soft)"><div class="r"><b>Total realisasi</b><span class="num"><b>${rp(realT)}</b> / ${rp(bt)}</span></div><div class="muted" style="font-size:13.5px">Sisa anggaran ${rp(bt-realT)}. Realisasi sudah termasuk hutang vendor yang belum dibayar.</div></div>`:''}</div>
-  ${rabItemsPanel(p)}${termsPanel(p)}${changesPanel(p)}${materialPanel(p)}${dailyPanel(p)}<div class="panel section"><div class="ph"><h2>Tugas</h2>${addBtn('new-task',_tr('Tugas baru'),_h`data-project="${id}"`,'sm')}</div><div class="list">${tk.length?tk.map(taskRow).join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada tugas untuk proyek ini.</div>')}</div></div>
+  ${schedulePanel(p)}${rabItemsPanel(p)}${termsPanel(p)}${changesPanel(p)}${materialPanel(p)}${dailyPanel(p)}${handoverPanel(p)}<div class="panel section"><div class="ph"><h2>Tugas</h2>${addBtn('new-task',_tr('Tugas baru'),_h`data-project="${id}"`,'sm')}</div><div class="list">${tk.length?tk.map(taskRow).join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada tugas untuk proyek ini.</div>')}</div></div>
   <div class="panel section"><div class="ph"><h2>Keuangan</h2><div class="actions"><button class="btn sm" data-act="new-tx" data-type="in" data-project="${id}">+ Masuk</button><button class="btn sm" data-act="new-tx" data-type="out" data-project="${id}">+ Keluar</button></div></div><div class="list">${tx.length?tx.map(txRow).join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada transaksi.</div>')}</div></div>
   <div class="panel section"><div class="ph"><h2>Penawaran &amp; invoice</h2><div class="actions"><button class="btn sm" data-act="doc-new" data-kind="quote" data-project="${id}">+ Penawaran</button><button class="btn sm" data-act="doc-new" data-kind="invoice" data-project="${id}">+ Invoice</button></div></div><div class="list">${qs.length+iv.length?[...qs.map(d=>docRow('quote',d)),...iv.map(d=>docRow('invoice',d))].join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada dokumen.</div>')}</div></div>`;
 }
@@ -1172,7 +1207,7 @@ function langCurPanel(){
 }
 function viewPengaturan(){
   const s=S.settings;
-  return pageHead(_tr('Pengaturan'),_tr('Profil perusahaan dan data aplikasi'))+langCurPanel()+accountPanel()+
+  return pageHead(_tr('Pengaturan'),_tr('Profil perusahaan dan data aplikasi'))+langCurPanel()+accountPanel()+reminderPanel()+
   _h`<form class="panel" data-form="settings" style="padding:16px">
     <h2 style="font-size:22px;margin-bottom:10px">Profil perusahaan</h2>
     ${s.logo?_h`<img class="logo-prev" src="${s.logo}" alt="Logo perusahaan">`:''}
@@ -1361,6 +1396,7 @@ function rabItemForm(p,it){
     ${fld(_tr('Kategori biaya'),_h`<select name="category">${COUT.map(c=>_h`<option value="${c}"${c===it.category?' selected':''}>${_tr(c)}</option>`).join('')}</select>`)}
     ${fld(_tr('Uraian pekerjaan / material'),_h`<input name="desc" value="${esc(it.desc||'')}" required placeholder="Contoh: Pasang keramik lantai">`)}
     <div class="g3">${fld(_tr('Volume'),_h`<input name="qty" type="number" step="any" min="0" inputmode="decimal" value="${it.qty}" required>`)}${fld(_tr('Satuan'),_h`<input name="unit" value="${esc(it.unit||'')}">`)}${fld(_tr('Harga satuan (')+baseCur()+')',_h`<input name="price" type="number" step="any" min="0" inputmode="decimal" value="${it.price||''}" required>`)}</div>
+    <div class="g2">${fld(_tr('Rencana mulai'),_h`<input name="start" type="date" value="${it.start||''}">`)}${fld(_tr('Rencana selesai'),_h`<input name="end" type="date" value="${it.end||''}">`)}</div>
     ${fld(_tr('Progres pekerjaan (%)'),_h`<input name="progress" type="number" min="0" max="100" step="any" inputmode="decimal" value="${it.progress||0}">`)}
     <div class="btns">${n?'':_h`<button type="button" class="btn danger" data-act="del-rabitem" data-p="${p.id}" data-id="${it.id}" style="margin-right:auto">Hapus</button>`}<button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`);
 }
@@ -1466,7 +1502,7 @@ function ensureClients(){
   });
   return changed;
 }
-const projPaid=p=>sumBy(S.tx.filter(t=>t.projectId===p.id&&t.type==='in'&&CLIENT_PAY_CATS.includes(t.category)),t=>t.amount);
+const projPaid=p=>sumBy(S.tx.filter(t=>t.projectId===p.id&&t.type==='in'&&CLIENT_PAY_CATS.includes(t.category)),t=>t.amount)+sumBy(S.invoices.filter(v=>v.projectId===p.id),v=>toBase(v,pphCred(v)));
 const projInvs=p=>S.invoices.filter(v=>v.projectId===p.id&&invState(v)!=='Draft');
 function projReceivable(p){
   const val=contractNow(p),paid=projPaid(p),inv=projInvs(p);
@@ -1693,6 +1729,7 @@ function openDocEditor(kind,doc,isNew){
     <div id="items"></div>
     <div class="g2">${fld(_tr('Diskon (')+dcur(d)+')',_h`<input name="discount" type="number" step="any" min="0" inputmode="decimal" value="${d.discount||''}">`)}${fld(_tr('PPN (%)'),_h`<input name="ppnRate" type="number" step="any" min="0" value="${d.ppnRate}">`)}</div>
     <label class="check"><input type="checkbox" name="ppn" ${d.ppn?'checked':''}> Kenakan PPN</label>
+    ${isQ?'':_h`<label class="check"><input type="checkbox" name="pph" ${d.pph?'checked':''}> Klien memotong PPh (ada bukti potong)</label><div class="g2" id="pphrow" style="${d.pph?'':'display:none'}">${fld(_tr('Tarif PPh (%)'),_h`<input name="pphRate" type="number" step="any" min="0" list="pphList" value="${d.pphRate||lastPph()}"><datalist id="pphList"><option value="1.75"><option value="2.65"><option value="4"></datalist>`)}${fld(_tr('No. bukti potong (opsional)'),_h`<input name="pphRef" value="${esc(d.pphRef||'')}">`)}</div>`}
     <div class="totals" id="totals"></div>
     ${fld(isQ?_tr('Syarat &amp; ketentuan'):_tr('Catatan'),_h`<textarea name="notes" rows="4">${esc(d.notes||'')}</textarea>`)}
     <div class="btns"><button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan ${isQ?_tr('penawaran'):'invoice'}</button></div></form>`,true);
@@ -1709,7 +1746,7 @@ function refreshTotals(){
   const rp=n=>money(n,ED.cur);
   const f=$('#docform');if(!f)return;
   const T=docTotals({items:ED.items,discount:+f.discount.value,ppn:f.ppn.checked,ppnRate:+f.ppnRate.value});
-  $('#totals').innerHTML=_h`<div><span>Subtotal</span><span class="num">${rp(T.sub)}</span></div>${T.disc?_h`<div><span>Diskon</span><span class="num">-${rp(T.disc)}</span></div>`:''}${T.tax?_h`<div><span>PPN ${f.ppnRate.value}%</span><span class="num">${rp(T.tax)}</span></div>`:''}<div class="grand"><span>Total</span><span class="num">${rp(T.total)}</span></div>`;
+  $('#totals').innerHTML=_h`<div><span>Subtotal</span><span class="num">${rp(T.sub)}</span></div>${T.disc?_h`<div><span>Diskon</span><span class="num">-${rp(T.disc)}</span></div>`:''}${T.tax?_h`<div><span>PPN ${f.ppnRate.value}%</span><span class="num">${rp(T.tax)}</span></div>`:''}<div class="grand"><span>Total</span><span class="num">${rp(T.total)}</span></div>${f.pph&&f.pph.checked?(()=>{const x=rnd(T.base*(+f.pphRate.value||0)/100,ED.cur);return _h`<div><span>PPh dipotong ${f.pphRate.value}%</span><span class="num">-${rp(x)}</span></div><div><span><b>Dibayar klien</b></span><span class="num"><b>${rp(T.total-x)}</b></span></div>`})():''}`;
 }
 
 /* ============ Dokumen: detail, preview, WA ============ */
@@ -1725,10 +1762,10 @@ function openDocDetail(kind,id){
   let body=_h`<div style="margin-bottom:10px">${st}</div><dl class="kv">
     <dt>Klien</dt><dd>${esc(d.client)}</dd>${d.title?_h`<dt>Perihal</dt><dd>${esc(d.title)}</dd>`:''}${p?_h`<dt>Proyek terkait</dt><dd>${esc(p.name)}</dd>`:''}
     <dt>Tanggal</dt><dd>${fmtD(d.date)}</dd><dt>${isQ?_tr('Berlaku sampai'):'Jatuh tempo'}</dt><dd>${fmtD(isQ?d.validUntil:d.dueDate)}</dd>
-    <dt>Total</dt><dd class="num"><b>${rp(T.total)}</b></dd>${isQ?'':_h`<dt>Sudah dibayar</dt><dd class="num pos">${rp(paid(d))}</dd><dt>Sisa tagihan</dt><dd class="num ${balance(d)>0?'neg':''}"><b>${rp(balance(d))}</b></dd>`}</dl>`;
+    <dt>Total</dt><dd class="num"><b>${rp(T.total)}</b></dd>${!isQ&&d.pph?_h`<dt>PPh dipotong ${d.pphRate}%</dt><dd class="num">-${rp(pphAmt(d))}</dd><dt>Dibayar klien</dt><dd class="num">${rp(netDue(d))}</dd>`:''}${isQ&&d.sign?_h`<dt>Tanda tangan klien</dt><dd class="pos">${esc(d.sign.name)} · ${fmtD(d.sign.date)}</dd>`:''}${isQ?'':_h`<dt>Sudah dibayar</dt><dd class="num pos">${rp(paid(d))}</dd><dt>Sisa tagihan</dt><dd class="num ${balance(d)>0?'neg':''}"><b>${rp(balance(d))}</b></dd>`}</dl>`;
   if(!isQ&&(d.payments||[]).length)body+=_h`<h3 style="font-size:19px;margin:16px 0 4px">Riwayat pembayaran</h3>`+d.payments.map(x=>_h`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line)"><span>${fmtD(x.date)} · ${esc(_tr(x.method||''))}${x.note?' · '+esc(x.note):''}</span><span><button class="btn sm" data-act="rc-open" data-k="receipt" data-a="${id}" data-b="${x.id}">Kuitansi</button> <b class="num pos">${rp(x.amount)}</b> <button class="icon-btn" data-act="pay-del" data-id="${id}" data-pid="${x.id}" aria-label="Hapus pembayaran">${ic('trash',17)}</button></span></div>`).join('');
   body+=_h`<div class="btns start" style="margin-top:18px">`+a('doc-preview',ic('print',18)+_tr('Lihat &amp; cetak'),'primary')+a('doc-wa',ic('send',18)+'WhatsApp');
-  if(isQ){body+=a('doc-edit',ic('edit',18)+_tr('Ubah'))+(d.status==='draft'?a('quote-status',_tr('Tandai terkirim'),'','data-s="sent"'):'')+(d.status==='sent'?a('quote-status',_tr('Disetujui'),'','data-s="approved"')+a('quote-status',_tr('Ditolak'),'','data-s="rejected"'):'')+(d.projectId?'':a('quote-project',_tr('Buat proyek dari penawaran')))+(d.status==='approved'?a('quote-invoice',_tr('Jadikan invoice')):'')}
+  if(isQ){body+=a('doc-edit',ic('edit',18)+_tr('Ubah'))+(d.status==='draft'?a('quote-status',_tr('Tandai terkirim'),'','data-s="sent"'):'')+((d.status==='sent'||d.status==='draft')?a('quote-sign',_tr('Setujui + tanda tangan klien'),'primary'):'')+(d.status==='sent'?a('quote-status',_tr('Disetujui'),'','data-s="approved"')+a('quote-status',_tr('Ditolak'),'','data-s="rejected"'):'')+(d.projectId?'':a('quote-project',_tr('Buat proyek dari penawaran')))+(d.status==='approved'?a('quote-invoice',_tr('Jadikan invoice')):'')}
   else{body+=(balance(d)>0?a('pay-add',_tr('Catat pembayaran')):'')+(d.status==='draft'&&!paid(d)?a('inv-sent',_tr('Tandai terkirim')):'')+a('doc-edit',ic('edit',18)+_tr('Ubah'))}
   body+=a('doc-del',ic('trash',18)+_tr('Hapus'),'danger')+_h`</div>`;
   modal(d.number,body);
@@ -1743,10 +1780,10 @@ function docSheet(kind,d){
     <div class="sd-title"><h1>${isQ?_tr('PENAWARAN'):_tr('INVOICE')}</h1><div><b>${esc(d.number)}</b></div><div>Tanggal: ${fmtD(d.date)}</div><div>${isQ?_tr('Berlaku s.d.: ')+fmtD(d.validUntil):_tr('Jatuh tempo: ')+fmtD(d.dueDate)}</div></div></div>
     <div class="sd-meta"><div><small>${isQ?_tr('Kepada'):_tr('Ditagihkan kepada')}</small><p><b>${esc(d.client)}</b></p><p>${esc(d.clientAddress||'')}</p><p>${esc(d.clientPhone||'')}</p></div><div><small>Perihal</small><p><b>${esc(d.title||'-')}</b></p>${d.projectId?_h`<p>Proyek terkait: ${esc(projName(d.projectId))}</p>`:''}</div></div>
     <table><thead><tr><th class="c">No</th><th>Uraian</th><th class="r">Jml</th><th>Sat</th><th class="r">Harga satuan</th><th class="r">Jumlah</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="sd-tot"><div><span>Subtotal</span><span class="r">${rp(T.sub)}</span></div>${T.disc?_h`<div><span>Diskon</span><span class="r">-${rp(T.disc)}</span></div>`:''}${T.tax?_h`<div><span>PPN ${d.ppnRate}%</span><span class="r">${rp(T.tax)}</span></div>`:''}<div class="g"><span>Total</span><span class="r">${rp(T.total)}</span></div>${!isQ&&p>0?_h`<div><span>Sudah dibayar</span><span class="r">-${rp(p)}</span></div><div><b>Sisa tagihan</b><b class="r">${rp(balance(d))}</b></div>`:''}</div>
-    <div class="sd-say">Terbilang: ${terbilang(!isQ&&p>0?balance(d):T.total,dcur(d))}</div>
+    <div class="sd-tot"><div><span>Subtotal</span><span class="r">${rp(T.sub)}</span></div>${T.disc?_h`<div><span>Diskon</span><span class="r">-${rp(T.disc)}</span></div>`:''}${T.tax?_h`<div><span>PPN ${d.ppnRate}%</span><span class="r">${rp(T.tax)}</span></div>`:''}<div class="g"><span>Total</span><span class="r">${rp(T.total)}</span></div>${!isQ&&d.pph?_h`<div><span>PPh dipotong ${d.pphRate}%</span><span class="r">-${rp(pphAmt(d))}</span></div><div><b>Dibayar klien</b><b class="r">${rp(netDue(d))}</b></div>`:''}${!isQ&&p>0?_h`<div><span>Sudah dibayar</span><span class="r">-${rp(p)}</span></div><div><b>Sisa tagihan</b><b class="r">${rp(balance(d))}</b></div>`:''}</div>
+    <div class="sd-say">Terbilang: ${terbilang(!isQ&&p>0?balance(d):(!isQ?netDue(d):T.total),dcur(d))}</div>
     <div class="sd-foot"><div>${d.notes?_h`<h4>${isQ?_tr('Syarat &amp; ketentuan'):_tr('Catatan')}</h4><p>${esc(d.notes)}</p>`:''}${!isQ&&s.bank?_h`<h4 style="margin-top:12px">Pembayaran ke</h4><p>${esc(s.bank)}</p>`:''}</div>
-    <div class="sd-sign"><div>Hormat kami,</div><div class="sp"></div><b>${esc(s.owner||s.company)}</b></div></div>
+    <div class="sd-sign"><div>Hormat kami,</div><div class="sp"></div><b>${esc(s.owner||s.company)}</b></div></div>${isQ&&d.sign?_h`<div class="sd-two">${signHtml(_tr('Disetujui oleh klien,'),d.sign)}<div></div></div>`:''}
   </div></div>`;
 }
 function buildPdf(kind,d){
@@ -1804,9 +1841,10 @@ function buildPdf(kind,d){
   rows.forEach(r=>{txt(r[0],128,y);txt(r[1],R-1.5,y,{align:'right'});y+=5});
   doc.setFillColor(242,176,30);doc.rect(124,y-3.5,R-124,8,'F');bold();fs(11);ink();
   txt(_tr('Total'),128,y+1.8);txt(rp(T.total),R-1.5,y+1.8,{align:'right'});y+=9;
+  if(!isQ&&d.pph){norm();fs(9.5);txt(_tr('PPh dipotong ')+d.pphRate+'%',128,y);txt('-'+rp(pphAmt(d)),R-1.5,y,{align:'right'});y+=5;bold();txt(_tr('Dibayar klien'),128,y);txt(rp(netDue(d)),R-1.5,y,{align:'right'});y+=6}
   if(!isQ&&pd>0){norm();fs(9.5);txt(_tr('Sudah dibayar'),128,y);txt('-'+rp(pd),R-1.5,y,{align:'right'});y+=5;bold();txt(_tr('Sisa tagihan'),128,y);txt(rp(balance(d)),R-1.5,y,{align:'right'});y+=5}
   y+=3;ital();fs(9);gray();
-  const tb=doc.splitTextToSize(_tr('Terbilang: ')+terbilang(!isQ&&pd>0?balance(d):T.total,dcur(d)),R-M);txt(tb,M,y);y+=tb.length*4.2+6;
+  const tb=doc.splitTextToSize(_tr('Terbilang: ')+terbilang(!isQ&&pd>0?balance(d):(!isQ?netDue(d):T.total),dcur(d)),R-M);txt(tb,M,y);y+=tb.length*4.2+6;
   // catatan, rekening, tanda tangan
   const nl=d.notes?doc.splitTextToSize(d.notes,105):[],bl=(!isQ&&s.bank)?doc.splitTextToSize(s.bank,105):[];
   const need=Math.max(40,(nl.length+bl.length)*4.2+16);
@@ -1816,6 +1854,7 @@ function buildPdf(kind,d){
   if(bl.length){gray();bold();fs(8.5);txt(_tr('Pembayaran ke'),M,ly);norm();fs(9);ink();txt(bl,M,ly+4.5)}
   norm();fs(9);ink();txt(_tr('Hormat kami,'),160,y,{align:'center'});
   doc.setDrawColor(27,35,51);doc.line(138,y+26,182,y+26);bold();txt(s.owner||s.company,160,y+30,{align:'center'});
+  if(isQ&&d.sign){let sy=Math.max(ly+6,y+40);if(sy+36>290){doc.addPage();sy=15}norm();fs(9);ink();txt(_tr('Disetujui oleh klien,'),45,sy,{align:'center'});try{const pr=doc.getImageProperties(d.sign.img),r=pr.width/pr.height;let h=18,w=h*r;if(w>60){w=60;h=w/r}doc.addImage(d.sign.img,'PNG',45-w/2,sy+3,w,h)}catch(e){}doc.setDrawColor(27,35,51);doc.line(23,sy+24,67,sy+24);bold();txt(d.sign.name,45,sy+28,{align:'center'});norm();fs(8);gray();txt(fmtD(d.sign.date),45,sy+32,{align:'center'})}
   return doc.output('blob');
 }
 function openPreview(kind,id){
@@ -2094,6 +2133,7 @@ document.addEventListener('change',e=>{
   if(form&&form.id==='docform'){
     if(t.name==='projectId'){const p=S.projects.find(x=>x.id===t.value);if(p){if(!form.client.value)form.client.value=p.client||'';if(!form.clientAddress.value)form.clientAddress.value=p.address||'';if(!form.clientPhone.value)form.clientPhone.value=p.phone||'';if(!form.title.value)form.title.value=p.name}}
     if(t.name==='ppn')refreshTotals();
+    if(t.name==='pph'){const r=$('#pphrow');if(r)r.style.display=t.checked?'':'none';refreshTotals()}
     if(t.name==='cur'){ED.cur=t.value;$('#raterow').style.display=t.value===baseCur()?'none':'';$('#ratelab').textContent=rateLabel(t.value);const dl=form.querySelector('[name=discount]');renderItems();refreshTotals()}
     if(t.name==='client'){const c=findClient(t.value);if(c){if(!form.clientPhone.value)form.clientPhone.value=c.phone;if(!form.clientAddress.value)form.clientAddress.value=c.address}}
   }
@@ -2109,7 +2149,7 @@ document.addEventListener('input',e=>{
   if(row&&t.dataset.sv&&SV){const r=SV.rooms[+row.dataset.i];r[t.dataset.sv]=t.dataset.sv==='name'?t.value:(t.value===''?'':+t.value);const lt=row.querySelector('.lt');if(lt)lt.textContent=`${fmtQty(roomArea(r))} m² ${_tr('lantai')} · ${fmtQty(roomWall(r))} m² ${_tr('dinding')}`;updateSvTot();return}
   if(row&&t.dataset.tf&&TE){const r=TE[+row.dataset.i];r[t.dataset.tf]=(t.dataset.tf==='name'||t.dataset.tf==='dueDate')?t.value:(t.value===''?'':+t.value);const lt=row.querySelector('.lt');if(lt)lt.textContent=rp(rnd((TEP.value||0)*(+r.pct||0)/100));updateTermTot();return}
   if(row&&t.dataset.f&&ED){const it=ED.items[+row.dataset.i];it[t.dataset.f]=(t.dataset.f==='desc'||t.dataset.f==='unit')?t.value:t.value===''?'':+t.value;row.querySelector('.lt').textContent=money((+it.qty||0)*(+it.price||0),ED.cur);refreshTotals();return}
-  if(t.form&&t.form.id==='docform'&&(t.name==='discount'||t.name==='ppnRate'))refreshTotals();
+  if(t.form&&t.form.id==='docform'&&(t.name==='discount'||t.name==='ppnRate'||t.name==='pphRate'))refreshTotals();
   if(t.form&&t.form.dataset.form==='rab'){const tot=COUT.reduce((a,c,i)=>a+(+t.form['c'+i].value||0),0);$('#rabt').textContent=rp(tot)}
 });
 
@@ -2220,7 +2260,7 @@ const SUB={
   payroll:(f,d)=>{const pr=payWorker(f.dataset.id,d.date,d.method);save();render();if(pr){openWorker(f.dataset.id);toast(_tr('Upah dibayar dan tercatat'))}else closeModal()},
   rabitem:(f,d)=>{
     const p=S.projects.find(x=>x.id===f.dataset.p);p.rabItems=p.rabItems||[];
-    const o={category:d.category,desc:d.desc.trim(),qty:+d.qty||0,unit:d.unit.trim()||'ls',price:+d.price||0,progress:Math.min(100,Math.max(0,+d.progress||0))};
+    const o={category:d.category,desc:d.desc.trim(),qty:+d.qty||0,unit:d.unit.trim()||'ls',price:+d.price||0,progress:Math.min(100,Math.max(0,+d.progress||0)),start:d.start||'',end:(d.end&&d.start&&d.end<d.start)?d.start:(d.end||'')};
     if(f.dataset.id)Object.assign(p.rabItems.find(i=>i.id===f.dataset.id),o);else{o.id=uid();p.rabItems.push(o)}
     save();closeModal();render();toast(_tr('Item RAB disimpan'));
   },
@@ -2286,7 +2326,7 @@ const SUB={
       if(gm){toast(gm);return}
     }
     Object.assign(doc,{number:d.number.trim(),date:d.date,projectId:d.projectId,client:d.client.trim(),clientPhone:d.clientPhone,clientAddress:d.clientAddress,title:d.title.trim(),items,discount:+d.discount||0,ppn:!!d.ppn,ppnRate:+d.ppnRate||0,notes:d.notes,cur:d.cur||baseCur(),rate:(d.cur&&d.cur!==baseCur())?(+d.rate||1):1});
-    if(isQ){doc.validUntil=d.validUntil;doc.status=d.status}else doc.dueDate=d.dueDate;
+    if(isQ){doc.validUntil=d.validUntil;doc.status=d.status}else{doc.dueDate=d.dueDate;doc.pph=!!d.pph;doc.pphRate=+d.pphRate||0;doc.pphRef=(d.pphRef||'').trim()}
     const arr=isQ?S.quotes:S.invoices;
     if(ED.isNew){const t=takeNo(k);S.cnt[t.key]=(S.cnt[t.key]||0)+1;arr.push(doc)}
     else{const i=arr.findIndex(x=>x.id===doc.id);arr[i]=doc;if(!isQ)S.tx.forEach(t=>{if(t.invoiceId===doc.id){t.projectId=doc.projectId;t.desc=t.desc.replace(/^(Pembayaran|Payment) \S+/,_tr('Pembayaran ')+doc.number)}})}
@@ -2696,6 +2736,246 @@ Object.assign(EN,{"belum diterima":"not yet received","dibutuhkan":"needed","men
 "Pekerjaan tambah-kurang":"Variation orders","Perubahan":"Change","Kontrak awal":"Original contract","Tambah disetujui":"Approved additions","Kurang disetujui":"Approved deductions","Nilai kontrak akhir":"Final contract value","Pekerjaan tambah":"Additional work","Pekerjaan kurang":"Reduced work","pekerjaan tambah":"additional work","pekerjaan kurang":"reduced work","Belum ada perubahan pekerjaan.":"No work changes yet.","Perubahan pekerjaan baru":"New work change","Ubah perubahan pekerjaan":"Edit work change","Judul perubahan":"Change title","Contoh: Tambah kanopi carport":"E.g. Add carport canopy","Rincian pekerjaan":"Work details","Contoh: Rangka hollow 4x4, atap alderon 3 x 5 m":"E.g. 4x4 hollow frame, 3 x 5 m uPVC roof","Nilai (":"Value (","Menunggu persetujuan":"Awaiting approval","Minta persetujuan klien":"Ask client approval","Tandai disetujui":"Mark approved","Lihat invoice":"View invoice","Nilai perubahan":"Change value","Kontrak saat ini":"Current contract","Pekerjaan kurang mengurangi nilai kontrak dan sisa piutang klien.":"Reduced work lowers the contract value and the client's outstanding balance.","Berikut usulan":"Here is the proposed","untuk proyek":"for project","Nilai: ":"Value: ","Nilai kontrak awal: ":"Original contract value: ","Nilai kontrak setelah perubahan: ":"Contract value after change: ","Mohon konfirmasi persetujuan Bapak/Ibu. Terima kasih,":"Kindly confirm your approval. Thank you,"," – pekerjaan tambah":" – additional work","Perubahan pekerjaan ini akan dihapus.":"This work change will be deleted.","Perubahan dihapus":"Change deleted","Perubahan disetujui, nilai kontrak diperbarui":"Change approved, contract value updated","Status diubah":"Status changed","Perubahan pekerjaan disimpan":"Work change saved","Kontrak awal ":"Original ",
 "Kasbon":"Cash advance","Kasbon – ":"Cash advance – ","Kasbon belum lunas":"Outstanding advance","+ Kasbon":"+ Advance","Simpan kasbon":"Save advance","Contoh: Keperluan keluarga":"E.g. Family needs","Kasbon otomatis dipotong saat upah dibayar. Uang yang keluar langsung tercatat di Keuangan.":"Advances are deducted automatically when wages are paid. The cash out is recorded in Finance right away.","Potong kasbon (sisa ":"Deduct advance (balance ","Kasbon ini dan catatan pengeluarannya akan dihapus.":"This advance and its expense record will be deleted.","Kasbon dihapus":"Advance deleted","Kasbon dicatat":"Advance recorded"," (dipotong kasbon)":" (advance deducted)","potong kasbon":"advance deducted"," – upah ":" – wages ",", potong kasbon ":", advance deducted ","Upah bersih dibayar":"Net wages paid","Hapus kasbon":"Delete advance"});
 Object.assign(MSD,{"Laporan harian":"Laporan harian","Cuaca":"Cuaca","Jumlah tukang":"Bilangan pekerja","Pekerjaan hari ini":"Kerja hari ini","Kendala / catatan":"Kekangan / catatan","Bagikan ke klien":"Kongsi dengan pelanggan","Hujan ringan":"Hujan renyai","Berikutnya ›":"Seterusnya ›","Material di lokasi":"Bahan di tapak","Stok di lokasi":"Stok di tapak","Pesanan material (PO)":"Pesanan bahan (PO)","Pakai":"Guna","terpakai":"digunakan","Terima barang":"Terima barang","Kirim ke vendor":"Hantar kepada pembekal","Buat tagihan vendor":"Buat bil pembekal","Pekerjaan tambah-kurang":"Kerja tambahan-kurangan","Pekerjaan tambah":"Kerja tambahan","Pekerjaan kurang":"Kerja kurangan","Kontrak awal":"Kontrak asal","Nilai kontrak akhir":"Nilai kontrak akhir","Menunggu persetujuan":"Menunggu kelulusan","Minta persetujuan klien":"Minta kelulusan pelanggan","Tandai disetujui":"Tandakan diluluskan","Kasbon":"Pendahuluan gaji","+ Kasbon":"+ Pendahuluan","Kasbon belum lunas":"Baki pendahuluan","potong kasbon":"potongan pendahuluan"});
+_TRE={};
+
+/* ============ Tahap 2: kurva S, tanda tangan, serah terima & garansi, PPh, pengingat, offline ============ */
+const dnum=s=>{const [y,m,d]=(s||'').split('-').map(Number);return Date.UTC(y,(m||1)-1,d||1)/864e5};
+const dstr=n=>{const t=new Date(n*864e5);return t.getUTCFullYear()+'-'+String(t.getUTCMonth()+1).padStart(2,'0')+'-'+String(t.getUTCDate()).padStart(2,'0')};
+const clamp01=x=>Math.max(0,Math.min(1,x));
+
+/* ---------- Jadwal & kurva S ---------- */
+function logProg(p){
+  if(!p||ROLE==='viewer')return;
+  const v=physProgress(p),t=todayStr(),l=p.progLog||(p.progLog=[]),last=l[l.length-1];
+  if(last&&last.v===v)return;
+  if(last&&last.d===t)last.v=v;else l.push({d:t,v});
+  if(l.length>400)l.splice(0,l.length-400);
+  save();
+}
+function planAt(p,d){
+  const x=dnum(d),it=(p.rabItems||[]).filter(i=>(+i.qty||0)*(+i.price||0)>0),ps=p.start?dnum(p.start):null,pe=p.end?dnum(p.end):null;
+  const lin=(s,e)=>e>s?clamp01((x-s)/(e-s)):(x>=e?1:0);
+  if(it.length&&it.some(i=>i.start&&i.end)){
+    const tot=sumBy(it,i=>i.qty*i.price);
+    return sumBy(it,i=>{const s=i.start?dnum(i.start):ps,e=i.end?dnum(i.end):pe;if(s==null||e==null)return 0;return i.qty*i.price*lin(s,e)})/tot*100;
+  }
+  if(ps==null||pe==null)return null;
+  const f=lin(ps,pe);return (f*f*(3-2*f))*100;
+}
+function schedState(p){
+  if(!p.start||!p.end)return null;
+  const t=todayStr(),pl=planAt(p,t),ac=physProgress(p),dev=Math.round(ac-pl);
+  if(ac>=100)return{pl,ac,dev,label:'Selesai',tone:'ok'};
+  if(dev>=-5)return{pl,ac,dev,label:'Sesuai jadwal',tone:'ok'};
+  if(dev>=-15)return{pl,ac,dev,label:'Sedikit terlambat',tone:'warn'};
+  return{pl,ac,dev,label:'Terlambat jadwal',tone:'bad'};
+}
+function sCurveSvg(p){
+  const s=dnum(p.start),e=dnum(p.end),t=dnum(todayStr()),lo=s,hi=Math.max(e,Math.min(t,e+Math.max(14,(e-s)*.3)));
+  const W=320,H=150,X=v=>((v-lo)/Math.max(1,hi-lo)*W).toFixed(1),Y=v=>(H-v/100*H).toFixed(1);
+  let plan='';for(let i=0;i<=48;i++){const x=lo+(hi-lo)*i/48;plan+=(i?'L':'M')+X(x)+' '+Y(planAt(p,dstr(Math.round(x))))}
+  const log=(p.progLog||[]).filter(r=>dnum(r.d)>=lo);const pts=[[s,0],...log.map(r=>[dnum(r.d),r.v])];if(t>s&&t<=hi)pts.push([t,physProgress(p)]);
+  const act=pts.sort((a,b)=>a[0]-b[0]).map((q,i)=>(i?'L':'M')+X(q[0])+' '+Y(q[1])).join('');
+  const grid=[25,50,75,100].map(v=>`<line x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" class="sg-g"/><text x="${W-2}" y="${+Y(v)-3}" class="sg-t" text-anchor="end">${v}%</text>`).join('');
+  return `<svg viewBox="-4 -8 ${W+8} ${H+26}" class="scurve" role="img" aria-label="${esc(_tr('Kurva S rencana dan realisasi'))}">${grid}<line x1="0" x2="${W}" y1="${H}" y2="${H}" class="sg-a"/>${e<=hi?`<line x1="${X(e)}" x2="${X(e)}" y1="0" y2="${H}" class="sg-e"/>`:''}${t>=lo&&t<=hi?`<line x1="${X(t)}" x2="${X(t)}" y1="0" y2="${H}" class="sg-n"/><text x="${X(t)}" y="${H+12}" class="sg-t" text-anchor="middle">${esc(_tr('Hari ini'))}</text>`:''}<path d="${plan}" class="sg-p"/><path d="${act}" class="sg-r"/><text x="0" y="${H+12}" class="sg-t">${esc(fmtD(p.start))}</text>${e<=hi&&X(e)>60?`<text x="${X(e)}" y="${H+22}" class="sg-t" text-anchor="middle">${esc(fmtD(p.end))}</text>`:''}</svg>`;
+}
+function schedulePanel(p){
+  if(!p.start||!p.end)return _h`<div class="panel section"><div class="ph"><h2>Jadwal &amp; kurva S</h2><button class="btn sm" data-act="edit-project" data-id="${p.id}">${ic('edit',16)}Isi tanggal</button></div><div class="empty" style="border-top:1px solid var(--line)">Isi tanggal mulai dan selesai proyek untuk melihat kurva S rencana vs realisasi.</div></div>`;
+  const st=schedState(p),it=(p.rabItems||[]).filter(i=>i.start&&i.end),s=dnum(p.start),e=Math.max(dnum(p.end),...it.map(i=>dnum(i.end))),span=Math.max(1,e-s);
+  const gantt=it.length?_h`<div class="subh">Jadwal pekerjaan</div><div class="gantt">${it.slice().sort((a,b)=>a.start.localeCompare(b.start)).map(i=>{const l=(dnum(i.start)-s)/span*100,w=Math.max(2,(dnum(i.end)-dnum(i.start))/span*100),late=(+i.progress||0)<100&&i.end<todayStr();return _h`<div class="gr"><div class="gl">${esc(i.desc)}<small>${fmtD(i.start)} – ${fmtD(i.end)} · ${fmtQty(i.progress||0)}%</small></div><div class="gb"><i class="${late?'late':''}" style="left:${l}%;width:${w}%"><b style="width:${Math.min(100,+i.progress||0)}%"></b></i></div></div>`}).join('')}</div>`:'';
+  return _h`<div class="panel section"><div class="ph"><h2>Jadwal &amp; kurva S</h2>${chip(st.label,st.tone)}</div>
+  <div style="padding:12px 16px 4px"><div class="g3 sm3"><div><small class="muted">Rencana hari ini</small><div class="num"><b>${Math.round(st.pl)}%</b></div></div><div><small class="muted">Realisasi</small><div class="num"><b>${st.ac}%</b></div></div><div><small class="muted">Selisih</small><div class="num ${st.dev<-5?'neg':'pos'}"><b>${st.dev>0?'+':''}${st.dev}%</b></div></div></div>
+  ${sCurveSvg(p)}<div class="legend" style="margin:2px 0 8px"><span><b style="background:var(--muted)"></b>Rencana</span><span><b style="background:var(--pos)"></b>Realisasi</span></div>
+  <p class="muted" style="font-size:13px;margin:0 0 10px">${it.length?_tr('Rencana dihitung dari tanggal tiap item RAB.'):_tr('Isi tanggal mulai dan selesai di tiap item RAB agar rencana lebih akurat.')} Realisasi diambil dari progres fisik RAB (atau tugas selesai).</p></div>${gantt}</div>`;
+}
+
+/* ---------- Tanda tangan digital ---------- */
+let SIG=null;
+function sigPad(title,name,note,cb){
+  SIG={cb,drawn:false};
+  modal(title,_h`<p class="muted" style="margin-top:0;font-size:14px">${esc(note||'')}</p>${fld(_tr('Nama penanda tangan'),_h`<input id="sigName" value="${esc(name||'')}" required>`)}
+  <div class="sigbox"><canvas id="sigCv"></canvas><span class="sighint">Tanda tangan di sini</span></div>
+  <div class="btns"><button type="button" class="btn" data-act="sig-clear" style="margin-right:auto">Ulangi</button><button type="button" class="btn" data-act="close-modal">Batal</button><button type="button" class="btn primary" data-act="sig-ok">Simpan tanda tangan</button></div>`);
+  const cv=$('#sigCv'),r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;
+  const g=cv.getContext('2d');g.scale(dpr,dpr);g.lineWidth=2.4;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#1B2333';
+  let on=false,lx=0,ly=0;const pos=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  cv.addEventListener('pointerdown',e=>{on=true;cv.setPointerCapture(e.pointerId);[lx,ly]=pos(e);g.beginPath();g.arc(lx,ly,1.1,0,7);g.fillStyle='#1B2333';g.fill();SIG.drawn=true;cv.parentNode.classList.add('on')});
+  cv.addEventListener('pointermove',e=>{if(!on)return;const [x,y]=pos(e);g.beginPath();g.moveTo(lx,ly);g.lineTo(x,y);g.stroke();lx=x;ly=y});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>cv.addEventListener(t,()=>{on=false}));
+}
+function sigData(){
+  const cv=$('#sigCv'),g=cv.getContext('2d'),{width:w,height:h}=cv,d=g.getImageData(0,0,w,h).data;let x0=w,y0=h,x1=0,y1=0;
+  for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2)if(d[(y*w+x)*4+3]>10){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+  if(x1<=x0)return null;const pad=8,c=document.createElement('canvas'),sw=x1-x0+pad*2,sh=y1-y0+pad*2,k=Math.min(1,500/sw);c.width=sw*k;c.height=sh*k;
+  c.getContext('2d').drawImage(cv,x0-pad,y0-pad,sw,sh,0,0,c.width,c.height);return c.toDataURL('image/png');
+}
+const signHtml=(label,sg)=>_h`<div class="sd-sign"><div>${label}</div>${sg?_h`<img class="sgimg" src="${sg.img}" alt="">`:'<div class="sp"></div>'}<b>${esc(sg?sg.name:'')}</b>${sg&&sg.date?_h`<div style="font-size:11px;color:#5E6676">${fmtD(sg.date)}</div>`:''}</div>`;
+
+/* ---------- Serah terima & garansi ---------- */
+const wEnd=p=>p.handover&&p.handover.date?addDays(p.handover.date,+p.handover.days||0):'';
+function warrantyState(p){
+  const e=wEnd(p);if(!e)return null;const left=Math.round(dnum(e)-dnum(todayStr()));
+  return left<0?{left,label:'Garansi berakhir',tone:'mute'}:left<=14?{left,label:'Garansi segera berakhir',tone:'warn'}:{left,label:'Masa garansi',tone:'ok'};
+}
+function syncRetention(p){
+  const e=wEnd(p);if(!e)return;
+  (p.terms||[]).forEach(t=>{if(!t.invoiceId&&/retensi|retention|tahanan/i.test(t.name||'')&&(!t.dueDate||t.autoDue)){t.dueDate=e;t.autoDue=true}});
+}
+function handoverPanel(p){
+  const h=p.handover,cl=(p.claims||[]).slice().sort((a,b)=>(a.status==='done')-(b.status==='done')||b.date.localeCompare(a.date));
+  if(!h)return _h`<div class="panel section"><div class="ph"><h2>Serah terima &amp; garansi</h2><button class="btn sm" data-act="ho-edit" data-id="${p.id}">Catat serah terima</button></div><div class="empty" style="border-top:1px solid var(--line)">Setelah pekerjaan selesai, catat serah terima dan masa pemeliharaan. Klien bisa langsung tanda tangan berita acara di HP.</div></div>`;
+  const ws=warrantyState(p);
+  return _h`<div class="panel section"><div class="ph"><h2>Serah terima &amp; garansi</h2>${chip(ws.label,ws.tone)}</div>
+  <div style="padding:12px 16px"><dl class="kv"><dt>Tanggal serah terima</dt><dd>${fmtD(h.date)}</dd><dt>Masa pemeliharaan</dt><dd>${fmtQty(h.days||0)} hari</dd><dt>Garansi berakhir</dt><dd>${fmtD(wEnd(p))}${ws.left>=0?_h` <span class="muted">(${ws.left} hari lagi)</span>`:''}</dd><dt>Tanda tangan klien</dt><dd>${h.sign?_h`<span class="pos">Sudah ditandatangani · ${esc(h.sign.name)}</span>`:_tr('<span class="neg">Belum ditandatangani</span>')}</dd></dl>
+  <div class="btns start" style="margin-top:12px"><button class="btn sm primary" data-act="bast-view" data-id="${p.id}">${ic('print',16)}Berita acara</button>${h.sign?'':_h`<button class="btn sm" data-act="ho-sign" data-id="${p.id}">Tanda tangan klien</button>`}<button class="btn sm" data-act="ho-edit" data-id="${p.id}">${ic('edit',16)}Ubah</button><button class="btn sm" data-act="claim-new" data-id="${p.id}">+ Klaim garansi</button></div></div>
+  ${cl.length?_h`<div class="subh">Klaim garansi</div><div class="list">${cl.map(c=>_h`<div class="item" style="cursor:default"><div class="main2"><div class="t">${esc(c.desc)}</div><div class="s">Dilaporkan ${fmtD(c.date)}${c.doneDate?' · '+_tr('selesai')+' '+fmtD(c.doneDate):''}</div></div><button class="btn sm ${c.status==='done'?'':'primary'}" data-act="claim-toggle" data-p="${p.id}" data-id="${c.id}">${c.status==='done'?_tr('Buka lagi'):_tr('Selesai')}</button></div>`).join('')}</div>`:''}</div>`;
+}
+function hoForm(p){
+  const h=p.handover||{date:todayStr(),days:90,note:''};
+  modal(_tr('Serah terima pekerjaan'),_h`<form data-form="handover" data-id="${p.id}">
+    <div class="g2">${fld(_tr('Tanggal serah terima'),_h`<input name="date" type="date" value="${h.date}" required>`)}${fld(_tr('Masa pemeliharaan (hari)'),_h`<input name="days" type="number" min="0" step="1" list="wdays" value="${h.days}" required><datalist id="wdays"><option value="30"><option value="60"><option value="90"><option value="180"><option value="365"></datalist>`)}</div>
+    ${fld(_tr('Catatan serah terima (opsional)'),_h`<textarea name="note" placeholder="Contoh: Seluruh pekerjaan selesai dan diterima baik. Kunci diserahkan.">${esc(h.note||'')}</textarea>`)}
+    ${p.handover?'':_tr('<label class="check"><input type="checkbox" name="signNow" checked> Minta klien tanda tangan sekarang</label>')}
+    <p class="muted" style="font-size:13.5px;margin:0 0 8px">Termin retensi otomatis siap ditagih saat masa pemeliharaan berakhir.</p>
+    <div class="btns">${p.handover?_h`<button type="button" class="btn danger" data-act="ho-del" data-id="${p.id}" style="margin-right:auto">Hapus</button>`:''}<button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`);
+}
+function bastSheet(p){
+  const s=S.settings,h=p.handover,co=[s.address,[s.phone,s.email].filter(Boolean).join(' · ')].filter(Boolean).join('\n'),no=h.no||'';
+  return _h`<div class="sheetdoc"><div class="tape"></div><div class="sd-in"><div class="sd-head"><div class="sd-co">${s.logo?_h`<img src="${s.logo}" alt="">`:''}<div><h2>${esc(s.company)}</h2><p>${esc(co)}</p></div></div><div class="sd-title"><h1 style="font-size:26px">BERITA ACARA<br>SERAH TERIMA</h1><div><b>${esc(no)}</b></div><div>Tanggal: ${fmtD(h.date)}</div></div></div>
+  <p style="line-height:1.6">Pada tanggal <b>${fmtD(h.date)}</b>, pekerjaan berikut telah diselesaikan oleh <b>${esc(s.company)}</b> dan diserahterimakan kepada <b>${esc(p.client||'-')}</b>:</p>
+  <div class="rc-box"><div class="rc-row"><small>Pekerjaan</small><b>${esc(p.name)}</b></div>${p.address?_h`<div class="rc-row"><small>Lokasi</small><span>${esc(p.address)}</span></div>`:''}<div class="rc-row"><small>Nilai kontrak</small><span>${rp(contractNow(p))}</span></div><div class="rc-row"><small>Masa pemeliharaan</small><span>${fmtQty(h.days||0)} hari, sampai ${fmtD(wEnd(p))}</span></div></div>
+  ${h.note?_h`<p style="white-space:pre-line">${esc(h.note)}</p>`:''}
+  <p style="line-height:1.6">Selama masa pemeliharaan, kerusakan yang timbul akibat pekerjaan kami akan diperbaiki tanpa biaya tambahan. Berita acara ini dibuat untuk dipergunakan sebagaimana mestinya.</p>
+  <div class="sd-two">${signHtml(_tr('Yang menerima,'),h.sign)}${_h`<div class="sd-sign"><div>Yang menyerahkan,</div><div class="sp"></div><b>${esc(s.owner||s.company)}</b></div>`}</div></div></div>`;
+}
+function openBast(p){
+  if(!p.handover.no){p.handover.no=_h`BAST/${new Date().getFullYear()}/${String((S.cnt['bast'+new Date().getFullYear()]||0)+1).padStart(3,'0')}`;S.cnt['bast'+new Date().getFullYear()]=(S.cnt['bast'+new Date().getFullYear()]||0)+1;save()}
+  closeModal();$('#preview').hidden=false;
+  $('#preview').innerHTML=_h`<div class="pv-bar"><button class="btn sm" data-act="pv-close">Tutup</button><span style="font-weight:600">${esc(p.handover.no)}</span><span style="display:flex;gap:8px"><button class="btn sm primary" data-act="pv-print">${ic('print',16)}Cetak / PDF</button></span></div>${bastSheet(p)}`;
+}
+
+/* ---------- PPh dipotong klien ---------- */
+const pphAmt=d=>d&&d.pph?rnd(docTotals(d).base*(+d.pphRate||0)/100,dcur(d)):0;
+const netDue=d=>docTotals(d).total-pphAmt(d);
+const lastPph=()=>{const v=S.invoices.filter(x=>x.pph&&x.pphRate).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];return v?v.pphRate:2.65};
+const pphCred=v=>{const n=netDue(v),a=pphAmt(v);if(!a)return 0;return n>0?a*Math.min(1,paid(v)/n):a};
+
+/* ---------- Pengingat jatuh tempo ---------- */
+function dueItems(){
+  if(!S)return[];const t=todayStr(),soon=addDays(t,30),L2=[];
+  S.invoices.forEach(v=>{const st=invState(v);if(st!=='Lunas'&&st!=='Draft'&&v.dueDate&&v.dueDate<=soon)L2.push({d:v.dueDate,k:'inv'+v.id,t:_h`${v.number} – ${v.client}`,b:_tr('Sisa ')+rpd(balance(v),v)})});
+  S.bills.forEach(b=>{if(billBal(b)>0&&b.due&&b.due<=soon)L2.push({d:b.due,k:'bill'+b.id,t:_h`Bayar ${vName(b.vendorId)||'vendor'}`,b:b.desc+' · '+rp(billBal(b))})});
+  S.projects.filter(p=>p.status!=='done').forEach(p=>(p.terms||[]).forEach(x=>{if(!x.invoiceId&&termReady(p,x))L2.push({d:t,k:'term'+x.id,t:_h`${x.name} siap ditagih`,b:p.name})}));
+  L('po').forEach(o=>{if(o.need&&o.need<=soon&&poState(o)!=='Diterima')L2.push({d:addDays(o.need,-1),k:'po'+o.id,t:_h`${o.no} belum diterima`,b:projName(o.projectId)+' · '+_tr('dibutuhkan')+' '+fmtD(o.need)})});
+  S.projects.forEach(p=>{const e=wEnd(p);if(e&&e>=addDays(t,-30)&&e<=soon)L2.push({d:addDays(e,-7),k:'war'+p.id,t:_h`Garansi ${p.name} berakhir ${fmtD(e)}`,b:_tr('Siapkan penagihan retensi')});(p.claims||[]).filter(c=>c.status!=='done').forEach(c=>L2.push({d:c.date,k:'cl'+c.id,t:_h`Klaim garansi: ${p.name}`,b:c.desc}))});
+  S.quotes.forEach(q=>{if(q.status==='sent'&&q.validUntil&&q.validUntil<=soon)L2.push({d:addDays(q.validUntil,-1),k:'q'+q.id,t:_h`${q.number} segera kedaluwarsa`,b:q.client})});
+  return L2.sort((a,b)=>a.d.localeCompare(b.d));
+}
+async function storeDue(){
+  if(!S||!('caches' in window))return;
+  try{const c=await caches.open('zk-rem');await c.put('./zk-rem.json',new Response(JSON.stringify({co:S.settings.company,items:dueItems().map(x=>({d:x.d,t:x.t,b:x.b})),lang:LANG})))}catch(e){}
+}
+const swReady=()=>Promise.race([navigator.serviceWorker?navigator.serviceWorker.ready:Promise.reject(0),new Promise((_,j)=>setTimeout(()=>j(new Error('no sw')),2500))]);
+async function notifyDue(force){
+  if(!S||!window.Notification||Notification.permission!=='granted')return false;
+  const t=todayStr(),key='zk-notif-'+(COMPANY&&COMPANY.id);let last='';try{last=localStorage.getItem(key)}catch(e){}
+  if(!force&&last===t)return false;
+  const it=dueItems().filter(x=>x.d<=t);if(!it.length&&!force)return false;
+  const title=it.length?_h`${it.length} hal perlu ditindaklanjuti`:_tr('Tidak ada yang jatuh tempo hari ini');
+  const body=it.slice(0,4).map(x=>'• '+x.t).join('\n')+(it.length>4?_h`\n+${it.length-4} lainnya`:'');
+  try{const r=await swReady();await r.showNotification('Zui Kontraktor – '+title,{body,icon:'icon-192.png',badge:'icon-192.png',tag:'zk-due',data:{url:'./#beranda'}})}
+  catch(e){try{new Notification('Zui Kontraktor – '+title,{body,icon:'icon-192.png'})}catch(x){return false}}
+  try{localStorage.setItem(key,t);caches.open('zk-rem').then(c=>c.put('./zk-rem-last',new Response(t))).catch(()=>{})}catch(e){}return true;
+}
+async function enableReminders(){
+  if(!window.Notification){toast(_tr('Browser ini tidak mendukung notifikasi'));return}
+  const r=await Notification.requestPermission();
+  if(r!=='granted'){toast(_tr('Izin notifikasi ditolak. Aktifkan lewat pengaturan situs di browser.'));render();return}
+  try{const reg=await swReady();if(reg.periodicSync)await reg.periodicSync.register('zk-due',{minInterval:12*3600*1000})}catch(e){}
+  await storeDue();await notifyDue(true);toast(_tr('Pengingat aktif'));render();
+}
+function reminderPanel(){
+  const ok=window.Notification&&Notification.permission==='granted',den=window.Notification&&Notification.permission==='denied',n=dueItems().filter(x=>x.d<=todayStr()).length;
+  return _h`<div class="panel section" style="padding:16px"><h2 style="font-size:22px;margin-bottom:6px">Pengingat jatuh tempo</h2><p class="muted" style="margin:0 0 12px">Notifikasi di HP ini untuk invoice dan tagihan vendor yang jatuh tempo, termin siap ditagih, PO yang belum datang, dan masa garansi. Muncul sekali sehari saat aplikasi dibuka${ok?_tr(', dan di latar belakang bila HP mendukung'):''}.</p>
+  <div class="actions">${ok?_h`<span class="chip ok">Pengingat aktif</span><button class="btn sm" data-act="rem-test">Kirim pengingat sekarang</button>`:den?_tr('<span class="chip bad">Diblokir di browser</span><span class="muted" style="font-size:13.5px;width:100%">Buka pengaturan situs di browser, izinkan Notifikasi, lalu muat ulang.</span>'):_h`<button class="btn primary" data-act="rem-on">Aktifkan pengingat</button>`}<span class="muted" style="font-size:14px">${n} hal jatuh tempo hari ini</span></div></div>`;
+}
+
+/* ---------- Mode offline ---------- */
+let OFFLINE=false,CACHED=true,cacheT=null;
+const IDB=(()=>{let p=null;const db=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open('zui-kontraktor',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+  const tx=(m,f)=>db().then(d=>new Promise((res,rej)=>{const t=d.transaction('kv',m),s=t.objectStore('kv'),q=f(s);t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error)}));
+  return{get:k=>tx('readonly',s=>s.get(k)),set:(k,v)=>tx('readwrite',s=>s.put(v,k)),clear:()=>tx('readwrite',s=>s.clear())}})();
+const ckey=()=>'co-'+(USER&&USER.id)+'-'+(COMPANY&&COMPANY.id);
+function cacheSoon(){CACHED=false;clearTimeout(cacheT);cacheT=setTimeout(writeCache,700)}
+async function writeCache(){
+  if(!S||!COMPANY||!USER)return;
+  try{await IDB.set(ckey(),{S:JSON.parse(JSON.stringify(S)),snap:[...SNAP.entries()],role:ROLE,ts:Date.now()});CACHED=true}catch(e){}
+  storeDue();
+}
+function collectFrom(o){
+  const m=new Map();
+  COLLS.forEach(c=>(o[c]||[]).forEach(e=>{if(e&&e.id)m.set(c+'/'+e.id,{coll:c,id:e.id,data:e,json:stable(e)})}));
+  if(o.settings)m.set('meta/settings',{coll:'meta',id:'settings',data:o.settings,json:stable(o.settings)});
+  m.set('meta/cnt',{coll:'meta',id:'cnt',data:o.cnt||{},json:stable(o.cnt||{})});
+  return m;
+}
+function mergePending(cache){
+  if(!cache||ROLE==='viewer')return 0;
+  const cs=new Map(cache.snap||[]),loc=collectFrom(cache.S||{});let n=0;
+  for(const [k,v] of loc){if(cs.get(k)===v.json)continue;n++;
+    if(v.coll==='meta'){if(v.id==='settings')S.settings=Object.assign(S.settings,v.data);else S.cnt=Object.assign({},S.cnt,v.data)}
+    else{const a=S[v.coll]||(S[v.coll]=[]),i=a.findIndex(e=>e.id===v.id);if(i>=0)a[i]=v.data;else a.push(v.data)}}
+  for(const k of cs.keys()){if(loc.has(k))continue;const i=k.indexOf('/'),c=k.slice(0,i),id=k.slice(i+1);if(c==='meta'||!S[c])continue;const b=S[c].length;S[c]=S[c].filter(e=>e.id!==id);if(S[c].length!==b)n++}
+  return n;
+}
+async function offlineEnter(){
+  let last=null;try{last=await IDB.get('last')}catch(e){}
+  if(!last||!last.companies||!last.companies.length)return false;
+  USER=USER||last.user;if(!USER||USER.id!==last.user.id)return false;
+  COMPANIES=last.companies;const m=COMPANIES.find(x=>x.company_id===last.companyId)||COMPANIES[0];
+  try{await openCompany(m);return !!S}catch(e){return false}
+}
+window.addEventListener('online',()=>{OFFLINE=false;setSync(dirty?'saving':'ok');if(S)push()});
+window.addEventListener('offline',()=>{OFFLINE=true;setSync(dirty?'error':'ok')});
+
+/* ---------- aksi ---------- */
+Object.assign(A,{
+  'sig-clear':()=>{const cv=$('#sigCv');if(!cv)return;cv.getContext('2d').clearRect(0,0,cv.width,cv.height);SIG.drawn=false;cv.parentNode.classList.remove('on')},
+  'sig-ok':()=>{const n=($('#sigName').value||'').trim();if(!n){toast(_tr('Isi nama penanda tangan'));return}const img=SIG&&SIG.drawn?sigData():null;if(!img){toast(_tr('Tanda tangan masih kosong'));return}const cb=SIG.cb;SIG=null;cb({img,name:n,date:todayStr()})},
+  'quote-sign':el=>{const q=getDoc('quote',el.dataset.id);if(!q)return;
+    sigPad(_tr('Persetujuan penawaran'),q.client,_h`Dengan tanda tangan ini, ${q.client} menyetujui penawaran ${q.number} senilai ${rpd(docTotals(q).total,q)}.`,sg=>{q.sign=sg;save();A['quote-status']({dataset:{kind:'quote',id:q.id,s:'approved'}})})},
+  'ho-edit':el=>hoForm(S.projects.find(p=>p.id===el.dataset.id)),
+  'ho-del':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);confirmBox(_tr('Data serah terima dan tanda tangannya akan dihapus.'),()=>{delete p.handover;(p.terms||[]).forEach(t=>{if(t.autoDue){delete t.dueDate;delete t.autoDue}});save();closeModal();render()})},
+  'ho-sign':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);if(!p||!p.handover)return;
+    sigPad(_tr('Tanda tangan berita acara'),p.client,_h`${p.client||'Klien'} menerima hasil pekerjaan ${p.name} pada ${fmtD(p.handover.date)} dengan masa pemeliharaan ${p.handover.days} hari.`,sg=>{p.handover.sign=sg;save();closeModal();render();toast(_tr('Berita acara ditandatangani'))})},
+  'bast-view':el=>openBast(S.projects.find(p=>p.id===el.dataset.id)),
+  'claim-new':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);modal(_tr('Klaim garansi baru'),_h`<form data-form="claim" data-id="${p.id}">${fld(_tr('Keluhan klien'),_h`<textarea name="desc" required placeholder="Contoh: Rembes di plafon kamar mandi lantai 2"></textarea>`)}${fld(_tr('Tanggal dilaporkan'),_h`<input name="date" type="date" value="${todayStr()}" required>`)}<div class="btns"><button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`)},
+  'claim-toggle':el=>{const p=S.projects.find(x=>x.id===el.dataset.p),c=(p.claims||[]).find(x=>x.id===el.dataset.id);if(!c)return;if(c.status==='done'){c.status='open';delete c.doneDate}else{c.status='done';c.doneDate=todayStr()}save();render()},
+  'rem-on':()=>enableReminders(),
+  'rem-test':async()=>{await storeDue();const ok=await notifyDue(true);if(!ok)toast(_tr('Notifikasi tidak bisa ditampilkan di perangkat ini'))}
+});
+['bast-view'].forEach(a=>RO_OK.add(a));
+
+Object.assign(SUB,{
+  handover:(f,d)=>{
+    const p=S.projects.find(x=>x.id===f.dataset.id),old=p.handover||{};
+    p.handover=Object.assign(old,{date:d.date,days:Math.max(0,+d.days||0),note:(d.note||'').trim()});
+    syncRetention(p);save();render();
+    if(d.signNow)A['ho-sign']({dataset:{id:p.id}});else{closeModal();toast(_tr('Serah terima disimpan'))}
+  },
+  claim:(f,d)=>{const p=S.projects.find(x=>x.id===f.dataset.id);(p.claims||(p.claims=[])).push({id:uid(),date:d.date,desc:d.desc.trim(),status:'open'});save();closeModal();render();toast(_tr('Klaim garansi dicatat'))}
+});
+
+/* pengingat saat aplikasi dibuka atau kembali dilihat */
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S)setTimeout(()=>{notifyDue();storeDue()},1500)});
+
+Object.assign(EN,{"Jadwal &amp; kurva S":"Schedule &amp; S-curve","Isi tanggal":"Set dates","Isi tanggal mulai dan selesai proyek untuk melihat kurva S rencana vs realisasi.":"Set the project start and end dates to see the planned vs actual S-curve.","Rencana hari ini":"Planned today","Realisasi":"Actual","Rencana":"Plan","Sesuai jadwal":"On schedule","Sedikit terlambat":"Slightly behind","Terlambat jadwal":"Behind schedule","Sudah ditandatangani":"Signed","Belum ditandatangani":"Not signed yet","Jadwal pekerjaan":"Work schedule","Rencana dihitung dari tanggal tiap item RAB.":"The plan uses each BoQ item's dates.","Isi tanggal mulai dan selesai di tiap item RAB agar rencana lebih akurat.":"Set start and end dates on each BoQ item for a more accurate plan.","Realisasi diambil dari progres fisik RAB (atau tugas selesai).":"Actual comes from BoQ physical progress (or completed tasks).","Kurva S rencana dan realisasi":"Planned and actual S-curve","Rencana mulai":"Planned start","Rencana selesai":"Planned finish","terlambat dari jadwal":"behind schedule","Jadwal":"Schedule","realisasi":"actual",
+"Nama penanda tangan":"Signer's name","Tanda tangan di sini":"Sign here","Ulangi":"Clear","Simpan tanda tangan":"Save signature","Isi nama penanda tangan":"Enter the signer's name","Tanda tangan masih kosong":"Signature is empty","Persetujuan penawaran":"Quote approval","Dengan tanda tangan ini,":"By signing,","menyetujui penawaran":"approves quote","senilai":"worth","Setujui + tanda tangan klien":"Approve + client signature","Tanda tangan klien":"Client signature","Disetujui oleh klien,":"Approved by client,",
+"Serah terima &amp; garansi":"Handover &amp; warranty","Catat serah terima":"Record handover","Setelah pekerjaan selesai, catat serah terima dan masa pemeliharaan. Klien bisa langsung tanda tangan berita acara di HP.":"When the work is done, record the handover and maintenance period. The client can sign the handover report on your phone.","Garansi berakhir":"Warranty ends","Garansi segera berakhir":"Warranty ending soon","Masa garansi":"Under warranty","Tanggal serah terima":"Handover date","Masa pemeliharaan":"Maintenance period","hari lagi":"days left","Berita acara":"Handover report","+ Klaim garansi":"+ Warranty claim","Klaim garansi":"Warranty claims","Dilaporkan":"Reported","selesai":"done","Serah terima pekerjaan":"Work handover","Masa pemeliharaan (hari)":"Maintenance period (days)","Catatan serah terima (opsional)":"Handover notes (optional)","Contoh: Seluruh pekerjaan selesai dan diterima baik. Kunci diserahkan.":"E.g. All work completed and accepted. Keys handed over."," Minta klien tanda tangan sekarang":" Ask the client to sign now","Termin retensi otomatis siap ditagih saat masa pemeliharaan berakhir.":"The retention milestone becomes billable when the maintenance period ends.","BERITA ACARA":"HANDOVER","SERAH TERIMA":"REPORT","Pada tanggal":"On","pekerjaan berikut telah diselesaikan oleh":"the following work was completed by","dan diserahterimakan kepada":"and handed over to","Pekerjaan":"Work","Lokasi":"Location","sampai":"until","Selama masa pemeliharaan, kerusakan yang timbul akibat pekerjaan kami akan diperbaiki tanpa biaya tambahan. Berita acara ini dibuat untuk dipergunakan sebagaimana mestinya.":"During the maintenance period, defects caused by our work will be repaired at no extra cost. This report is made to be used as appropriate.","Yang menerima,":"Received by,","Yang menyerahkan,":"Handed over by,","Cetak / PDF":"Print / PDF","Data serah terima dan tanda tangannya akan dihapus.":"The handover record and its signature will be deleted.","Tanda tangan berita acara":"Sign handover report","menerima hasil pekerjaan":"accepts the work","dengan masa pemeliharaan":"with a maintenance period of","Berita acara ditandatangani":"Handover report signed","Klaim garansi baru":"New warranty claim","Keluhan klien":"Client complaint","Contoh: Rembes di plafon kamar mandi lantai 2":"E.g. Leak in the 2nd floor bathroom ceiling","Tanggal dilaporkan":"Date reported","Serah terima disimpan":"Handover saved","Klaim garansi dicatat":"Warranty claim recorded","Garansi":"Warranty","sudah berakhir":"has ended","segera berakhir":"ending soon","tagih retensi":"bill retention","Siapkan penagihan retensi":"Prepare the retention invoice",
+"PPh dipotong":"Tax withheld (PPh)","Dibayar klien":"Paid by client"," Klien memotong PPh (ada bukti potong)":" Client withholds PPh (with withholding slip)","Tarif PPh (%)":"PPh rate (%)","No. bukti potong (opsional)":"Withholding slip no. (optional)","PPh dipotong ":"Tax withheld ",
+"Pengingat jatuh tempo":"Due-date reminders","Notifikasi di HP ini untuk invoice dan tagihan vendor yang jatuh tempo, termin siap ditagih, PO yang belum datang, dan masa garansi. Muncul sekali sehari saat aplikasi dibuka":"Notifications on this phone for due invoices and vendor bills, billable milestones, undelivered POs and warranties. Shown once a day when the app opens",", dan di latar belakang bila HP mendukung":", and in the background when the phone supports it","Kirim pengingat sekarang":"Send reminder now","Diblokir di browser":"Blocked in browser","Buka pengaturan situs di browser, izinkan Notifikasi, lalu muat ulang.":"Open the browser's site settings, allow Notifications, then reload.","Aktifkan pengingat":"Turn on reminders","hal jatuh tempo hari ini":"items due today","hal perlu ditindaklanjuti":"items need attention","Tidak ada yang jatuh tempo hari ini":"Nothing is due today","lainnya":"more","Sisa ":"Balance ","Garansi ":"Warranty ","berakhir":"ends","segera kedaluwarsa":"expiring soon","Browser ini tidak mendukung notifikasi":"This browser doesn't support notifications","Izin notifikasi ditolak. Aktifkan lewat pengaturan situs di browser.":"Notification permission denied. Enable it in the browser's site settings.","Pengingat aktif":"Reminders on","Notifikasi tidak bisa ditampilkan di perangkat ini":"Notifications can't be shown on this device",
+"Offline – perubahan tersimpan di HP":"Offline – changes saved on this phone","Offline":"Offline","Perubahan offline dikirim ke server":"Offline changes sent to the server"});
+Object.assign(MSD,{"Jadwal &amp; kurva S":"Jadual &amp; lengkung S","Sesuai jadwal":"Mengikut jadual","Terlambat jadwal":"Lewat jadual","Sedikit terlambat":"Sedikit lewat","Serah terima &amp; garansi":"Serahan &amp; waranti","Berita acara":"Berita acara","Masa pemeliharaan":"Tempoh penyelenggaraan","Garansi":"Waranti","Klaim garansi":"Tuntutan waranti","Setujui + tanda tangan klien":"Lulus + tandatangan pelanggan","Tanda tangan klien":"Tandatangan pelanggan","PPh dipotong":"Cukai dipotong","Dibayar klien":"Dibayar pelanggan","Pengingat jatuh tempo":"Peringatan tarikh akhir","Aktifkan pengingat":"Aktifkan peringatan","Offline – perubahan tersimpan di HP":"Luar talian – perubahan disimpan di telefon"});
 _TRE={};
 
 boot();
