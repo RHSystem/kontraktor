@@ -3175,15 +3175,15 @@ const canChat=()=>ROLE==='owner'||ROLE==='admin'||ROLE==='staff';
 
 /* ---------- data yang dibagikan ke klien (tanpa biaya internal) ---------- */
 function shareSnap(p){
-  const s=S.settings,st=p.start&&p.end?schedState(p):null,its=it=>(it||[]).map(i=>[i.desc||'',+i.qty||0,i.unit||'',+i.price||0]);
+  const s=S.settings,st=p.start&&p.end?schedState(p):null,its=it=>(it||[]).map(i=>({d:i.desc||'',q:+i.qty||0,u:i.unit||'',p:+i.price||0}));
   const inv=S.invoices.filter(v=>v.projectId===p.id&&invState(v)!=='Draft').sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(v=>{const T=docTotals(v);return{id:v.id,no:v.number,date:v.date,due:v.dueDate||'',cur:dcur(v),sub:T.sub,disc:T.disc,tax:T.tax,ppnRate:v.ppn?v.ppnRate:0,total:T.total,pph:pphAmt(v),pphRate:v.pph?v.pphRate:0,paid:paid(v),bal:balance(v),state:invState(v),title:v.title||'',items:its(v.items)}});
   const q=S.quotes.filter(x=>x.projectId===p.id&&x.status!=='draft').map(x=>{const T=docTotals(x);return{id:x.id,no:x.number,date:x.date,valid:x.validUntil||'',cur:dcur(x),sub:T.sub,disc:T.disc,tax:T.tax,ppnRate:x.ppn?x.ppnRate:0,total:T.total,status:x.status,title:x.title||'',notes:x.notes||'',sign:x.sign?{name:x.sign.name,date:x.sign.date}:null,items:its(x.items)}});
   const ch=L('changes').filter(x=>x.projectId===p.id&&x.status!=='draft').map(x=>({id:x.id,no:x.no,type:x.type,title:x.title,detail:x.detail||'',amount:+x.amount||0,status:x.status,date:x.date,sign:x.sign?{name:x.sign.name,date:x.sign.date}:null}));
   let curve=null;
   if(p.start&&p.end){const s0=dnum(p.start),e0=dnum(p.end),t0=dnum(todayStr()),hi=Math.max(e0,Math.min(t0,e0+Math.max(14,(e0-s0)*.3))),plan=[];
-    for(let i=0;i<=30;i++){const x=s0+(hi-s0)*i/30;plan.push([Math.round(x),Math.round(planAt(p,dstr(Math.round(x)))*10)/10])}
-    const act=[[s0,0],...(p.progLog||[]).filter(r=>dnum(r.d)>=s0).map(r=>[dnum(r.d),r.v])];if(t0>s0)act.push([t0,physProgress(p)]);
-    curve={s:s0,e:e0,hi,plan,act:act.sort((a,b)=>a[0]-b[0])}}
+    for(let i=0;i<=30;i++){const x=s0+(hi-s0)*i/30;plan.push({x:Math.round(x),y:Math.round(planAt(p,dstr(Math.round(x)))*10)/10})}
+    const act=[{x:s0,y:0},...(p.progLog||[]).filter(r=>dnum(r.d)>=s0).map(r=>({x:dnum(r.d),y:r.v}))];if(t0>s0)act.push({x:t0,y:physProgress(p)});
+    curve={s:s0,e:e0,hi,plan,act:act.sort((a,b)=>a.x-b.x)}}
   const terms=(p.terms||[]).map(t=>{const inv1=t.invoiceId?getDoc('invoice',t.invoiceId):null;return{name:t.name,pct:+t.pct||0,amt:rnd((p.value||0)*(+t.pct||0)/100),state:inv1?invState(inv1):(termReady(p,t)?'Siap ditagih':'Belum ditagih')}});
   return{cid:COMPANY.id,pid:p.id,
     co:{name:s.company||'',logo:s.logo||'',phone:s.phone||'',email:s.email||'',bank:s.bank||'',cur:baseCur(),lang:LANG},

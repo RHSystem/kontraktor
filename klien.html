@@ -155,7 +155,7 @@ function render(){
 }
 function curveSvg(c){
   const W=320,H=150,lo=c.s,hi=c.hi,X=v=>((v-lo)/Math.max(1,hi-lo)*W).toFixed(1),Y=v=>(H-v/100*H).toFixed(1),t=dnum(today());
-  const path=a=>a.map((q,i)=>(i?'L':'M')+X(q[0])+' '+Y(q[1])).join('');
+  const path=a=>a.map((q,i)=>(i?'L':'M')+X(q.x)+' '+Y(q.y)).join('');
   const grid=[25,50,75,100].map(v=>`<line x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" class="g"/><text x="${W-2}" y="${+Y(v)-3}" class="t" text-anchor="end">${v}%</text>`).join('');
   return `<svg viewBox="-4 -8 ${W+8} ${H+24}" class="curve" role="img" aria-label="Kurva S rencana dan realisasi">${grid}${t>=lo&&t<=hi?`<line x1="${X(t)}" x2="${X(t)}" y1="0" y2="${H}" class="n"/><text x="${X(t)}" y="${H+12}" class="t" text-anchor="middle">Hari ini</text>`:''}<path d="${path(c.plan)}" class="p"/><path d="${path(c.act)}" class="r"/><text x="0" y="${H+12}" class="t">${esc(fmtD(dstr(c.s)))}</text></svg>`;
 }
@@ -221,7 +221,7 @@ function sheet(title,body){
   closeSheet();document.body.appendChild(s);document.body.style.overflow='hidden';
 }
 function closeSheet(){document.querySelectorAll('.scrim').forEach(x=>x.remove());document.body.style.overflow=''}
-const itemsTable=(items,cur)=>`<table><thead><tr><th>Uraian</th><th class="r">Jml</th><th class="r">Jumlah</th></tr></thead><tbody>${items.map(i=>`<tr><td>${esc(i[0])}<div class="muted" style="font-size:12.5px">${money(i[3],cur)} / ${esc(i[2]||'')}</div></td><td class="r">${(+i[1]).toLocaleString('id-ID')}</td><td class="r num">${money(i[1]*i[3],cur)}</td></tr>`).join('')}</tbody></table>`;
+const itemsTable=(items,cur)=>`<table><thead><tr><th>Uraian</th><th class="r">Jml</th><th class="r">Jumlah</th></tr></thead><tbody>${items.map(i=>`<tr><td>${esc(i.d)}<div class="muted" style="font-size:12.5px">${money(i.p,cur)} / ${esc(i.u||'')}</div></td><td class="r">${(+i.q).toLocaleString('id-ID')}</td><td class="r num">${money(i.q*i.p,cur)}</td></tr>`).join('')}</tbody></table>`;
 const totals=x=>`<div class="tot"><div><span>Subtotal</span><span class="num">${money(x.sub,x.cur)}</span></div>${x.disc?`<div><span>Diskon</span><span class="num">-${money(x.disc,x.cur)}</span></div>`:''}${x.tax?`<div><span>PPN ${x.ppnRate}%</span><span class="num">${money(x.tax,x.cur)}</span></div>`:''}<div class="g"><span>Total</span><span class="num">${money(x.total,x.cur)}</span></div>`;
 function openInv(id){
   const v=D.inv.find(x=>x.id===id);if(!v)return;
