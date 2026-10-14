@@ -296,15 +296,15 @@ label.f input,label.f select,label.f textarea{color:var(--ink);font-weight:400;f
 .land .feat svg{flex:none;margin-top:2px}
 .land .feat b{display:block;font-size:16.5px;margin-bottom:3px}
 .land .feat span{color:var(--muted);font-size:14.5px}
-.land .plans{display:grid;gap:14px}
-@media(min-width:880px){.land .plans{grid-template-columns:repeat(3,1fr)}}
-.land .plan{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:22px;display:flex;flex-direction:column}
-.land .plan.pop{border:2px solid var(--accent)}
-.land .plan .price{font-family:var(--f-head);font-weight:700;font-size:40px;line-height:1.1;margin:12px 0 2px}
-.land .plan .price small{font-size:16px;font-weight:500;color:var(--muted);margin-left:4px}
-.land .plan ul{list-style:none;margin:16px 0 20px;padding:0;display:grid;gap:9px;flex:1}
-.land .plan li{display:flex;gap:9px;font-size:15px}
-.land .plan li::before{content:"✓";color:var(--pos);font-weight:700}
+.plans{display:grid;gap:14px}
+@media(min-width:880px){.plans{grid-template-columns:repeat(3,1fr)}}
+.plan{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:22px;display:flex;flex-direction:column}
+.plan.pop{border:2px solid var(--accent)}
+.plan .price{font-family:var(--f-head);font-weight:700;font-size:40px;line-height:1.1;margin:12px 0 2px}
+.plan .price small{font-size:16px;font-weight:500;color:var(--muted);margin-left:4px}
+.plan ul{list-style:none;margin:16px 0 20px;padding:0;display:grid;gap:9px;flex:1}
+.plan li{display:flex;gap:9px;font-size:15px}
+.plan li::before{content:"✓";color:var(--pos);font-weight:700}
 .land details{border-top:1px solid var(--line);padding:14px 2px}
 .land details:last-of-type{border-bottom:1px solid var(--line)}
 .land summary{cursor:pointer;font-weight:600;font-size:16.5px}
@@ -315,6 +315,15 @@ label.f input,label.f select,label.f textarea{color:var(--ink);font-weight:400;f
 .land .demo .flow-step:first-of-type{border-top:0}
 #toast{z-index:99!important}
 html.ro [data-act^="new-"]:not([data-act="new-co"]),html.ro [data-act^="edit-"],html.ro [data-act^="del-"],html.ro [data-act^="add-"],html.ro [data-act^="sv-"],html.ro [data-act="doc-new"],html.ro [data-act="doc-new-for"],html.ro [data-act="task-status"],html.ro [data-act="att-set"],html.ro [data-act="pay-add"],html.ro [data-act="pay-del"],html.ro [data-act="pay-worker"],html.ro [data-act="payroll-del"],html.ro [data-act="bill-pay"],html.ro [data-act="bill-pay-del"],html.ro [data-act="quote-status"],html.ro [data-act="inv-sent"],html.ro [data-act="term-invoice"],html.ro [data-act="quote-invoice"],html.ro [data-act="quote-project"],html.ro [data-act="terms-edit"],html.ro [data-act="rab-edit"],html.ro [data-act="survey-done"],html.ro [data-act="survey-quote"],html.ro [data-act="survey-new"],html.ro [data-act="sample"],html.ro [data-act="reset"],html.ro [data-act="logo-del"],html.ro [data-act="member-rm"],html.ro [data-act="invite-cancel"],html.ro [data-act="del-company"],html.ro label.btn,html.ro form[data-form="settings"] button[type="submit"]{display:none!important}
+.lockrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 16px;border-top:1px solid var(--line);font-size:14.5px;color:var(--muted)}
+.subban{border-radius:8px;padding:11px 14px;margin:0 0 14px;font-size:14.5px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1px solid var(--line);background:var(--soft)}
+.subban.bad{background:rgba(182,63,46,.1);border-color:rgba(182,63,46,.35)}.subban.warn{background:rgba(242,176,30,.14);border-color:rgba(242,176,30,.45)}
+.side a.nl.upg{color:#fff;background:rgba(242,176,30,.16);margin-bottom:4px}.side a.nl.upg.bad{background:rgba(182,63,46,.35)}.side a.nl.upg span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upgm{font-size:12.5px;font-weight:700;text-decoration:none;color:var(--onaccent);background:var(--accent);border-radius:999px;padding:5px 10px;white-space:nowrap}.upgm.bad{background:var(--neg);color:#fff}
+.mtop .rt{display:flex;align-items:center;gap:8px}
+.paybox{display:flex;justify-content:space-between;align-items:baseline;background:var(--soft);border-radius:8px;padding:12px 14px;margin-bottom:12px}.paybox .amt{font-family:var(--f-head);font-weight:700;font-size:28px}
+.qris{display:block;max-width:260px;width:100%;margin:6px auto 12px;border-radius:8px;border:1px solid var(--line);background:#fff}
+.plan .price{font-family:var(--f-head);font-weight:700;font-size:34px;line-height:1.1;margin:10px 0 2px}
 .rohint{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:12px 0 4px;font-size:14px;font-weight:600}
 #sync{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:70;background:var(--ink);color:var(--bg);font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px}
 #sync[hidden]{display:none}
@@ -860,7 +869,7 @@ function setSync(st){
   el.hidden=false;el.className=st==='error'?'err':'';el.textContent=st==='error'?_tr('Gagal menyimpan, mencoba lagi…'):_tr('Menyimpan…');
 }
 function save(){
-  if(!S||!COMPANY||ROLE==='viewer')return;
+  if(!S||!COMPANY||ROLE==='viewer'||(typeof READONLY==='function'&&READONLY()))return;
   ensureClients();
   dirty=true;clearTimeout(saveT);saveT=setTimeout(push,600);setSync('saving');cacheSoon();if(typeof schedPub==='function')schedPub();
 }
@@ -904,7 +913,7 @@ async function commitOps(ops){
 }
 window.addEventListener('beforeunload',e=>{if((dirty||pushing)&&!CACHED){e.preventDefault();e.returnValue=''}});
 function unsubRec(){LISTEN.forEach(L=>{L.dead=true;try{L.un&&L.un()}catch(e){}});LISTEN=[]}
-function unsub(){unsubRec();if(typeof stopShares==='function')stopShares();if(typeof stopWorkers==='function')stopWorkers()}
+function unsub(){unsubRec();if(typeof stopCS==='function')stopCS();if(typeof stopShares==='function')stopShares();if(typeof stopWorkers==='function')stopWorkers()}
 /* dengarkan perubahan dari anggota lain, mulai dari dokumen terakhir yang sudah diketahui */
 function subscribe(){
   unsubRec();if(!SB||!COMPANY)return;
@@ -1066,61 +1075,9 @@ async function showCompanySetup(){
   <div class="actions"><button class="btn" data-act="check-invites">Cek undangan</button><button class="btn" data-act="logout">Keluar dari akun</button></div>`);
 }
 
-const LANDING_ON=_CFG.showLanding!==false;
+const LANDING_ON=false;/* halaman depan/iklan pindah ke web Zui */
 const PCFG=Object.assign({trialDays:14,yearlyMonths:10,whatsapp:'',email:''},_CFG.pricing||{});
-const PRICES=Object.assign({starter:{IDR:99000,MYR:29,USD:7},pro:{IDR:249000,MYR:69,USD:17},business:{IDR:599000,MYR:169,USD:39}},PCFG.prices||{});
 let LANDVIEW=false,LAND_YEARLY=false;
-const planCur=()=>LANG==='id'?'IDR':LANG==='ms'?'MYR':'USD';
-function planDefs(){return [
-  {id:'starter',name:'Starter',tag:_tr('Untuk tukang dan usaha kecil'),limits:[_tr('Hingga 5 proyek aktif'),_tr('2 pengguna')],feats:[_tr('Proyek, tugas, dan keuangan dasar'),_tr('Penawaran dan invoice PDF'),_tr('Daftar klien otomatis')]},
-  {id:'pro',name:'Pro',pop:true,tag:_tr('Untuk kontraktor yang berkembang'),limits:[_tr('Hingga 25 proyek aktif'),_tr('5 pengguna')],feats:[_tr('Semua fitur Starter'),_tr('Site visit dan alur penawaran'),_tr('RAB rinci dan progres fisik'),_tr('Absensi dan upah tukang'),_tr('Piutang, hutang vendor, dan laporan'),_tr('Tiga bahasa dan semua mata uang')]},
-  {id:'business',name:_tr('Bisnis'),tag:_tr('Untuk tim dan beberapa perusahaan'),limits:[_tr('Proyek tanpa batas'),_tr('15 pengguna')],feats:[_tr('Semua fitur Pro'),_tr('Hak akses Pemilik, Admin, Staf, dan Hanya lihat'),_tr('Beberapa perusahaan dalam satu akun'),_tr('Bantuan prioritas')]}
-]}
-function showLanding(){zr();setTimeout(instShow,0);
-  if(!SB_OK){showSetup();return}
-  LANDVIEW=true;const a=$('#auth');a.hidden=false;a.classList.add('land');
-  const cur=planCur(),plans=planDefs(),yr=LAND_YEARLY,mo=PCFG.yearlyMonths,app=esc(APP_NAME);
-  const lg=Object.entries(LANGS).map(([k,v])=>_h`<option value="${k}"${LANG===k?' selected':''}>${v}</option>`).join('');
-  const F=[['folder',_tr('Alur proyek'),_tr('Dari prospek sampai selesai dengan langkah yang jelas: site visit, penawaran, persetujuan klien, lalu invoice.')],
-    ['tasks',_tr('Site visit dan ukuran'),_tr('Catat ukuran per ruangan. Luas lantai dan dinding dihitung otomatis dan bisa jadi dasar penawaran.')],
-    ['file',_tr('Penawaran dan invoice'),_tr('Dokumen rapi dengan logo, terbilang, dan PDF yang siap dikirim lewat WhatsApp.')],
-    ['wallet',_tr('Keuangan lengkap'),_tr('Uang masuk dan keluar, piutang klien, hutang vendor, dan laba rugi per proyek.')],
-    ['gear',_tr('Anggaran dan progres'),_tr('Bandingkan rencana biaya (RAB) dengan realisasi dan pantau progres fisik proyek.')],
-    ['plus',_tr('Absensi dan upah'),_tr('Absen tukang sekali ketuk, hitung upah harian, dan catat otomatis sebagai biaya proyek.')],
-    ['home',_tr('Klien dan vendor'),_tr('Data klien terkumpul otomatis. Lihat sisa piutang tiap klien dalam sekali buka.')],
-    ['send',_tr('Tim dan bahasa'),_tr('Undang tim dengan hak akses, pakai Bahasa Indonesia, Melayu, atau English, dan semua mata uang.')]];
-  const card=p=>{
-    const pr=(PRICES[p.id]||{})[cur],price=pr==null?'-':money(yr?pr*mo:pr,cur);
-    return `<div class="plan${p.pop?' pop':''}">${p.pop?`<span class="chip ok" style="align-self:flex-start;margin-bottom:8px">${_tr('Paling populer')}</span>`:''}<h3 style="font-size:26px">${esc(p.name)}</h3><div class="muted" style="font-size:14.5px">${esc(p.tag)}</div><div class="price num">${price}<small>${yr?_tr('/tahun'):_tr('/bulan')}</small></div>${yr&&pr!=null?`<div class="muted" style="font-size:13.5px">${_tr('Hemat {n} bulan').replace('{n}',12-mo)}</div>`:'<div style="height:20px"></div>'}<ul>${p.limits.map(x=>`<li><b>${esc(x)}</b></li>`).join('')}${p.feats.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="btn ${p.pop?'primary':''} block" data-act="plan-pick" data-plan="${p.id}">${_tr('Pilih paket')}</button></div>`;
-  };
-  const QA=[[_tr('Apakah perlu memasang aplikasi?'),_tr('Tidak. Buka lewat browser di HP atau laptop. Kamu bisa menambahkannya ke layar utama HP supaya mudah dibuka.')],
-    [_tr('Siapa yang bisa melihat data saya?'),_tr('Hanya anggota tim yang kamu undang. Peran Hanya lihat tidak bisa mengubah data.')],
-    [_tr('Bagaimana cara berlangganan?'),_tr('Daftar akun, buat perusahaan, lalu pilih paket dan hubungi kami untuk pengaktifan dan pembayaran.')],
-    [_tr('Bisakah data saya diambil kembali?'),_tr('Bisa. Kamu dapat mengunduh cadangan data (.json) dan laporan (.csv) kapan saja.')]];
-  if(PCFG.trialDays>0)QA.push([_tr('Apakah ada masa percobaan?'),_tr('Ada masa percobaan {n} hari.').replace('{n}',PCFG.trialDays)]);
-  const step=(n,t,st,d)=>`<div class="flow-step ${st}"><span class="dot">${st==='done'?'✓':n}</span><div class="main2"><div class="t">${t}</div><div class="s">${d}</div></div></div>`;
-  a.innerHTML=_h`<div class="land">
-  <div class="lhead"><span class="brand"><i></i>${app}</span><div class="nav"><select data-set="lang" aria-label="Language">${lg}</select><button class="btn sm" data-act="land-scroll" data-to="harga">Harga</button><button class="btn sm" data-act="go-login">Masuk ke akun</button></div></div>
-  <div class="tape" aria-hidden="true"></div>
-  <div class="hero"><div>
-    <div class="eyebrow">Aplikasi untuk kontraktor dan tukang</div>
-    <h1>Dari site visit sampai invoice, semuanya rapi di satu tempat.</h1>
-    <p class="lead">${app} membantu kamu mencatat proyek, tugas tukang, uang masuk dan keluar, penawaran, sampai invoice, di HP maupun laptop.</p>
-    <div class="cta"><button class="btn primary" data-act="go-register">Daftar gratis</button><button class="btn" data-act="land-scroll" data-to="harga">Lihat harga</button></div>
-    <div class="note">${PCFG.trialDays>0?_tr('Masa percobaan {n} hari.').replace('{n}',PCFG.trialDays)+' ':''}${_tr('Sudah punya akun?')} <button class="btn sm" data-act="go-login" style="min-height:30px">Masuk ke akun</button></div>
-  </div>
-  <div class="demo"><div class="ph"><h2 style="font-size:22px;margin:0">Contoh alur proyek</h2></div>${step(1,_tr('Site visit'),'done',_tr('Selesai, hasil pengukuran tercatat'))}${step(2,_tr('Penawaran harga'),'done',_tr('Rinci dari hasil ukur'))}${step(3,_tr('Persetujuan klien'),'cur',_tr('Menunggu keputusan klien'))}${step(4,'Invoice','lock',_tr('Terkunci sampai penawaran disetujui'))}${step(5,_tr('Pengerjaan'),'lock',_tr('Mulai setelah penawaran disetujui'))}</div></div>
-  <section><h2>Alur kerja yang tertib</h2><p class="sub">Penawaran baru bisa dibuat setelah site visit selesai, dan invoice setelah klien menyetujui. Urutan ini mencegah penawaran tanpa ukuran dan invoice tanpa persetujuan.</p></section>
-  <section><h2>Semua yang dibutuhkan kontraktor</h2><p class="sub">Satu aplikasi untuk lapangan dan kantor.</p>
-  <div class="feats">${F.map(f=>`<div class="feat">${ic(f[0],24)}<div><b>${esc(f[1])}</b><span>${esc(f[2])}</span></div></div>`).join('')}</div></section>
-  <section id="harga"><h2>Harga langganan</h2><p class="sub">Pilih paket sesuai ukuran usahamu. Harga per bulan, bayar tahunan lebih hemat.</p>
-  <div class="seg" role="group" aria-label="Periode"><button data-act="land-billing" data-v="month" aria-pressed="${!yr}">Bulanan</button><button data-act="land-billing" data-v="year" aria-pressed="${yr}">Tahunan</button></div>
-  <div class="plans">${plans.map(card).join('')}</div>
-  <p class="note">Semua paket termasuk: tampilan HP dan laptop, cadangan data, dan tiga bahasa. Harga belum termasuk pajak jika berlaku.</p></section>
-  <section><h2>Pertanyaan yang sering diajukan</h2>${QA.map(q=>`<details><summary>${esc(q[0])}</summary><p>${esc(q[1])}</p></details>`).join('')}</section>
-  <div class="lfoot"><span>© ${new Date().getFullYear()} ${app}</span><span><button class="btn sm" data-act="go-login">Masuk ke akun</button> <button class="btn sm" data-act="go-register">Daftar</button></span></div></div>`;
-  window.scrollTo(0,0);
-}
 async function boot(){
   document.documentElement.lang=LANG;
   if(!SB_OK){showSetup();return}
@@ -1130,7 +1087,7 @@ async function boot(){
     if(data&&data.session&&AUTHTAB!=='newpw'){USER=data.session.user;await enterApp();return}
   }catch(e){}
   if(!S&&AUTHTAB!=='newpw'&&!navigator.onLine&&await offlineEnter())return;
-  if(!S&&AUTHTAB!=='newpw'){if(LANDING_ON)showLanding();else showAuth('login')}
+  if(!S&&AUTHTAB!=='newpw')showAuth('login')
 }
 function onAuth(ev,session){
   if(ev==='PASSWORD_RECOVERY'){USER=session&&session.user;showAuth('newpw');return}
@@ -1169,6 +1126,7 @@ async function openCompany(m){
     S.settings.owner=S.settings.owner||(USER.user_metadata&&USER.user_metadata.full_name)||'';
     save();
   }
+  watchCS();
   if(!OFFLINE){subscribe();if(MGR())fillSecret();if(!_pend&&ROLE!=='viewer'){const cur=collectLocal();for(const [k,v] of cur)if(SNAP.get(k)!==v.json&&(k!=='r|meta/settings'||MGR())){save();break}if(!dirty&&MGR())for(const k of SNAP.keys())if(!cur.has(k)&&!k.includes('|meta/')){save();break}}}
   startApp();
   if(_pend){save();toast(_tr('Perubahan offline dikirim ke server'))}
@@ -1241,7 +1199,7 @@ function setLang(l){
     if(s.invoiceTerms===TERMS[old].i)s.invoiceTerms=TERMS[l].i;
     if(s.company===CO_DEF[old])s.company=CO_DEF[l];
     save();buildNav();render();
-  }else if(typeof showLanding==='function'&&LANDVIEW)showLanding();else showAuth(AUTHTAB);
+  }else showAuth(AUTHTAB);
 }
 const ui={docTab:'quote',taskProj:'all',finMonth:'all',finType:'all',finProj:'all',projFilter:'all',finTab:'tx',projTab:'projects',recvView:'project',taskTab:'board',attDate:'',attProj:null};
 
@@ -1448,7 +1406,7 @@ function viewProyekDetail(id){
     ${MGR()?_h`<div class="panel" style="padding:16px"><h2 style="font-size:21px;margin-bottom:10px">Biaya vs anggaran</h2>${bt>0?_h`<div class="bar ${realT>bt?'over':''}"><i style="width:${Math.min(100,realT/bt*100)}%"></i></div><div class="muted" style="margin-top:6px;font-size:14px">${rp(realT)} dari ${rp(bt)} (${Math.round(realT/bt*100)}%)${realT>bt?_tr(' – melebihi anggaran'):''}</div>`:_tr('<div class="muted" style="font-size:14px">Atur anggaran (RAB) untuk memantau pemakaian biaya.</div>')}${hut>0?_h`<div style="margin-top:8px;font-size:14px">Hutang vendor belum dibayar: <b class="num neg">${rp(hut)}</b></div>`:''}</div>`:''}
   </div>
   ${MGR()?_h`<div class="panel section"><div class="ph"><h2>Anggaran (RAB)</h2><button class="btn sm" data-act="rab-edit" data-id="${id}">${ic('edit',16)}Atur anggaran</button></div>${rabRows||_tr('<div class="empty" style="border-top:1px solid var(--line)"><b>Anggaran belum diatur</b>Isi rencana biaya per kategori untuk dibandingkan dengan realisasi.</div>')}${rabRows?_h`<div class="cat" style="background:var(--soft)"><div class="r"><b>Total realisasi</b><span class="num"><b>${rp(realT)}</b> / ${rp(bt)}</span></div><div class="muted" style="font-size:13.5px">Sisa anggaran ${rp(bt-realT)}. Realisasi sudah termasuk hutang vendor yang belum dibayar.</div></div>`:''}</div>`:''}
-  ${schedulePanel(p)}${rabItemsPanel(p)}${MGR()?termsPanel(p):''}${changesPanel(p)}${materialPanel(p)}${dailyPanel(p)}${handoverPanel(p)}<div class="panel section"><div class="ph"><h2>Tugas</h2>${addBtn('new-task',_tr('Tugas baru'),_h`data-project="${id}"`,'sm')}</div><div class="list">${tk.length?tk.map(taskRow).join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada tugas untuk proyek ini.</div>')}</div></div>
+  ${FEAT('rab')?schedulePanel(p)+rabItemsPanel(p):''}${MGR()&&FEAT('terms')?termsPanel(p):''}${FEAT('changes')?changesPanel(p):''}${FEAT('po')?materialPanel(p):''}${dailyPanel(p)}${FEAT('handover')?handoverPanel(p):''}${MGR()?lockPanel(['rab','terms','changes','po','handover','clientlink']):''}<div class="panel section"><div class="ph"><h2>Tugas</h2>${addBtn('new-task',_tr('Tugas baru'),_h`data-project="${id}"`,'sm')}</div><div class="list">${tk.length?tk.map(taskRow).join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada tugas untuk proyek ini.</div>')}</div></div>
   ${MGR()?_h`<div class="panel section"><div class="ph"><h2>Keuangan</h2><div class="actions"><button class="btn sm" data-act="new-tx" data-type="in" data-project="${id}">+ Masuk</button><button class="btn sm" data-act="new-tx" data-type="out" data-project="${id}">+ Keluar</button></div></div><div class="list">${tx.length?tx.map(txRow).join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada transaksi.</div>')}</div></div>
   <div class="panel section"><div class="ph"><h2>Penawaran &amp; invoice</h2><div class="actions"><button class="btn sm" data-act="doc-new" data-kind="quote" data-project="${id}">+ Penawaran</button><button class="btn sm" data-act="doc-new" data-kind="invoice" data-project="${id}">+ Invoice</button></div></div><div class="list">${qs.length+iv.length?[...qs.map(d=>docRow('quote',d)),...iv.map(d=>docRow('invoice',d))].join(''):_tr('<div class="empty" style="border-top:1px solid var(--line)">Belum ada dokumen.</div>')}</div></div>`:''}`;
 }
@@ -1487,6 +1445,7 @@ function viewKeuangan(){
   const tabs=[['tx',_tr('Transaksi')],['recv',_tr('Piutang')],['bills',_tr('Hutang')],['vendors',_tr('Vendor')]];
   const seg=_h`<div class="filters"><div class="seg" role="group" aria-label="Bagian keuangan">${tabs.map(([k,l])=>_h`<button data-act="fin-tab" data-v="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div></div>`;
   const sub={tx:_tr('Catat setiap uang masuk dan keluar'),recv:_tr('Sisa tagihan dari klien per proyek dan per klien'),bills:_tr('Tagihan dari supplier dan subkontraktor'),vendors:_tr('Daftar supplier, subkontraktor, dan tukang')}[tab];
+  if((tab==='bills'||tab==='vendors')&&!FEAT('vendors'))return pageHead(_tr('Keuangan'),sub,'')+seg+lockPanel(['vendors'],_tr(tab==='bills'?'Hutang':'Vendor'));
   return pageHead(_tr('Keuangan'),sub,acts)+seg+({tx:finTx,recv:finRecv,bills:finBills,vendors:finVendors}[tab]||finTx)();
 }
 function finTx(){
@@ -1594,6 +1553,7 @@ function buildNav(){
   $('#tabbar').innerHTML=NAV.map(n=>_h`<a data-nav="${n[0]}" href="#${n[0]}">${ic(n[2],22)}<span>${_tr(n[1])}</span></a>`).join('');
   $('.side [data-nav="pengaturan"]').innerHTML=ic('gear')+_tr('Pengaturan');
   $('#mset').innerHTML=ic('gear',22);
+  if(typeof upgradeNav==='function')upgradeNav();
   $('.side').setAttribute('aria-label',_tr('Menu utama'));$('#tabbar').setAttribute('aria-label',_tr('Menu utama'));$('#mset').setAttribute('aria-label',_tr('Pengaturan'));
 }
 function render(){
@@ -1606,10 +1566,12 @@ function render(){
     case 'keuangan':h=MGR()?viewKeuangan():noFinView(_tr('Keuangan'));break;
     case 'dokumen':h=MGR()?viewDokumen():noFinView(_tr('Dokumen'));break;
     case 'laporan':h=viewLaporan();break;
+    case 'langganan':h=viewLangganan();break;
+    case 'zadmin':h=viewZAdmin();break;
     case 'pengaturan':h=viewPengaturan();break;
     default:h=viewBeranda();
   }
-  $('#view').innerHTML=h;
+  $('#view').innerHTML=(typeof subBanner==='function'&&name!=='langganan'?subBanner():'')+h;
   if(name==='pengaturan')loadTeam();
   if(ROLE==='viewer')applyRO();else if(name==='pengaturan'&&!MGR())lockSettings();
   document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===name||(!name&&a.dataset.nav==='beranda'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
@@ -1951,10 +1913,12 @@ function gateInvoice(pid){
   if(p.status==='prospect')return _tr('Penawaran proyek ini belum disetujui klien. Invoice dibuat setelah penawaran disetujui.');
   return '';
 }
+const activeProjects=()=>S.projects.filter(p=>p.status==='active').length;
 function activateFromQuote(q){
   if(q.status!=='approved'||!q.projectId)return false;
   const p=S.projects.find(x=>x.id===q.projectId);
   if(!p||p.status!=='prospect')return false;
+  if(activeProjects()>=planLimit('projects')){setTimeout(()=>upgradeAsk('projects'),300);return false}
   p.status='active';if(!p.start)p.start=todayStr();if(!(p.value>0))p.value=toBase(q,docTotals(q).total);
   return true;
 }
@@ -2068,9 +2032,9 @@ function openDocEditor(kind,doc,isNew){
     ${isQ?_h`<div class="g2">${fld(_tr('Berlaku sampai'),_h`<input name="validUntil" type="date" value="${d.validUntil||''}">`)}${fld(_tr('Status'),_h`<select name="status">${Object.entries(QS).map(([k,v])=>_h`<option value="${k}"${d.status===k?' selected':''}>${_tr(v[0])}</option>`).join('')}</select>`)}</div>`:fld('Jatuh tempo',_h`<input name="dueDate" type="date" value="${d.dueDate||''}">`)}
     <div class="items-h"><h3>Rincian pekerjaan</h3><div class="actions">${isQ&&(S.surveys||[]).some(v=>v.status==='done')?_h`<button type="button" class="btn sm" data-act="add-survey-items">Dari site visit</button>`:''}${S.catalog.length?_h`<select data-catpick style="width:auto;max-width:200px;min-height:34px;padding:4px 8px" aria-label="Ambil dari katalog"><option value="">Dari katalog…</option>${S.catalog.map(c=>_h`<option value="${c.id}">${esc(c.name)} – ${rp(c.price)}/${esc(c.unit||'ls')}</option>`).join('')}</select>`:''}<button type="button" class="btn sm" data-act="add-item">${ic('plus',16)}Baris</button></div></div>
     <div id="items"></div>
-    <div class="g2">${fld(_tr('Diskon (')+dcur(d)+')',_h`<input name="discount" type="number" step="any" min="0" inputmode="decimal" value="${d.discount||''}">`)}${fld(_tr('PPN (%)'),_h`<input name="ppnRate" type="number" step="any" min="0" value="${d.ppnRate}">`)}</div>
-    <label class="check"><input type="checkbox" name="ppn" ${d.ppn?'checked':''}> Kenakan PPN</label>
-    ${isQ?'':_h`<label class="check"><input type="checkbox" name="pph" ${d.pph?'checked':''}> Klien memotong PPh (ada bukti potong)</label><div class="g2" id="pphrow" style="${d.pph?'':'display:none'}">${fld(_tr('Tarif PPh (%)'),_h`<input name="pphRate" type="number" step="any" min="0" list="pphList" value="${d.pphRate||lastPph()}"><datalist id="pphList"><option value="1.75"><option value="2.65"><option value="4"></datalist>`)}${fld(_tr('No. bukti potong (opsional)'),_h`<input name="pphRef" value="${esc(d.pphRef||'')}">`)}</div>`}
+    <div class="g2">${fld(_tr('Diskon (')+dcur(d)+')',_h`<input name="discount" type="number" step="any" min="0" inputmode="decimal" value="${d.discount||''}">`)}${FEAT('tax')?fld(_tr('PPN (%)'),_h`<input name="ppnRate" type="number" step="any" min="0" value="${d.ppnRate}">`):''}</div>
+    ${FEAT('tax')?_h`<label class="check"><input type="checkbox" name="ppn" ${d.ppn?'checked':''}> Kenakan PPN</label>`:_h`<input type="checkbox" name="ppn" hidden ${d.ppn?'checked':''}><input name="ppnRate" type="number" step="any" hidden value="${d.ppnRate}"><input type="checkbox" name="pph" hidden ${d.pph?'checked':''}><input name="pphRate" type="number" step="any" hidden value="${d.pphRate||''}"><input name="pphRef" hidden value="${esc(d.pphRef||'')}">${lockRow('tax')}`}
+    ${isQ||!FEAT('tax')?'':_h`<label class="check"><input type="checkbox" name="pph" ${d.pph?'checked':''}> Klien memotong PPh (ada bukti potong)</label><div class="g2" id="pphrow" style="${d.pph?'':'display:none'}">${fld(_tr('Tarif PPh (%)'),_h`<input name="pphRate" type="number" step="any" min="0" list="pphList" value="${d.pphRate||lastPph()}"><datalist id="pphList"><option value="1.75"><option value="2.65"><option value="4"></datalist>`)}${fld(_tr('No. bukti potong (opsional)'),_h`<input name="pphRef" value="${esc(d.pphRef||'')}">`)}</div>`}
     <div class="totals" id="totals"></div>
     ${fld(isQ?_tr('Syarat &amp; ketentuan'):_tr('Catatan'),_h`<textarea name="notes" rows="4">${esc(d.notes||'')}</textarea>`)}
     <div class="btns"><button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan ${isQ?_tr('penawaran'):'invoice'}</button></div></form>`,true);
@@ -2271,18 +2235,6 @@ const A={
   'auth-tab':el=>showAuth(el.dataset.v),
   'go-login':()=>{closeModal();showAuth('login')},
   'go-register':()=>{closeModal();showAuth('register')},
-  'landing':()=>showLanding(),
-  'land-billing':el=>{LAND_YEARLY=el.dataset.v==='year';showLanding();const h=document.getElementById('harga');if(h&&h.scrollIntoView)h.scrollIntoView()},
-  'land-scroll':el=>{const h=document.getElementById(el.dataset.to);if(h&&h.scrollIntoView)h.scrollIntoView({behavior:'smooth'})},
-  'plan-pick':el=>{
-    const p=planDefs().find(x=>x.id===el.dataset.plan),cur=planCur(),pr=(PRICES[p.id]||{})[cur];
-    const price=pr==null?'':money(LAND_YEARLY?pr*PCFG.yearlyMonths:pr,cur)+(LAND_YEARLY?_tr('/tahun'):_tr('/bulan'));
-    const msg=_tr('Halo, saya mau berlangganan paket')+' '+p.name+' ('+price+') '+_tr('untuk')+' '+APP_NAME+'.';
-    const wa=String(PCFG.whatsapp||'').replace(/[^\d]/g,'');
-    modal(_tr('Berlangganan paket')+' '+p.name,_h`<p class="muted" style="margin-top:0">${price}</p><ol style="padding-left:20px;line-height:1.7"><li>Daftar akun dan buat perusahaanmu (gratis).</li><li>Hubungi kami untuk pengaktifan paket dan pembayaran.</li><li>Setelah paket aktif, seluruh tim bisa langsung memakainya.</li></ol>
-    <div class="btns start">${wa?_h`<a class="btn primary" href="https://wa.me/${wa}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer">Hubungi lewat WhatsApp</a>`:(PCFG.email?`<a class="btn primary" href="mailto:${esc(PCFG.email)}?subject=${encodeURIComponent(APP_NAME)}&body=${encodeURIComponent(msg)}">${_tr('Hubungi lewat email')}</a>`:'')}<button class="btn" data-act="go-register">Daftar gratis</button></div>
-    ${wa||PCFG.email?'':`<p class="muted" style="font-size:13.5px">${_tr('Kontak belum diatur. Isi pricing.whatsapp atau pricing.email di config.js.')}</p>`}`);
-  },
   'google':async()=>{const {error}=await SB.auth.signInWithOAuth({provider:'google',options:{redirectTo:REDIRECT}});if(error)authErr(errMsg(error))},
   'resend':async el=>{const {error}=await SB.auth.resend({type:'signup',email:el.dataset.email,options:{emailRedirectTo:REDIRECT}});toast(error?errMsg(error):_tr('Email verifikasi dikirim ulang'))},
   'check-invites':async()=>{ENTERING=false;await enterApp()},
@@ -2456,7 +2408,9 @@ document.addEventListener('click',e=>{
   const sc=e.target.closest('.scrim');if(sc&&e.target===sc){closeModal();return}
   const el=e.target.closest('[data-act]');if(!el)return;
   const act=el.dataset.act;
+  if(S&&ROLE!=='viewer'&&READONLY()&&!RO_OK.has(act)){toast(roMsg());return}
   if(S&&ROLE==='viewer'&&!RO_OK.has(act)){toast(_tr('Peranmu hanya bisa melihat data'));return}
+  if(S&&ACT_FEAT[act]&&!FEAT(ACT_FEAT[act])){upgradeAsk(ACT_FEAT[act]);return}
   if(S&&(act==='reset'||act==='sample')&&!MGR()){toast(_tr('Hanya pemilik atau admin yang bisa melakukan ini'));return}
   if(S&&!MGR()&&FIN_ACTS.has(act)){toast(Lw('Khusus pemilik atau admin','Owner or admin only','Khas untuk pemilik atau admin'));return}
   const f=A[act];if(f){f(el,e)}
@@ -2467,6 +2421,7 @@ document.addEventListener('change',e=>{
   if(t.dataset&&t.dataset.set==='lang'){setLang(t.value);return}
   if(t.dataset&&t.dataset.set==='company'){switchCompany(t.value);return}
   if(t.dataset&&t.dataset.roleuser){SB.from('members').update({role:t.value}).eq('company_id',COMPANY.id).eq('user_id',t.dataset.roleuser).then(({error})=>{toast(error?errMsg(error):_tr('Peran diubah'));loadTeam()});return}
+  if(S&&READONLY()&&ROLE!=='viewer'&&!t.dataset.flt&&t.id!=='qrisFile'){toast(roMsg());if(t.type==='file')t.value='';return}
   if(S&&ROLE==='viewer'&&!t.dataset.flt){toast(_tr('Peranmu hanya bisa melihat data'));if(t.type==='file')t.value='';return}
   if(t.dataset&&t.dataset.set==='currency'){if(!MGR()){toast(_tr('Hanya pemilik atau admin yang bisa mengubah profil perusahaan'));render();return}S.settings.currency=t.value;save();render();toast(_tr('Mata uang diubah'));return}
   if('catpick' in t.dataset&&ED){const c=S.catalog.find(x=>x.id===t.value);if(c){const it={desc:c.name,qty:1,unit:c.unit||'ls',price:c.price},blank=ED.items.length===1&&!ED.items[0].desc&&!ED.items[0].price;if(blank)ED.items=[it];else ED.items.push(it);renderItems();refreshTotals()}t.value='';return}
@@ -2573,6 +2528,8 @@ const SUB={
     COMPANIES=data||COMPANIES;const last=COMPANIES[COMPANIES.length-1];S=null;await openCompany(last);toast(_tr('Perusahaan dibuat'));
   },
   invite:async(f,d)=>{
+    try{const [m,i]=await Promise.all([SB.from('members').select('user_id').eq('company_id',COMPANY.id),SB.from('invites').select('id').eq('company_id',COMPANY.id)]);
+      if(((m.data||[]).length+((i&&i.data)||[]).length)>=planLimit('users'))return upgradeAsk('users')}catch(e){}
     const {error}=await SB.rpc('invite_member',{p_company:COMPANY.id,p_email:(d.email||'').trim(),p_role:d.role});
     if(error)return toast(errMsg(error));
     toast(_tr('Undangan dibuat. Minta orang itu mendaftar atau masuk dengan email tersebut.'));loadTeam();
@@ -2643,6 +2600,7 @@ const SUB={
     const old=f.dataset.id?S.projects.find(p=>p.id===f.dataset.id):null;
     o.skipSurvey=canOverride()?!!d.skipSurvey:!!(old&&old.skipSurvey);
     if((!old||old.status==='prospect')&&o.status!=='prospect'&&o.status!=='hold'&&!canOverride()&&!(old&&approvedQuote(old.id))){toast(_tr('Status Berjalan baru bisa dipilih setelah penawaran disetujui klien.'));return}
+    if(o.status==='active'&&(!old||old.status!=='active')&&activeProjects()>=planLimit('projects'))return upgradeAsk('projects');
     if(f.dataset.id)Object.assign(S.projects.find(p=>p.id===f.dataset.id),o);else{o.id=uid();S.projects.push(o);}
     save();closeModal();render();toast(_tr('Proyek disimpan'));
   },
@@ -2695,7 +2653,8 @@ const SUB={
 };
 document.addEventListener('submit',e=>{
   e.preventDefault();const f=e.target,h=SUB[f.dataset.form];
-  if(S&&ROLE==='viewer'&&!['chpw','newco','myname'].includes(f.dataset.form)){toast(_tr('Peranmu hanya bisa melihat data'));return}
+  if(S&&READONLY()&&ROLE!=='viewer'&&!['chpw','newco','myname','subpay','zarej','zaco','zapay','invite'].includes(f.dataset.form)){toast(roMsg());return}
+  if(S&&ROLE==='viewer'&&!['chpw','newco','myname','subpay','zarej','zaco','zapay'].includes(f.dataset.form)){toast(_tr('Peranmu hanya bisa melihat data'));return}
   if(h)Promise.resolve(h(f,Object.fromEntries(new FormData(f)))).catch(err=>{try{authErr(errMsg(err))}catch(x){}toast(errMsg(err))});
 });
 document.addEventListener('keydown',e=>{
@@ -3412,7 +3371,7 @@ function chatChanged(pid){if(OPENCHAT===pid&&$('#chatlist')){renderChat();markRe
 /* ---------- panel di detail proyek ---------- */
 function clientPanel(p){
   if(!canChat())return '';
-  const sh=p.share;
+  const sh=p.share;if(!sh&&!FEAT('clientlink'))return '';
   if(!sh)return _h`<div class="panel section"><div class="ph"><h2>Halaman klien</h2>${MGR()?_h`<button class="btn sm primary" data-act="share-new" data-id="${p.id}">Buat link klien</button>`:''}</div><div class="cat"><span class="muted" style="font-size:14px">Klien bisa memantau progres, foto laporan, tagihan, menyetujui dokumen, dan chat dengan timmu lewat satu link, tanpa daftar akun. Biaya internal, upah, dan vendor tidak ikut terlihat.${MGR()?'':_tr(' Minta pemilik atau admin membuat link.')}</span></div></div>`;
   const msgs=CHAT[p.id]||[],last=msgs[msgs.length-1],un=unreadOf(p.id),url=shareUrl(sh.token);
   return _h`<div class="panel section"><div class="ph"><h2>Halaman klien</h2>${chip(sh.active?_tr('Link aktif'):_tr('Link mati'),sh.active?'ok':'mute')}</div>
@@ -3508,7 +3467,7 @@ function workerForm(w){
   modal(n?_tr('Pekerja baru'):_tr('Ubah pekerja'),_h`<form data-form="worker" data-id="${w.id||''}">
     ${fld(_tr('Nama'),_h`<input name="name" value="${esc(w.name||'')}" required>`)}
     <div class="g2">${fld(_tr('Peran'),_h`<input name="role" value="${esc(w.role||'')}" placeholder="Tukang batu, mandor, admin, ...">`)}${fld(_tr('Telepon / WhatsApp'),_h`<input name="phone" value="${esc(w.phone||'')}" inputmode="tel">`)}</div>
-    ${MGR()?'':_h`<input type="hidden" name="wtype" value="${m?'monthly':'daily'}">`}<div ${MGR()?'':'hidden'}>${fld(_tr('Sistem pembayaran'),_h`<select name="wtype" ${MGR()?'':'disabled'}><option value="daily"${m?'':' selected'}>Upah harian (dari absensi)</option><option value="monthly"${m?' selected':''}>Gaji bulanan (karyawan tetap)</option></select>`)}
+    ${MGR()?'':_h`<input type="hidden" name="wtype" value="${m?'monthly':'daily'}">`}<div ${MGR()?'':'hidden'}>${fld(_tr('Sistem pembayaran'),_h`<select name="wtype" ${MGR()?'':'disabled'}><option value="daily"${m?'':' selected'}>Upah harian (dari absensi)</option><option value="monthly"${m?' selected':''}${!m&&!FEAT('payroll')?' disabled':''}>Gaji bulanan (karyawan tetap)${FEAT('payroll')?'':' – '+planName('business')}</option></select>`)}
     <div id="wdaily" style="${m?'display:none':''}">${fld(_tr('Upah harian (')+baseCur()+')',_h`<input name="rate" type="number" step="any" min="0" inputmode="decimal" value="${w.rate||''}">`)}</div>
     <div id="wmonthly" style="${m?'':'display:none'}">
       ${fld(_tr('Gaji pokok per bulan (')+baseCur()+')',_h`<input name="base" type="number" step="any" min="0" inputmode="decimal" value="${s.base||''}">`)}
@@ -3587,6 +3546,7 @@ function openWorker(id){
 /* ---------- link pekerja ---------- */
 function workerLinkBox(w){
   if(!canChat())return '';const sh=w.share;
+  if(!sh&&!FEAT('workerlink'))return MGR()?`<div class="wlink" style="padding:0">${lockRow('workerlink')}</div>`:'';
   if(!sh)return MGR()?_h`<div class="wlink"><div><b>Halaman pekerja</b><div class="muted" style="font-size:13.5px">Absen dengan selfie & lokasi, tugas, lapor kerja, upah, kasbon, dan chat lewat link pribadi ber-PIN.</div></div><button class="btn sm primary" data-act="wshare-new" data-id="${w.id}">Buat link</button></div>`:'';
   const un=(WCHAT[w.id]||[]).filter(m=>m.from==='worker'&&m.ts>lastRead('w'+w.id)).length;
   return _h`<div class="wlink"><div style="min-width:0"><b>Halaman pekerja</b> ${chip(sh.active?_tr('Link aktif'):_tr('Link mati'),sh.active?'ok':'mute')}${MGR()&&!sh.pinHash?' '+chip(Lw('PIN belum diatur','PIN not set','PIN belum ditetapkan'),'warn'):''}<div class="linkbox" style="margin-top:6px">${esc(wUrl(sh.token))}</div></div>
@@ -3898,6 +3858,7 @@ function repStatement(a,proj){
 function viewLaporan(){
   const title=W('Laporan','Reports');
   if(!isOwner())return pageHead(title,'')+`<div class="panel"><div class="empty"><b>${W('Khusus pemilik','Owner only','Khas untuk pemilik')}</b>${W('Laporan keuangan hanya bisa dibuka oleh pemilik perusahaan.','Financial reports can only be opened by the company owner.','Laporan kewangan hanya boleh dibuka oleh pemilik syarikat.')}</div></div>`;
+  if(!FEAT('reports'))return pageHead(title,'')+lockPanel(['reports']);
   const D=repData(),t=D.tot,tab=ui.repTab;
   const years=[...new Set([String(new Date().getFullYear()),...S.tx.map(x=>(x.date||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y))])].sort().reverse();
   const sel=`<select data-flt="repYear" aria-label="${W('Periode','Period','Tempoh')}" style="width:auto">${years.map(y=>`<option value="${y}"${ui.repYear===y?' selected':''}>${W('Tahun','Year','Tahun')} ${y}</option>`).join('')}<option value="all"${D.all?' selected':''}>${W('Semua waktu','All time','Semua masa')}</option></select>`;
@@ -3909,7 +3870,7 @@ function viewLaporan(){
     <div><div class="k">${W('Biaya','Costs','Kos')}</div><div class="v num">${rp(t.cout+t.pph)}</div><div class="s">${W('termasuk PPh final','incl. final tax','termasuk PPh final')}</div></div>
     <div><div class="k">${L_.net()}</div><div class="v num ${t.net<0?'neg':'pos'}">${rp(t.net)}</div><div class="s">${W('margin ','margin ')}${pct(t.margin)}</div></div>
     <div><div class="k">${W('Saldo kas akhir','Closing cash','Baki tunai akhir')}</div><div class="v num ${D.close<0?'neg':''}">${rp(D.close)}</div><div class="s">${W('awal ','opening ','awal ')}${rp(D.open)}</div></div></div>`;
-  const body={pl:repPL,proj:repProj,cash:repCash,tax:repTax}[tab]||repPL;
+  const body=tab==='tax'&&!FEAT('pphrecap')?()=>lockPanel(['pphrecap']):({pl:repPL,proj:repProj,cash:repCash,tax:repTax}[tab]||repPL);
   const empty=!D.L.length?`<div class="panel section"><div class="empty"><b>${W('Belum ada transaksi','No transactions yet','Belum ada transaksi')}</b>${W('Laporan disusun dari uang masuk dan keluar di menu Keuangan, termasuk pembayaran invoice dan tagihan vendor.','Reports are built from money in and out in Finance, including invoice payments and vendor bills.','Laporan disusun daripada wang masuk dan keluar di menu Kewangan.')}</div></div>`:'';
   return pageHead(title,W('Ringkasan keuangan untuk pemilik','Financial overview for the owner','Ringkasan kewangan untuk pemilik')+' · '+repPer(D),acts)+met+seg+(empty||body(D));
 }
@@ -4182,6 +4143,192 @@ Object.assign(A,{
   'cash-open':()=>modal(W('Saldo kas awal','Opening cash balance','Baki tunai awal'),`<form data-form="cashopen"><p class="muted" style="margin-top:0">${W('Jumlah uang kas dan rekening sebelum transaksi pertama yang dicatat di aplikasi. Dipakai untuk menghitung saldo di laporan arus kas.','Cash and bank balance before the first transaction recorded in the app. Used to compute balances in the cash flow report.','Jumlah wang tunai dan akaun sebelum transaksi pertama yang direkod.')}</p>${fld(W('Saldo awal (','Opening balance (','Baki awal (')+baseCur()+')',`<input name="cashOpen" type="number" step="any" inputmode="decimal" value="${+S.settings.cashOpen||''}" autofocus>`)}<div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel')}</button><button class="btn primary" type="submit">${W('Simpan','Save')}</button></div></form>`)
 });
 SUB.cashopen=(f,d)=>{if(!isOwner())return;S.settings.cashOpen=+d.cashOpen||0;save();closeModal();render();toast(W('Saldo awal disimpan','Opening balance saved','Baki awal disimpan'))};
+
+/* ============ Langganan: paket, masa percobaan, hanya-baca, upgrade, admin ============ */
+/*NOTR_START*/
+const SUPER_ADMINS=(_CFG.superAdmins||['admin.zuisystem@gmail.com']).map(x=>String(x).trim().toLowerCase());
+const SUPER=()=>!!(USER&&USER.email&&SUPER_ADMINS.includes(String(USER.email).toLowerCase()));
+const TRIAL_DAYS=14,GRACE_DAYS=3,TRIAL_FROM=Date.UTC(2026,9,15),DAYMS=864e5;
+const PLAN_ORDER=['starter','pro','business'];
+const PLANS={starter:{name:'Starter',users:2,projects:5},pro:{name:'Pro',users:5,projects:25},business:{name:'Bisnis',users:15,projects:Infinity}};
+const planName=k=>k==='business'?W('Bisnis','Business','Bisnes'):(PLANS[k]||PLANS.starter).name;
+const FEAT_PLAN={rab:'pro',terms:'pro',tax:'pro',vendors:'pro',po:'pro',changes:'pro',handover:'pro',kasbon:'pro',reports:'pro',workerlink:'pro',clientlink:'business',payroll:'business',pphrecap:'business',multico:'business'};
+const featName=k=>({rab:W('RAB rinci, progres fisik & kurva S','Detailed BoQ, progress & S-curve','RAB terperinci, kemajuan & keluk S'),terms:W('Termin pembayaran','Payment terms','Termin bayaran'),tax:W('PPN & PPh di invoice','VAT & withholding tax on invoices','PPN & PPh dalam invois'),vendors:W('Vendor & hutang vendor','Vendors & payables','Vendor & hutang vendor'),po:W('PO material & stok di lokasi','Material POs & site stock','PO bahan & stok di tapak'),changes:W('Pekerjaan tambah-kurang','Change orders','Kerja tambah-kurang'),handover:W('Serah terima (BAST) & garansi','Handover & warranty','Serah terima & waranti'),kasbon:W('Kasbon pekerja','Worker cash advances','Pendahuluan pekerja'),reports:W('Laporan laba rugi & arus kas + Excel','Profit & loss and cash flow + Excel','Laporan untung rugi & aliran tunai + Excel'),workerlink:W('Halaman pekerja: absen selfie & lokasi, ber-PIN','Worker page: selfie & location check-in, PIN','Halaman pekerja: kehadiran swafoto & lokasi'),clientlink:W('Halaman klien: progres, chat & tanda tangan','Client page: progress, chat & signatures','Halaman pelanggan: kemajuan, sembang & tandatangan'),payroll:W('Gaji bulanan & slip gaji','Monthly salary & payslips','Gaji bulanan & slip gaji'),pphrecap:W('Rekap PPh per masa pajak','Withholding tax summary by period','Ringkasan PPh ikut tempoh'),multico:W('Beberapa perusahaan dalam satu akun','Several companies in one account','Beberapa syarikat dalam satu akaun')})[k]||k;
+const BASE_FEATS=()=>[W('Proyek, tugas & site visit dengan ukuran','Projects, tasks & site visits','Projek, tugasan & lawatan tapak'),W('Penawaran & invoice PDF, kirim via WhatsApp','Quotes & invoices as PDF via WhatsApp','Sebut harga & invois PDF'),W('Uang masuk-keluar, piutang & daftar klien','Cash in/out, receivables & clients','Wang masuk-keluar, penghutang & pelanggan'),W('Absensi & upah harian tukang','Attendance & daily wages','Kehadiran & upah harian'),W('Laporan harian, pengingat & mode offline','Daily reports, reminders & offline mode','Laporan harian, peringatan & luar talian'),W('Peran tim (data uang tertutup untuk staf)','Team roles (money hidden from staff)','Peranan pasukan'),W('3 bahasa & semua mata uang','3 languages & all currencies','3 bahasa & semua mata wang')];
+const DEF_PRICES={starter:{1:79000,6:395000,12:790000},pro:{1:149000,6:745000,12:1490000},business:{1:299000,6:1495000,12:2990000}};
+let CS=null,CSUN=null,PAYCFG=null;
+Object.assign(ui,{subPer:'1'});
+/* status langganan perusahaan yang sedang dibuka */
+function subState(){
+  if(!CS)return{kind:'unknown',eff:'business',active:true};
+  const c=CS,now=Date.now();
+  if(c.free)return{kind:'free',plan:'business',eff:'business',active:true};
+  if(c.until){const u=c.until,p=PLANS[c.plan]?c.plan:'starter';
+    if(now<u)return{kind:'paid',plan:p,eff:p,active:true,until:u,left:Math.ceil((u-now)/DAYMS)};
+    if(now<u+GRACE_DAYS*DAYMS)return{kind:'grace',plan:p,eff:p,active:true,until:u,left:Math.ceil((u+GRACE_DAYS*DAYMS-now)/DAYMS)};
+    return{kind:'expired',plan:p,eff:p,active:false,until:u}}
+  const te=Math.max(c.created||now,TRIAL_FROM)+TRIAL_DAYS*DAYMS;
+  if(now<te)return{kind:'trial',plan:'business',eff:'business',active:true,until:te,left:Math.ceil((te-now)/DAYMS)};
+  if(now<te+GRACE_DAYS*DAYMS)return{kind:'grace',trial:true,plan:'business',eff:'business',active:true,until:te,left:Math.ceil((te+GRACE_DAYS*DAYMS-now)/DAYMS)};
+  return{kind:'expired',trial:true,plan:'starter',eff:'starter',active:false,until:te};
+}
+const FEAT=k=>PLAN_ORDER.indexOf(subState().eff)>=PLAN_ORDER.indexOf(FEAT_PLAN[k]||'starter');
+const READONLY=()=>!!S&&!subState().active;
+const planLimit=k=>(PLANS[subState().eff]||PLANS.business)[k];
+const roMsg=()=>MGR()?W('Masa langganan habis. Data hanya bisa dilihat. Perpanjang di menu Upgrade.','Your subscription has ended. Data is read-only. Renew under Upgrade.','Langganan tamat. Data hanya boleh dilihat. Perbaharui di menu Naik taraf.'):W('Masa langganan perusahaan habis. Data hanya bisa dilihat. Hubungi pemilik untuk memperpanjang.','The company subscription has ended. Data is read-only. Ask the owner to renew.','Langganan syarikat tamat. Hubungi pemilik.');
+function watchCS(){
+  if(CSUN){try{CSUN()}catch(e){}CSUN=null}
+  CS=null;if(!COMPANY)return;const cid=COMPANY.id;
+  try{const c=JSON.parse(localStorage.getItem('zk-cs-'+cid)||'null');if(c)CS=c}catch(e){}
+  if(!SB)return;
+  CSUN=SB._fb.db.collection('companies').doc(cid).onSnapshot(d=>{if(!COMPANY||COMPANY.id!==cid)return;const x=d.data()||{};
+    CS={plan:x.plan||'',until:tsMs0(x.until)||0,free:!!x.free,created:tsMs0(x.created_at)||0};
+    try{localStorage.setItem('zk-cs-'+cid,JSON.stringify(CS))}catch(e){}
+    if(S){buildNav();render()}},()=>{});
+}
+function stopCS(){if(CSUN){try{CSUN()}catch(e){}CSUN=null}}
+/* tombol Upgrade di bawah, dekat Pengaturan */
+function upgradeNav(){
+  const s=subState(),show=S&&(MGR()||SUPER())&&s.kind!=='unknown';
+  const lbl=s.kind==='free'?W('Bisnis · gratis','Business · free','Bisnes · percuma'):s.kind==='trial'?W('Upgrade · sisa ','Upgrade · ','Naik taraf · ')+s.left+W(' hari',' days left',' hari'):s.kind==='paid'?planName(s.plan)+' · '+fmtD(iso(new Date(s.until))):s.kind==='grace'?W('Perpanjang · ','Renew · ','Perbaharui · ')+s.left+W(' hari',' days',' hari'):W('Perpanjang','Renew','Perbaharui');
+  const tone=s.kind==='expired'||s.kind==='grace'?'bad':s.kind==='trial'&&s.left<=3?'warn':'';
+  const side=$('.side [data-nav="pengaturan"]');
+  if(side){const nav=side.parentNode;nav.querySelectorAll('.upg,.zadm').forEach(e=>e.remove());
+    if(SUPER())nav.insertAdjacentHTML('afterbegin',`<a class="nl zadm" data-nav="zadmin" href="#zadmin">${ic('gear')}${W('Admin langganan','Subscription admin','Admin langganan')}</a>`);
+    if(show)nav.insertAdjacentHTML('afterbegin',`<a class="nl upg ${tone}" data-nav="langganan" href="#langganan">${ic('chart')}<span>${esc(lbl)}</span></a>`)}
+  const rt=$('.mtop .rt');
+  if(rt){rt.querySelectorAll('.upgm').forEach(e=>e.remove());if(show||SUPER())rt.insertAdjacentHTML('afterbegin',`<a class="upgm ${tone}" href="${SUPER()&&!show?'#zadmin':'#langganan'}">${esc(show?(s.kind==='trial'?W('Upgrade','Upgrade','Naik taraf')+' · '+s.left+W('h','d','h'):s.kind==='paid'||s.kind==='free'?planName(s.plan):W('Perpanjang','Renew','Perbaharui')):'Admin')}</a>`)}
+}
+function subBanner(){
+  const s=subState();if(!S)return '';
+  if(s.kind==='expired')return `<div class="subban bad"><b>${esc(roMsg())}</b>${MGR()?` <a class="btn sm primary" href="#langganan">${W('Perpanjang','Renew','Perbaharui')}</a>`:''}</div>`;
+  if(s.kind==='grace'&&MGR())return `<div class="subban warn"><b>${s.trial?W('Masa percobaan sudah berakhir.','Your trial has ended.','Percubaan tamat.'):W('Masa langganan sudah berakhir.','Your subscription has ended.','Langganan tamat.')}</b> ${W('Data akan menjadi hanya-baca dalam ','Data becomes read-only in ','Data menjadi baca sahaja dalam ')}${s.left}${W(' hari.',' days.',' hari.')} <a class="btn sm primary" href="#langganan">${W('Pilih paket','Choose a plan','Pilih pakej')}</a></div>`;
+  if(s.kind==='trial'&&s.left<=3&&MGR())return `<div class="subban warn">${W('Masa percobaan tinggal ','Trial ends in ','Percubaan tinggal ')}${s.left}${W(' hari.',' days.',' hari.')} <a class="btn sm" href="#langganan">${W('Lihat paket','See plans','Lihat pakej')}</a></div>`;
+  return '';
+}
+/* ajakan upgrade ketika fitur/batas di luar paket */
+function upgradeAsk(f){
+  const lim=f==='users'||f==='projects',need=lim?null:FEAT_PLAN[f];
+  const msg=lim?(f==='users'?W('Batas pengguna paket ','User limit of the ','Had pengguna pakej ')+planName(subState().eff)+W(' sudah tercapai ('+planLimit('users')+' orang).',' plan reached ('+planLimit('users')+').',' telah dicapai ('+planLimit('users')+').'):W('Batas proyek berjalan paket ','Active project limit of the ','Had projek berjalan pakej ')+planName(subState().eff)+W(' sudah tercapai ('+planLimit('projects')+' proyek).',' plan reached ('+planLimit('projects')+').',' telah dicapai ('+planLimit('projects')+').'))
+    :featName(f)+W(' tersedia mulai paket ',' is available from the ',' tersedia mulai pakej ')+planName(need)+'.';
+  modal(W('Perlu upgrade','Upgrade needed','Perlu naik taraf'),`<p style="margin-top:0">${esc(msg)}</p>${MGR()?`<div class="btns"><button class="btn" data-act="close-modal">${W('Nanti','Later','Nanti')}</button><a class="btn primary" href="#langganan" data-act="close-modal">${W('Lihat paket','See plans','Lihat pakej')}</a></div>`:`<p class="muted">${W('Minta pemilik perusahaan meng-upgrade paket.','Ask the company owner to upgrade.','Minta pemilik syarikat naik taraf.')}</p><div class="btns"><button class="btn primary" data-act="close-modal">OK</button></div>`}`);
+}
+const lockRow=f=>`<div class="lockrow"><span>🔒 ${esc(featName(f))}</span><button class="btn sm" data-act="upgrade" data-f="${f}">${planName(FEAT_PLAN[f])}</button></div>`;
+const lockPanel=(fs,title)=>{fs=fs.filter(f=>!FEAT(f));if(!fs.length)return '';return `<div class="panel section"><div class="ph"><h2>${esc(title||W('Fitur paket lebih tinggi','Higher-plan features','Ciri pakej lebih tinggi'))}</h2></div>${fs.map(lockRow).join('')}</div>`};
+const ACT_FEAT={'new-rabitem':'rab','edit-rabitem':'rab','del-rabitem':'rab','terms-edit':'terms','term-preset':'terms','add-term':'terms','del-term':'terms','term-invoice':'terms',
+  'new-bill':'vendors','edit-bill':'vendors','bill-open':'vendors','bill-pay':'vendors','bill-pay-del':'vendors','del-bill':'vendors','vendor-open':'vendors','new-vendor':'vendors','edit-vendor':'vendors','del-vendor':'vendors','po-bill':'vendors',
+  'edit-po':'po','po-open':'po','po-recv':'po','po-wa':'po','po-add-item':'po','new-mmove':'po','stock-open':'po','del-po':'po','mm-del':'po',
+  'edit-change':'changes','change-open':'changes','change-status':'changes','change-inv':'changes','change-wa':'changes','del-change':'changes',
+  'ho-edit':'handover','ho-sign':'handover','ho-del':'handover','bast-view':'handover','claim-new':'handover','claim-toggle':'handover',
+  'new-kasbon':'kasbon','kasbon-del':'kasbon','rep-proj':'reports','rep-xlsx':'reports','cash-open':'reports',
+  'wshare-new':'workerlink','share-new':'clientlink','pay-salary':'payroll','slipg-open':'payroll','slipg-wa':'payroll','new-co':'multico'};
+const SUB_OK=new Set(['upgrade','sub-per','sub-pick','sub-wa','za-act','za-rej','za-co','za-tab','close-modal','logout','pv-close','copy-text']);
+/* ---------- halaman Langganan ---------- */
+async function loadPay(){if(PAYCFG)return PAYCFG;try{const d=await SB._fb.db.collection('zconfig').doc('pay').get();PAYCFG=d.exists?d.data():{}}catch(e){PAYCFG={}}return PAYCFG}
+const priceOf=(p,m)=>{const pr=(PAYCFG&&PAYCFG.prices)||DEF_PRICES;return +((pr[p]||{})[m]||(DEF_PRICES[p]||{})[m]||0)};
+let MYREQ=null;
+async function loadMyReq(){try{const s=await SB._fb.db.collection('subreqs').where('cid','==',COMPANY.id).get();MYREQ=s.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>tsMs0(b.at)-tsMs0(a.at))}catch(e){MYREQ=[]}if(location.hash==='#langganan')render()}
+function viewLangganan(){
+  if(!PAYCFG){loadPay().then(()=>{if(location.hash==='#langganan')render()})}
+  if(MYREQ===null&&MGR())loadMyReq();
+  const s=subState(),per=ui.subPer,mo=+per;
+  const st=s.kind==='free'?W('Paket Bisnis, gratis selamanya.','Business plan, free forever.','Pakej Bisnes, percuma selamanya.'):s.kind==='trial'?W('Masa percobaan semua fitur, tersisa ','Full-feature trial, ','Percubaan semua ciri, tinggal ')+s.left+W(' hari (sampai ',' days left (until ',' hari (hingga ')+fmtD(iso(new Date(s.until)))+').':s.kind==='paid'?W('Paket ','Plan ','Pakej ')+planName(s.plan)+W(' aktif sampai ',' active until ',' aktif hingga ')+fmtD(iso(new Date(s.until)))+'.':s.kind==='grace'?(s.trial?W('Masa percobaan berakhir. ','Trial ended. ','Percubaan tamat. '):W('Langganan berakhir. ','Subscription ended. ','Langganan tamat. '))+W('Tenggang ','Grace period: ','Tempoh tangguh ')+s.left+W(' hari lagi sebelum hanya-baca.',' days before read-only.',' hari lagi.'):s.kind==='expired'?roMsg():'';
+  const segP=`<div class="seg" role="group">${[['1',W('Bulanan','Monthly','Bulanan')],['6',W('6 bulan','6 months','6 bulan')],['12',W('Tahunan','Yearly','Tahunan')]].map(([k,l])=>`<button data-act="sub-per" data-v="${k}" aria-pressed="${per===k}">${l}</button>`).join('')}</div>`;
+  const prev={starter:null,pro:'starter',business:'pro'};
+  const card=p=>{const pr=priceOf(p,mo),cur=s.kind==='paid'&&s.plan===p,lim=PLANS[p];
+    const feats=p==='starter'?BASE_FEATS():Object.keys(FEAT_PLAN).filter(k=>FEAT_PLAN[k]===p).map(featName);
+    return `<div class="plan${p==='pro'?' pop':''}">${p==='pro'?`<span class="chip ok" style="align-self:flex-start;margin-bottom:8px">${W('Paling pas','Best fit','Paling sesuai')}</span>`:''}<h3 style="font-size:26px;margin:0">${planName(p)}</h3>
+      <div class="price num">${money(pr,'IDR')}<small>/${mo===1?W('bulan','month','bulan'):mo+W(' bulan',' months',' bulan')}</small></div>${mo>1?`<div class="muted" style="font-size:13px">${W('setara ','about ','bersamaan ')}${money(Math.round(pr/mo),'IDR')}${W('/bulan','/month','/bulan')}</div>`:'<div style="height:18px"></div>'}
+      <ul><li><b>${lim.users} ${W('pengguna','users','pengguna')}</b></li><li><b>${lim.projects===Infinity?W('Proyek berjalan tanpa batas','Unlimited active projects','Projek tanpa had'):lim.projects+W(' proyek berjalan',' active projects',' projek berjalan')}</b></li>${prev[p]?`<li class="muted">${W('Semua fitur ','Everything in ','Semua ciri ')}${planName(prev[p])}${W(', plus:',', plus:',', tambah:')}</li>`:''}${feats.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>
+      ${MGR()?`<button class="btn ${p==='pro'?'primary':''} block" data-act="sub-pick" data-plan="${p}">${cur?W('Perpanjang','Renew','Perbaharui'):W('Pilih ','Choose ','Pilih ')+planName(p)}</button>`:''}</div>`};
+  const reqs=(MYREQ||[]).slice(0,6).map(r=>`<div class="item" style="cursor:default"><div class="main2"><div class="t">${planName(r.plan)} · ${r.months} ${W('bulan','months','bulan')} · ${money(r.amount,'IDR')}</div><div class="s">${fmtD(iso(new Date(tsMs0(r.at)||Date.now())))} · Ref ${esc(r.ref||'')}${r.note?' · '+esc(r.note):''}</div></div>${chip(r.status==='ok'?W('Aktif','Activated','Aktif'):r.status==='no'?W('Ditolak','Rejected','Ditolak'):W('Menunggu','Pending','Menunggu'),r.status==='ok'?'ok':r.status==='no'?'bad':'warn')}</div>`).join('');
+  return pageHead(W('Langganan','Subscription','Langganan'),esc(st))+`<div class="filters">${segP}</div><div class="plans">${['starter','pro','business'].map(card).join('')}</div>
+  <p class="muted rep-note">${W('Harga per perusahaan. Setelah membayar lewat QRIS, kirim nomor referensinya; paket aktif setelah dicek admin. Jika masa langganan habis, data tetap aman dan bisa dilihat, tetapi tidak bisa diubah sampai diperpanjang.','Prices are per company. After paying via QRIS, submit the reference number; the plan is activated after admin review. If the subscription ends, your data stays safe and viewable but cannot be changed until renewed.','Harga bagi setiap syarikat. Selepas bayar melalui QRIS, hantar nombor rujukan.')}</p>
+  ${reqs?`<div class="panel section"><div class="ph"><h2>${W('Riwayat permintaan','Request history','Sejarah permintaan')}</h2></div><div class="list">${reqs}</div></div>`:''}`;
+}
+function payModal(plan){
+  const mo=+ui.subPer,amt=priceOf(plan,mo),pc=PAYCFG||{};
+  modal(W('Bayar paket ','Pay for ','Bayar pakej ')+planName(plan),`<form data-form="subpay" data-plan="${plan}" data-mo="${mo}" data-amt="${amt}">
+    <div class="paybox"><div class="k">${mo} ${W('bulan','months','bulan')}</div><div class="amt num">${money(amt,'IDR')}</div></div>
+    ${pc.qris?`<img class="qris" src="${esc(pc.qris)}" alt="QRIS">`:`<p class="muted">${W('QRIS belum diatur admin. Hubungi admin lewat WhatsApp.','QRIS not set up yet. Contact admin via WhatsApp.','QRIS belum ditetapkan.')}</p>`}
+    ${pc.note?`<p style="white-space:pre-line;font-size:14px">${esc(pc.note)}</p>`:''}
+    <ol style="padding-left:20px;line-height:1.6;font-size:14.5px"><li>${W('Scan QRIS di atas dan bayar sesuai jumlah.','Scan the QRIS and pay the exact amount.','Imbas QRIS dan bayar.')}</li><li>${W('Isi nomor referensi/resi dari bukti bayar.','Enter the reference number from the receipt.','Isi nombor rujukan.')}</li><li>${W('Admin mengecek pembayaran lalu mengaktifkan paket.','Admin checks the payment and activates the plan.','Admin semak lalu aktifkan.')}</li></ol>
+    ${fld(W('Nomor referensi / resi','Reference number','Nombor rujukan'),`<input name="ref" required maxlength="80" autocomplete="off">`)}
+    <div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel','Batal')}</button><button class="btn primary" type="submit">${W('Kirim bukti bayar','Submit payment','Hantar bukti')}</button></div></form>`);
+}
+const adminWa=()=>String((PAYCFG&&PAYCFG.wa)||PCFG.whatsapp||'').replace(/[^\d]/g,'').replace(/^0/,'62');
+/* ---------- halaman admin (hanya akun admin) ---------- */
+let ZA=null;Object.assign(ui,{zaTab:'req'});
+async function loadZA(){
+  const db=SB._fb.db;ZA={loading:true};
+  try{
+    const [rq,cs]=await Promise.all([db.collection('subreqs').get(),db.collection('companies').get()]);
+    const reqs=rq.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>tsMs0(b.at)-tsMs0(a.at));
+    const cos=await Promise.all(cs.docs.map(async d=>{const x=d.data();let email='';try{const m=await db.collection('companies').doc(d.id).collection('members').doc(x.owner).get();email=(m.data()||{}).email||''}catch(e){}return{id:d.id,name:x.name||'',owner:x.owner,email,plan:x.plan||'',until:tsMs0(x.until)||0,free:!!x.free,created:tsMs0(x.created_at)||0}}));
+    await loadPay();ZA={reqs,cos:cos.sort((a,b)=>b.created-a.created)};
+  }catch(e){ZA={err:errMsg(e)}}
+  if(location.hash==='#zadmin')render();
+}
+function coState(c){const keep=CS;CS=c;const s=subState();CS=keep;return s}
+function viewZAdmin(){
+  if(!SUPER())return pageHead('Admin','')+`<div class="panel"><div class="empty">${W('Khusus admin ZUI.','ZUI admins only.','Khas admin ZUI.')}</div></div>`;
+  if(!ZA){loadZA();return pageHead(W('Admin langganan','Subscription admin','Admin langganan'),W('Memuat…','Loading…','Memuatkan…'))}
+  if(ZA.loading)return pageHead(W('Admin langganan','Subscription admin','Admin langganan'),W('Memuat…','Loading…','Memuatkan…'));
+  if(ZA.err)return pageHead(W('Admin langganan','Subscription admin','Admin langganan'),'')+`<div class="panel"><div class="empty">${esc(ZA.err)}</div></div>`;
+  const tab=ui.zaTab,wait=ZA.reqs.filter(r=>r.status==='wait');
+  const seg=`<div class="filters"><div class="seg" role="group">${[['req',W('Permintaan','Requests','Permintaan')+(wait.length?` (${wait.length})`:'')],['co',W('Perusahaan','Companies','Syarikat')],['pay',W('Harga & QRIS','Prices & QRIS','Harga & QRIS')]].map(([k,l])=>`<button data-act="za-tab" data-v="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div><button class="btn sm" data-act="za-reload">${W('Muat ulang','Reload','Muat semula')}</button></div>`;
+  const coName=id=>(ZA.cos.find(c=>c.id===id)||{}).name||id;
+  let body='';
+  if(tab==='req')body=`<div class="panel"><div class="list">${ZA.reqs.length?ZA.reqs.slice(0,80).map(r=>`<div class="item" style="cursor:default;flex-wrap:wrap"><div class="main2"><div class="t">${esc(r.coName||coName(r.cid))} · ${planName(r.plan)} ${r.months} ${W('bln','mo','bln')} · ${money(r.amount,'IDR')}</div><div class="s">${fmtD(iso(new Date(tsMs0(r.at)||Date.now())))} · ${esc(r.byEmail||'')} · Ref <b>${esc(r.ref||'')}</b></div></div>${r.status==='wait'?`<div class="btns" style="margin:0"><button class="btn sm" data-act="za-rej" data-id="${r.id}">${W('Tolak','Reject','Tolak')}</button><button class="btn sm primary" data-act="za-act" data-id="${r.id}">${W('Aktifkan','Activate','Aktifkan')}</button></div>`:chip(r.status==='ok'?W('Aktif','Activated','Aktif'):W('Ditolak','Rejected','Ditolak'),r.status==='ok'?'ok':'bad')}</div>`).join(''):`<div class="empty">${W('Belum ada permintaan.','No requests yet.','Tiada permintaan.')}</div>`}</div></div>`;
+  if(tab==='co')body=`<div class="panel"><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Perusahaan','Company','Syarikat')}</th><th class="tl">${W('Pemilik','Owner','Pemilik')}</th><th class="tl">Status</th><th>${W('Sampai','Until','Hingga')}</th><th></th></tr></thead><tbody>${ZA.cos.map(c=>{const s=coState(c);return `<tr><td>${esc(c.name)}<div class="muted" style="font-size:12px">${W('dibuat ','created ','dicipta ')}${c.created?fmtD(iso(new Date(c.created))):'-'}</div></td><td class="tl">${esc(c.email)}</td><td class="tl">${chip(s.kind==='free'?W('Gratis','Free','Percuma'):s.kind==='trial'?W('Percobaan','Trial','Percubaan'):s.kind==='paid'?planName(s.plan):s.kind==='grace'?W('Tenggang','Grace','Tangguh'):W('Habis','Expired','Tamat'),s.kind==='expired'?'bad':s.kind==='grace'?'warn':s.kind==='trial'?'info':'ok')}</td><td>${s.until?fmtD(iso(new Date(s.until))):'-'}</td><td><button class="btn sm" data-act="za-co" data-id="${c.id}">${W('Atur','Edit','Ubah')}</button></td></tr>`}).join('')}</tbody></table></div></div>`;
+  if(tab==='pay'){const pc=PAYCFG||{};body=`<form class="panel" data-form="zapay" style="padding:16px"><h2 style="font-size:22px;margin-bottom:10px">${W('Harga paket (Rp)','Plan prices (IDR)','Harga pakej (Rp)')}</h2>
+    <div class="scrollx"><table class="tbl"><thead><tr><th>${W('Paket','Plan','Pakej')}</th><th>1 ${W('bulan','month','bulan')}</th><th>6 ${W('bulan','months','bulan')}</th><th>12 ${W('bulan','months','bulan')}</th></tr></thead><tbody>${PLAN_ORDER.map(p=>`<tr><td>${planName(p)}</td>${[1,6,12].map(m=>`<td><input name="p_${p}_${m}" type="number" min="0" step="1000" value="${priceOf(p,m)}" style="max-width:140px"></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    ${fld(W('Nomor WhatsApp admin (untuk bukti bayar)','Admin WhatsApp number','Nombor WhatsApp admin'),`<input name="wa" value="${esc(pc.wa||PCFG.whatsapp||'')}" inputmode="tel" placeholder="62812…">`)}
+    ${fld(W('Catatan pembayaran (opsional, mis. nama rekening usaha)','Payment note (optional)','Nota bayaran'),`<textarea name="note" rows="3">${esc(pc.note||'')}</textarea>`)}
+    <div class="f"><span>QRIS</span>${pc.qris?`<img class="qris" src="${esc(pc.qris)}" alt="QRIS">`:''}<input type="file" id="qrisFile" accept="image/*"></div>
+    <div class="btns"><button class="btn primary" type="submit">${W('Simpan','Save','Simpan')}</button></div></form>`}
+  return pageHead(W('Admin langganan','Subscription admin','Admin langganan'),W('Aktifkan paket pelanggan setelah pembayaran dicek.','Activate customer plans after checking payment.','Aktifkan pakej pelanggan.'))+seg+body;
+}
+const addMonths=(ms,n)=>{const d=new Date(ms),day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));return d.getTime()};
+async function zaActivate(cid,plan,months){
+  const db=SB._fb.db,ref=db.collection('companies').doc(cid),d=await ref.get(),x=d.data()||{};
+  const base=Math.max(Date.now(),tsMs0(x.until)||0),until=addMonths(base,+months||1);
+  await ref.update({plan,until:firebase.firestore.Timestamp.fromMillis(until)});return until;
+}
+Object.assign(A,{
+  'upgrade':el=>{closeModal();upgradeAsk(el.dataset.f)},
+  'sub-per':el=>{ui.subPer=el.dataset.v;render()},
+  'sub-pick':async el=>{if(!MGR())return;await loadPay();payModal(el.dataset.plan)},
+  'za-tab':el=>{ui.zaTab=el.dataset.v;render()},
+  'za-reload':()=>{ZA=null;PAYCFG=null;render()},
+  'za-act':async el=>{const r=ZA.reqs.find(x=>x.id===el.dataset.id);if(!r)return;
+    try{const until=await zaActivate(r.cid,r.plan,r.months);await SB._fb.db.collection('subreqs').doc(r.id).update({status:'ok',doneAt:firebase.firestore.FieldValue.serverTimestamp()});toast(W('Paket aktif sampai ','Active until ','Aktif hingga ')+fmtD(iso(new Date(until))));ZA=null;render()}catch(e){toast(errMsg(e))}},
+  'za-rej':el=>modal(W('Tolak permintaan','Reject request','Tolak permintaan'),`<form data-form="zarej" data-id="${el.dataset.id}">${fld(W('Alasan (dilihat pelanggan)','Reason (shown to customer)','Sebab'),'<input name="note" maxlength="200">')}<div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel','Batal')}</button><button class="btn danger" type="submit">${W('Tolak','Reject','Tolak')}</button></div></form>`),
+  'za-co':el=>{const c=ZA.cos.find(x=>x.id===el.dataset.id);if(!c)return;
+    modal(c.name,`<form data-form="zaco" data-id="${c.id}">${fld(W('Paket','Plan','Pakej'),`<select name="plan">${PLAN_ORDER.map(p=>`<option value="${p}"${c.plan===p?' selected':''}>${planName(p)}</option>`).join('')}</select>`)}
+      ${fld(W('Aktif sampai (kosongkan = masa percobaan)','Active until (empty = trial)','Aktif hingga'),`<input name="until" type="date" value="${c.until?iso(new Date(c.until)):''}">`)}
+      <label class="check"><input type="checkbox" name="free" ${c.free?'checked':''}> ${W('Gratis selamanya (paket Bisnis)','Free forever (Business plan)','Percuma selamanya')}</label>
+      <div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel','Batal')}</button><button class="btn primary" type="submit">${W('Simpan','Save','Simpan')}</button></div></form>`)}
+});
+['upgrade','sub-per','za-tab','za-reload','za-act','za-rej','za-co','sub-pick'].forEach(a=>RO_OK.add(a));
+Object.assign(SUB,{
+  subpay:async(f,d)=>{
+    const plan=f.dataset.plan,months=+f.dataset.mo,amount=+f.dataset.amt,ref=String(d.ref||'').trim();if(!ref)return;
+    try{await SB._fb.db.collection('subreqs').add({cid:COMPANY.id,coName:(S.settings.company||COMPANY.name||'').slice(0,120),plan,months,amount,ref:ref.slice(0,80),by:USER.id,byEmail:USER.email||'',status:'wait',at:firebase.firestore.FieldValue.serverTimestamp()})}catch(e){return toast(errMsg(e))}
+    MYREQ=null;const wa=adminWa(),msg=`Halo admin ZUI, saya sudah membayar paket ${planName(plan)} ${months} bulan (${money(amount,'IDR')}) untuk ${S.settings.company||COMPANY.name}. No. referensi: ${ref}. Email: ${USER.email}`;
+    modal(W('Bukti bayar terkirim','Payment submitted','Bukti dihantar'),`<p style="margin-top:0">${W('Terima kasih. Paket aktif setelah admin mengecek pembayaran, biasanya di hari yang sama.','Thank you. The plan is activated after the admin checks the payment, usually the same day.','Terima kasih. Pakej aktif selepas disemak admin.')}</p><div class="btns">${wa?`<a class="btn primary" href="https://wa.me/${wa}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${ic('send',16)}${W('Kabari admin via WhatsApp','Notify admin via WhatsApp','Maklumkan admin')}</a>`:''}<button class="btn" data-act="close-modal">${W('Tutup','Close','Tutup')}</button></div>`);
+    render();
+  },
+  zarej:async(f,d)=>{try{await SB._fb.db.collection('subreqs').doc(f.dataset.id).update({status:'no',note:String(d.note||'').slice(0,200),doneAt:firebase.firestore.FieldValue.serverTimestamp()})}catch(e){return toast(errMsg(e))}closeModal();ZA=null;render()},
+  zaco:async(f,d)=>{const o={plan:d.plan,free:!!d.free,until:d.until?firebase.firestore.Timestamp.fromMillis(new Date(d.until+'T23:59:59').getTime()):firebase.firestore.FieldValue.delete()};
+    try{await SB._fb.db.collection('companies').doc(f.dataset.id).update(o)}catch(e){return toast(errMsg(e))}closeModal();ZA=null;render();toast(W('Disimpan','Saved','Disimpan'))},
+  zapay:async(f,d)=>{const prices={};PLAN_ORDER.forEach(p=>{prices[p]={};[1,6,12].forEach(m=>{prices[p][m]=+d[`p_${p}_${m}`]||0})});
+    const o={prices,wa:String(d.wa||'').trim(),note:String(d.note||'').slice(0,500)};if(PAYCFG&&PAYCFG.qris)o.qris=PAYCFG.qris;
+    try{await SB._fb.db.collection('zconfig').doc('pay').set(o,{merge:true});PAYCFG=Object.assign({},PAYCFG,o);toast(W('Disimpan','Saved','Disimpan'))}catch(e){toast(errMsg(e))}}
+});
+document.addEventListener('change',async e=>{const t=e.target;if(t.id!=='qrisFile'||!t.files[0]||!SUPER())return;let img;try{img=await shrinkImg(t.files[0],700,.85)}catch(x){return toast(W('Gambar tidak bisa dibaca','Cannot read image','Imej tidak dapat dibaca'))}t.value='';
+  try{await SB._fb.db.collection('zconfig').doc('pay').set({qris:img},{merge:true});PAYCFG=Object.assign({},PAYCFG,{qris:img});render();toast(W('QRIS disimpan','QRIS saved','QRIS disimpan'))}catch(x){toast(errMsg(x))}});
+/*NOTR_END*/
 
 Object.assign(EN,{"Sistem pembayaran":"Pay system","Upah harian (dari absensi)":"Daily wage (from attendance)","Gaji bulanan (karyawan tetap)":"Monthly salary (permanent staff)","Gaji pokok per bulan (":"Monthly base salary (","Tunjangan makan & transport":"Meal & transport allowance","Tunjangan lain":"Other allowance","Potongan BPJS":"BPJS deduction","Potongan lain":"Other deduction","Absensi tetap dicatat untuk kehadiran, tapi tidak dihitung sebagai upah harian.":"Attendance is still recorded, but not paid as daily wages.","Bayar gaji – ":"Pay salary – ","Periode gaji":"Pay period","Tanggal bayar":"Payment date","Kehadiran tercatat bulan ini:":"Attendance recorded this month:","Pendapatan":"Earnings","Gaji pokok":"Base salary","Lembur":"Overtime","Bonus / THR":"Bonus","Potongan":"Deductions","Biaya dibebankan ke proyek":"Charge cost to project","Kantor / umum":"Office / general","Total pendapatan":"Total earnings","Total potongan":"Total deductions","Gaji bersih dibayar":"Net salary paid","Bayar gaji":"Pay salary","Isi gaji pokok atau pendapatan lain":"Enter a base salary or other earnings","Gaji dibayar dan slip dibuat":"Salary paid and payslip created","SLIP GAJI":"PAYSLIP","Periode:":"Period:","Dibayar:":"Paid:","Nama":"Name","Kehadiran":"Attendance","Potongan kasbon":"Advance deduction","Tidak ada potongan":"No deductions","Penerima":"Recipient","Sistem":"System","Gaji bulanan":"Monthly salary","Hadir bulan ini":"Present this month","Riwayat gaji":"Salary history","Slip gaji":"Payslip","Halaman pekerja":"Worker page","Absen dengan selfie & lokasi, tugas, lapor kerja, upah, kasbon, dan chat lewat link pribadi ber-PIN.":"Selfie & location check-in, tasks, work reports, wages, advances and chat through a private PIN-protected link.","Buat link":"Create link","Ganti PIN":"Change PIN","Lihat":"View","PIN 4 angka ini diminta saat pekerja membuka link di HP-nya. Beri tahu PIN langsung ke pekerja, jangan lewat chat grup.":"This 4-digit PIN is asked when the worker opens the link. Tell the worker the PIN in person, not in a group chat.","Link pekerja dibuat. PIN: ":"Worker link created. PIN: ","Menunggu konfirmasi":"Awaiting confirmation","Di luar lokasi":"Outside site","Absen HP":"Phone check-in","Laporan kerja":"Work report","Pengajuan kasbon":"Advance request","Izin sakit":"Sick leave","Izin tidak masuk":"Leave request","Pengajuan":"Request","Konfirmasi absen – ":"Confirm attendance – ","Pulang":"Out","Masuk":"In","Tanpa proyek":"No project","Lokasi proyek belum diatur":"Site location not set","Lihat di peta":"View on map","Belum absen pulang. Kamu tetap bisa mengonfirmasi sekarang.":"No check-out yet. You can still confirm now.","Tolak":"Reject","Chat – ":"Chat – ","Tulis pesan untuk pekerja atau catatan internal…":"Write a message to the worker or an internal note…","Kirim ke pekerja":"Send to worker","PIN harus 4 angka":"PIN must be 4 digits","PIN diganti: ":"PIN changed: ","Lokasi absen":"Check-in location","Belum diatur":"Not set","Berdiri di lokasi proyek, lalu tekan tombol di bawah supaya absen pekerja hanya bisa dilakukan di sini.":"Stand at the project site, then press the button below so workers can only check in here.","Pakai lokasi saya sekarang":"Use my current location","Ubah radius":"Change radius","Link pekerja diaktifkan":"Worker link turned on","Link pekerja dimatikan":"Worker link turned off","Absensi tanggal ini sudah dibayar":"This date's attendance has already been paid","Absen dikonfirmasi":"Attendance confirmed","Absen ini ditolak dan tidak dihitung. Pekerja akan melihat statusnya di HP.":"This check-in is rejected and not counted. The worker will see the status.","Absen ditolak":"Check-in rejected","Laporan kerja – ":"Work report – ","Abaikan":"Ignore","Masukkan ke laporan harian":"Add to daily report","Laporan ini tidak punya proyek":"This report has no project","Ditambahkan ke laporan harian":"Added to daily report","Catatan untuk pekerja (opsional)":"Note to worker (optional)","Setujui":"Approve","Pengajuan disetujui":"Request approved","Pengajuan ditolak":"Request rejected","Hanya pemilik atau admin yang bisa menyetujui kasbon":"Only the owner or an admin can approve advances","HP ini tidak mendukung lokasi":"This phone doesn't support location","Mengambil lokasi…":"Getting location…","Lokasi tidak bisa diambil. Izinkan akses lokasi di browser.":"Location unavailable. Allow location access in the browser.","Radius absen":"Check-in radius","Radius (meter)":"Radius (meters)","absen / pengajuan pekerja menunggu konfirmasi":"worker check-ins / requests awaiting confirmation","Buka Absensi untuk menerima atau menolak":"Open Attendance to accept or reject","Pesan baru dari":"New message from","Pekerja":"Workers"});
 Object.assign(MSD,{"Gaji bulanan":"Gaji bulanan","Slip gaji":"Slip gaji","Halaman pekerja":"Halaman pekerja","Menunggu konfirmasi":"Menunggu pengesahan","Lokasi absen":"Lokasi kehadiran","Pakai lokasi saya sekarang":"Guna lokasi saya sekarang"});

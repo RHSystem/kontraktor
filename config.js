@@ -19,6 +19,10 @@ window.MANDOR_CONFIG = {
   // Contoh: allowedCreators: ["info.zuisystem@gmail.com"],
   allowedCreators: [],
 
+  // Email akun admin ZUI yang boleh membuka halaman "Admin langganan" dan mengaktifkan paket pelanggan.
+  // Samakan dengan daftar di fungsi superAdmin() pada firestore.rules.
+  superAdmins: ["admin.zuisystem@gmail.com"],
+
   // Bagian di bawah ini sama seperti sebelumnya. Salin dari config.js lama bila kamu sudah mengisinya.
   tagline: "Aplikasi Kontraktor",
   showLanding: true,

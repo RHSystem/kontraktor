@@ -113,3 +113,11 @@ Setelah itu:
 - **Staf** dan **Hanya lihat** tidak lagi melihat menu Keuangan, Dokumen (penawaran/invoice), gaji, kasbon, upah pekerja, nilai kontrak, dan anggaran. Rincian RAB per item (harga satuan) tetap terlihat karena staf memperbarui progres di sana.
 - Link pekerja lama tetap bisa dipakai dengan PIN yang sama.
 - Data yang hanya ada di HP lama (belum terkirim) tetap ikut terkirim saat HP itu online.
+
+## Langganan (versi 12)
+
+- Perusahaan baru otomatis mendapat **masa percobaan 14 hari** dengan semua fitur. Perusahaan yang sudah ada mulai menghitung percobaan dari 15 Oktober 2026.
+- Setelah percobaan atau langganan habis ada **tenggang 3 hari**, lalu data menjadi **hanya baca** (masih bisa dilihat, tidak bisa diubah) sampai diperpanjang.
+- **Akun admin langganan** diatur di dua tempat dan harus sama: `superAdmins` di `config.js` dan fungsi `superAdmin()` di `firestore.rules`. Bawaannya `admin.zuisystem@gmail.com`. Akun ini harus punya perusahaan sendiri di aplikasi agar bisa membuka menu **Admin langganan**.
+- Langkah pertama setelah memasang: masuk dengan akun admin → **Admin langganan → Perusahaan** → tandai perusahaanmu sendiri **Gratis selamanya**. Lalu buka tab **Harga & QRIS**: unggah gambar QRIS, isi nomor WhatsApp admin, dan cek harga.
+- Pelanggan membayar lewat menu **Upgrade** (di bawah, dekat Pengaturan), mengisi nomor referensi, lalu kamu menekan **Aktifkan** di tab **Permintaan**. Masa aktif ditambahkan dari tanggal berakhir yang sekarang (atau dari hari ini kalau sudah lewat).
