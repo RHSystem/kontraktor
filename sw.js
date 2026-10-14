@@ -1,6 +1,6 @@
 // Zui Kontraktor service worker
 // Naikkan angka versi ini setiap kali kamu mengubah file aplikasi.
-const VERSION = 'zui-kontraktor-v6';
+const VERSION = 'zui-kontraktor-v7';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './config.js'];
 // File dari luar yang aman disimpan untuk offline (Firebase, jsPDF, dan font).
 const CDN = ['www.gstatic.com', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];

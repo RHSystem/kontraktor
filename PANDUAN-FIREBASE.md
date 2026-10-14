@@ -81,3 +81,18 @@ Siapa bisa apa di chat:
 
 Setiap proyek punya link dan ruang chat sendiri. Kalau link tersebar ke orang lain, tekan **Matikan link**; riwayat chat tetap tersimpan.
 Data di halaman klien diperbarui otomatis beberapa detik setelah timmu menyimpan perubahan, selama ada anggota tim yang membuka aplikasi.
+
+## I. Halaman pekerja + gaji bulanan (fitur baru)
+
+1. **Wajib:** tempel ulang **seluruh isi `firestore.rules` yang baru** di Firestore → Rules, lalu **Publish**.
+2. Unggah **`pekerja.html`** ke repo GitHub, di folder yang sama dengan `index.html`.
+3. **Atur lokasi absen proyek:** saat berada di lokasi proyek, buka proyek → panel **Lokasi absen** → **Pakai lokasi saya sekarang**. Radius bawaan 200 m dan bisa diubah. Tanpa titik lokasi, absen tetap bisa tapi lokasinya hanya dicatat.
+4. **Buat link pekerja:** Tugas → Pekerja → pilih pekerja → **Buat link**, tentukan PIN 4 angka, lalu **Kirim link** lewat WhatsApp. Sampaikan PIN langsung ke pekerja.
+5. **Konfirmasi:** absen, laporan kerja, dan pengajuan kasbon/izin dari HP pekerja muncul di **Tugas → Absensi → Menunggu konfirmasi** (juga di Beranda). Mandor/staf bisa mengonfirmasi absen; kasbon hanya bisa disetujui pemilik/admin.
+
+Yang dilihat pekerja: absen masuk/pulang (selfie + lokasi), tugasnya sendiri, lapor kerja + foto, upah belum dibayar, kasbon, slip upah/gaji, pengajuan kasbon/izin/sakit, dan chat dengan kantor.
+Yang **tidak** dilihat: data pekerja lain, klien, invoice, biaya proyek, dan catatan internal.
+
+**Gaji bulanan:** ubah pekerja → Sistem pembayaran **Gaji bulanan**, isi gaji pokok, tunjangan, dan potongan tetap. Lalu buka pekerja → **Bayar gaji** setiap bulan. Slip gaji (SG/…) bisa dicetak/PDF dan otomatis muncul di halaman pekerja.
+
+**Catatan keamanan:** link pekerja adalah kunci utamanya, dan PIN melindungi kalau HP dipinjam orang lain. Kalau pekerja berhenti atau link tersebar, tekan **Matikan link**.

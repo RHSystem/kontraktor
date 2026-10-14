@@ -381,6 +381,14 @@ label.btn:focus-within{outline:2px solid var(--info);outline-offset:2px}
 .cm img{display:block;max-width:220px;max-height:220px;border-radius:8px;margin:4px 0;cursor:zoom-in}
 .chatform textarea{width:100%}
 .chimg{position:relative;display:inline-block;margin-bottom:6px}.chimg img{max-height:90px;border-radius:8px;display:block}
+
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--line)}
+.wlink{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft)}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.chk img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:var(--soft);flex:none}
+.slipcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+.slipcols table{width:100%;border-collapse:collapse;font-size:13px}.slipcols th,.slipcols td{padding:6px 4px;border-bottom:1px solid #D5D9D1;text-align:left}.slipcols .r{text-align:right}
+@media (max-width:560px){.slipcols{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -792,12 +800,12 @@ async function push(){
   finally{pushing=false;if(dirty&&SYNC!=='error'){clearTimeout(saveT);saveT=setTimeout(push,300)}}
 }
 window.addEventListener('beforeunload',e=>{if((dirty||pushing)&&!CACHED){e.preventDefault();e.returnValue=''}});
-function unsub(){try{if(CHAN&&SB)SB.removeChannel(CHAN)}catch(e){}CHAN=null;if(typeof stopShares==='function')stopShares()}
+function unsub(){try{if(CHAN&&SB)SB.removeChannel(CHAN)}catch(e){}CHAN=null;if(typeof stopShares==='function')stopShares();if(typeof stopWorkers==='function')stopWorkers()}
 function subscribe(){
   unsub();
   CHAN=SB.channel('rec-'+COMPANY.id).on('postgres_changes',{event:'*',schema:'public',table:'records',filter:'company_id=eq.'+COMPANY.id},onRemote).subscribe();
 }
-function scheduleRender(){clearTimeout(rT);rT=setTimeout(()=>{if(S){if(typeof ensureShares==='function')ensureShares();render()}},250);cacheSoon()}
+function scheduleRender(){clearTimeout(rT);rT=setTimeout(()=>{if(S){if(typeof ensureShares==='function')ensureShares();if(typeof ensureWorkers==='function')ensureWorkers();render()}},250);cacheSoon()}
 function onRemote(p){
   if(!S)return;
   const r=p.eventType==='DELETE'?p.old:p.new;if(!r||!r.coll)return;
@@ -996,7 +1004,7 @@ async function openCompany(m){
   }
   subscribe();startApp();
   if(_pend){save();toast(_tr('Perubahan offline dikirim ke server'))}
-  cacheSoon();if(OFFLINE)setSync(dirty?'error':'ok');setTimeout(()=>{notifyDue();storeDue()},2500);if(!OFFLINE)setTimeout(()=>{ensureShares();schedPub()},1200);
+  cacheSoon();if(OFFLINE)setSync(dirty?'error':'ok');setTimeout(()=>{notifyDue();storeDue()},2500);if(!OFFLINE)setTimeout(()=>{ensureShares();ensureWorkers();schedPub()},1200);
 }
 async function switchCompany(id){
   await push();const m=COMPANIES.find(x=>x.company_id===id);if(!m)return;
@@ -1096,7 +1104,7 @@ const budgetTotal=p=>{const cats=new Set([...Object.keys(p.rab||{}),...(p.rabIte
 function physProgress(p){const it=p.rabItems||[],tot=sumBy(it,i=>(+i.qty||0)*(+i.price||0));if(tot>0)return Math.round(sumBy(it,i=>(+i.qty||0)*(+i.price||0)*(+i.progress||0)/100)/tot*100);const tk=S.tasks.filter(t=>t.projectId===p.id);return tk.length?Math.round(tk.filter(t=>t.status==='done').length/tk.length*100):0}
 function termReady(p,t){const inv=t.invoiceId?getDoc('invoice',t.invoiceId):null;if(inv)return false;return !!((t.dueDate&&t.dueDate<=todayStr())||(t.progressAt>0&&physProgress(p)>=t.progressAt))}
 const wName=id=>(S.workers.find(w=>w.id===id)||{}).name||'';
-const unpaidAtt=wid=>S.att.filter(a=>a.workerId===wid&&!a.payId);
+const unpaidAtt=wid=>{const w=S.workers.find(x=>x.id===wid);if(w&&w.type==='monthly')return [];return S.att.filter(a=>a.workerId===wid&&!a.payId&&(+a.units||0)>0)};
 const attAmt=a=>(+a.units||0)*(+a.rate||0);
 const unitLabel=u=>u===0?_tr('Absen'):u===0.5?_tr('½ hari'):u===1?_tr('Hadir'):u===1.5?_tr('Lembur'):fmtQty(u)+_tr(' hari');
 const attProjId=()=>ui.attProj===null?((S.projects.find(p=>p.status==='active')||{}).id||''):ui.attProj;
@@ -1146,7 +1154,7 @@ function pStats(p){
 }
 function takeNo(kind){
   const s=S.settings,y=new Date().getFullYear(),k=kind+y;
-  return {key:k,peek:()=>_h`${({quote:s.quotePrefix,invoice:s.invoicePrefix,receipt:'KW',voucher:'BP',slip:'SU',po:'PO',change:'TK'})[kind]}/${y}/${String((S.cnt[k]||0)+1).padStart(3,'0')}`};
+  return {key:k,peek:()=>_h`${({quote:s.quotePrefix,invoice:s.invoicePrefix,receipt:'KW',voucher:'BP',slip:'SU',slipg:'SG',po:'PO',change:'TK'})[kind]}/${y}/${String((S.cnt[k]||0)+1).padStart(3,'0')}`};
 }
 function nextNo(kind){const t=takeNo(kind);const n=t.peek();S.cnt[t.key]=(S.cnt[t.key]||0)+1;return n}
 
@@ -1198,6 +1206,8 @@ function viewBeranda(){
     ...(wagesDue>0?[_h`<button class="item" data-act="go-att"><div class="main2"><div class="t">Upah tukang belum dibayar</div><div class="s">${rp(wagesDue)} dari absensi yang belum dibayarkan</div></div>${chip(_tr('Upah'),'info')}</button>`]:[]),
     ...overBills.slice(0,3).map(b=>_h`<button class="item" data-act="bill-open" data-id="${b.id}"><div class="main2"><div class="t">Bayar ${esc(vName(b.vendorId)||'vendor')}</div><div class="s">${esc(b.desc)} · sisa ${rp(billBal(b))} · jatuh tempo ${fmtD(b.due)}</div></div>${chip(_tr('Hutang'),'bad')}</button>`),
     ...lateTasks.slice(0,4).map(x=>_h`<button class="item" data-act="edit-task" data-id="${x.id}"><div class="main2"><div class="t">${esc(x.title)}</div><div class="s">Terlambat sejak ${fmtD(x.due)}${x.projectId?' · '+esc(projName(x.projectId)):''}</div></div>${chip(_tr('Tugas'),'warn')}</button>`),
+    ...(typeof pendCount==='function'&&pendCount()>0?[_h`<button class="item" data-act="go-att"><div class="main2"><div class="t">${pendCount()} absen / pengajuan pekerja menunggu konfirmasi</div><div class="s">Buka Absensi untuk menerima atau menolak</div></div>${chip(_tr('Pekerja'),'warn')}</button>`]:[]),
+    ...(typeof WCHAT!=='undefined'?S.workers.filter(w=>w.share&&(WCHAT[w.id]||[]).some(m=>m.from==='worker'&&m.ts>lastRead('w'+w.id))).map(w=>_h`<button class="item" data-act="wchat-open" data-id="${w.id}"><div class="main2"><div class="t">Pesan baru dari ${esc(w.name)}</div><div class="s">${esc(w.role||_tr('Pekerja'))}</div></div>${chip(_tr('Chat'),'info')}</button>`):[]),
     ...(typeof unreadOf==='function'?S.projects.filter(p=>p.share&&unreadOf(p.id)>0).map(p=>_h`<button class="item" data-act="chat-open" data-id="${p.id}"><div class="main2"><div class="t">${unreadOf(p.id)} pesan baru dari klien</div><div class="s">${esc(p.name)} · ${esc(p.client||'')}</div></div>${chip(_tr('Chat'),'info')}</button>`):[]),
     ...S.projects.filter(p=>{const w=warrantyState(p);return w&&w.left<=14&&w.left>=-30&&(p.terms||[]).some(x=>!x.invoiceId&&/retensi|retention|tahanan/i.test(x.name||''))}).map(p=>_h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">Garansi ${esc(p.name)} ${warrantyState(p).left<0?_tr('sudah berakhir'):_tr('segera berakhir')}</div><div class="s">${fmtD(wEnd(p))} · tagih retensi</div></div>${chip(_tr('Garansi'),'warn')}</button>`),
     ...S.projects.flatMap(p=>(p.claims||[]).filter(c=>c.status!=='done').map(c=>_h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">Klaim garansi: ${esc(c.desc)}</div><div class="s">${esc(p.name)} · ${fmtD(c.date)}</div></div>${chip(_tr('Garansi'),'bad')}</button>`)).slice(0,3),
@@ -1251,6 +1261,7 @@ function viewProyekDetail(id){
   _h`<div style="margin-bottom:14px">${(()=>{const sg=stageInfo(projStage(p));return sg?chip(sg[0],sg[1])+' ':''})()}${chip(PS[p.status][0],PS[p.status][1])} <span class="muted" style="font-size:14px;margin-left:6px">${p.start?fmtD(p.start):'-'} s.d. ${p.end?fmtD(p.end):'-'}</span></div>
   ${flowPanel(p)}
   ${clientPanel(p)}
+  ${geoPanel(p)}
   ${surveyPanel(p)}
   <div class="metrics" style="margin-top:18px">
     <div><div class="k">Nilai kontrak</div><div class="v num">${rp(contractNow(p))}</div>${contractNow(p)!==(+p.value||0)?_h`<div class="s muted" style="font-size:12.5px">Kontrak awal ${rp(p.value)}</div>`:''}</div>
@@ -1462,7 +1473,7 @@ function taskForm(x,projectId){
   modal(n?_tr('Tugas baru'):_tr('Ubah tugas'),_h`<form data-form="task" data-id="${x.id||''}">
     ${fld(_tr('Judul tugas'),_h`<input name="title" value="${esc(x.title||'')}" required placeholder="Contoh: Pasang keramik lantai 1">`)}
     ${fld(_tr('Proyek terkait'),_h`<select name="projectId">${projOpts(x.projectId)}</select>`)}
-    <div class="g2">${fld(_tr('Dikerjakan oleh'),_h`<input name="assignee" value="${esc(x.assignee||'')}" placeholder="Nama mandor / tukang">`)}${fld(_tr('Tenggat'),_h`<input name="due" type="date" value="${x.due||''}">`)}</div>
+    <div class="g2">${fld(_tr('Dikerjakan oleh'),_h`<input name="assignee" value="${esc(x.assignee||'')}" placeholder="Nama mandor / tukang" list="wkList" autocomplete="off"><datalist id="wkList">${S.workers.filter(w=>w.active!==false).map(w=>_h`<option value="${esc(w.name)}">`).join('')}</datalist>`)}${fld(_tr('Tenggat'),_h`<input name="due" type="date" value="${x.due||''}">`)}</div>
     <div class="g2">${fld(_tr('Prioritas'),_h`<select name="priority">${Object.entries(PR).map(([k,v])=>_h`<option value="${k}"${x.priority===k?' selected':''}>${_tr(v[0])}</option>`).join('')}</select>`)}${fld(_tr('Status'),_h`<select name="status">${Object.entries(TS).map(([k,v])=>_h`<option value="${k}"${x.status===k?' selected':''}>${_tr(v)}</option>`).join('')}</select>`)}</div>
     ${fld(_tr('Catatan'),_h`<textarea name="notes">${esc(x.notes||'')}</textarea>`)}
     <div class="btns">${n?'':_h`<button type="button" class="btn danger" data-act="del-task" data-id="${x.id}" style="margin-right:auto">Hapus</button>`}<button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`);
@@ -1545,6 +1556,7 @@ function viewAbsensi(){
   const unp=S.workers.map(w=>({w,r:unpaidAtt(w.id)})).filter(x=>x.r.length);
   return pageHead(_tr('Absensi'),_tr('Catat kehadiran tukang dan hitung upah harian'),addBtn('new-worker',_tr('Pekerja')))+
   _h`<div class="filters">${taskSeg()}</div>
+  ${workerQueuePanel()}
   <div class="filters"><input type="date" data-flt="attDate" value="${d}" style="width:auto" aria-label="Tanggal absensi"><select data-flt="attProj" aria-label="Proyek hari ini"><option value="">Tanpa proyek</option>${S.projects.filter(p=>p.status!=='done').map(p=>_h`<option value="${p.id}"${pj===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
   <div class="metrics" style="grid-template-columns:1fr 1fr;margin-bottom:16px"><div style="border-left:0;border-top:0"><div class="k">Hari kerja tercatat</div><div class="v num">${fmtQty(sumBy(day,a=>a.units))}</div></div><div style="border-top:0"><div class="k">Upah hari ini</div><div class="v num">${rp(sumBy(day,attAmt))}</div></div></div>
   <div class="cols two">
@@ -3337,6 +3349,278 @@ SUB.chat=async(f,d)=>{
 
 Object.assign(EN,{"Halaman klien":"Client page","Buat link klien":"Create client link","Klien bisa memantau progres, foto laporan, tagihan, menyetujui dokumen, dan chat dengan timmu lewat satu link, tanpa daftar akun. Biaya internal, upah, dan vendor tidak ikut terlihat.":"Clients can follow progress, report photos and invoices, approve documents and chat with your team through one link, without an account. Internal costs, wages and vendors are not shown."," Minta pemilik atau admin membuat link.":" Ask the owner or an admin to create the link.","Link aktif":"Link on","Link mati":"Link off","Chat klien":"Client chat","Kirim link":"Send link","Salin":"Copy","Lihat sebagai klien":"View as client","Matikan link":"Turn off link","Aktifkan lagi":"Turn on again","Klien":"Client","Tim":"Team","[foto]":"[photo]","Hari ini":"Today","Tulis pesan untuk klien atau catatan internal…":"Write a message to the client or an internal note…","Tulis catatan internal untuk admin…":"Write an internal note for the admin…","Foto":"Photo","Catatan internal":"Internal note","Kirim ke klien":"Send to client","Pesan ke klien terlihat di halaman klien. Catatan internal hanya terlihat timmu.":"Messages to the client appear on the client page. Internal notes are only visible to your team.","Hanya pemilik dan admin yang membalas klien. Catatanmu hanya terlihat tim.":"Only the owner and admins reply to clients. Your notes are visible only to the team.","Belum ada pesan.":"No messages yet.","Kirim link ke klien supaya mereka bisa mulai chat.":"Send the link to the client so they can start chatting.","Link sedang dimatikan.":"The link is turned off.","Hapus catatan":"Delete note","Kembali ke chat":"Back to chat","Tulis catatannya dulu":"Write the note first","Hanya pemilik dan admin yang bisa membalas klien":"Only the owner and admins can reply to clients","Link sedang dimatikan. Aktifkan dulu supaya klien bisa membaca.":"The link is off. Turn it on so the client can read it.","Beri tahu klien lewat WhatsApp":"Notify client via WhatsApp","Hanya pemilik atau admin yang bisa membuat link klien":"Only the owner or an admin can create a client link","Butuh koneksi internet untuk membuat link":"An internet connection is needed to create a link","Link klien dibuat":"Client link created","Link klien diaktifkan":"Client link turned on","Link klien dimatikan":"Client link turned off","Klien tidak bisa membuka link ini lagi sampai kamu mengaktifkannya kembali. Riwayat chat tetap tersimpan.":"The client can't open this link until you turn it on again. Chat history is kept.","Link disalin":"Link copied","Salin link":"Copy link","pesan baru dari klien":"new messages from client","Chat":"Chat","menyetujui penawaran":"approved quote","menyetujui":"approved","menandatangani berita acara":"signed the handover report"});
 Object.assign(MSD,{"Halaman klien":"Halaman pelanggan","Buat link klien":"Buat pautan pelanggan","Chat klien":"Sembang pelanggan","Kirim ke klien":"Hantar kepada pelanggan","Catatan internal":"Nota dalaman","Matikan link":"Matikan pautan","pesan baru dari klien":"mesej baharu daripada pelanggan"});
+_TRE={};
+
+/* ============ Pekerja: gaji bulanan, slip gaji, halaman pekerja (link + PIN), absen dari HP ============ */
+const isMonthly=w=>!!w&&w.type==='monthly';
+const wById=id=>S.workers.find(w=>w.id===id);
+const SAL0={base:0,allowMeal:0,allowOther:0,dedBpjs:0,dedOther:0};
+const salOf=w=>Object.assign({},SAL0,w.salary||{});
+const ymNow=()=>todayStr().slice(0,7);
+const sha=async s=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')};
+const wUrl=t=>location.origin+location.pathname.replace(/[^/]*$/,'')+'pekerja.html#'+t;
+let WSL={},WPUB={},WCHAT={},WQ={},OPENWCHAT=null,WCIMG='';
+
+/* ---------- form pekerja (harian / bulanan) ---------- */
+function workerForm(w){
+  const n=!w;w=w||{rate:0,active:true,type:'daily'};const s=salOf(w),m=isMonthly(w);
+  modal(n?_tr('Pekerja baru'):_tr('Ubah pekerja'),_h`<form data-form="worker" data-id="${w.id||''}">
+    ${fld(_tr('Nama'),_h`<input name="name" value="${esc(w.name||'')}" required>`)}
+    <div class="g2">${fld(_tr('Peran'),_h`<input name="role" value="${esc(w.role||'')}" placeholder="Tukang batu, mandor, admin, ...">`)}${fld(_tr('Telepon / WhatsApp'),_h`<input name="phone" value="${esc(w.phone||'')}" inputmode="tel">`)}</div>
+    ${fld(_tr('Sistem pembayaran'),_h`<select name="wtype"><option value="daily"${m?'':' selected'}>Upah harian (dari absensi)</option><option value="monthly"${m?' selected':''}>Gaji bulanan (karyawan tetap)</option></select>`)}
+    <div id="wdaily" style="${m?'display:none':''}">${fld(_tr('Upah harian (')+baseCur()+')',_h`<input name="rate" type="number" step="any" min="0" inputmode="decimal" value="${w.rate||''}">`)}</div>
+    <div id="wmonthly" style="${m?'':'display:none'}">
+      ${fld(_tr('Gaji pokok per bulan (')+baseCur()+')',_h`<input name="base" type="number" step="any" min="0" inputmode="decimal" value="${s.base||''}">`)}
+      <div class="g2">${fld(_tr('Tunjangan makan & transport'),_h`<input name="allowMeal" type="number" step="any" min="0" inputmode="decimal" value="${s.allowMeal||''}">`)}${fld(_tr('Tunjangan lain'),_h`<input name="allowOther" type="number" step="any" min="0" inputmode="decimal" value="${s.allowOther||''}">`)}</div>
+      <div class="g2">${fld(_tr('Potongan BPJS'),_h`<input name="dedBpjs" type="number" step="any" min="0" inputmode="decimal" value="${s.dedBpjs||''}">`)}${fld(_tr('Potongan lain'),_h`<input name="dedOther" type="number" step="any" min="0" inputmode="decimal" value="${s.dedOther||''}">`)}</div>
+      <p class="muted" style="font-size:13px;margin:-4px 0 10px">Absensi tetap dicatat untuk kehadiran, tapi tidak dihitung sebagai upah harian.</p>
+    </div>
+    <label class="check"><input type="checkbox" name="active" ${w.active!==false?'checked':''}> Pekerja aktif</label>
+    <div class="btns">${n?'':_h`<button type="button" class="btn danger" data-act="del-worker" data-id="${w.id}" style="margin-right:auto">Hapus</button>`}<button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`);
+}
+document.addEventListener('change',e=>{const t=e.target;if(t.name==='wtype'&&t.form&&t.form.dataset.form==='worker'){$('#wdaily').style.display=t.value==='monthly'?'none':'';$('#wmonthly').style.display=t.value==='monthly'?'':'none'}});
+
+/* ---------- gaji bulanan ---------- */
+function salaryForm(wid){
+  const w=wById(wid);if(!w)return;const s=salOf(w),kb=kbTotal(wid),per=ymNow(),done=S.payroll.find(p=>p.workerId===wid&&p.kind==='monthly'&&p.period===per);
+  const days=S.att.filter(a=>a.workerId===wid&&a.date.startsWith(per)&&(+a.units||0)>0).length;
+  modal(_tr('Bayar gaji – ')+w.name,_h`<form data-form="salary" data-w="${wid}">
+    ${done?_h`<p class="neg" style="margin-top:0;font-size:14px">Gaji bulan ${monthLabel(per)} sudah dibayar (${esc(done.no||'')}). Pastikan periode benar sebelum menyimpan.</p>`:''}
+    <div class="g2">${fld(_tr('Periode gaji'),_h`<input name="period" type="month" value="${per}" required>`)}${fld(_tr('Tanggal bayar'),_h`<input name="date" type="date" value="${todayStr()}" required>`)}</div>
+    <p class="muted" style="font-size:13.5px;margin:-4px 0 10px">Kehadiran tercatat bulan ini: <b>${days} hari</b></p>
+    <div class="subh" style="margin:0 -2px 8px;border-radius:6px">Pendapatan</div>
+    <div class="g2">${fld(_tr('Gaji pokok'),_h`<input name="base" type="number" step="any" min="0" value="${s.base||0}">`)}${fld(_tr('Tunjangan makan & transport'),_h`<input name="allowMeal" type="number" step="any" min="0" value="${s.allowMeal||0}">`)}</div>
+    <div class="g2">${fld(_tr('Tunjangan lain'),_h`<input name="allowOther" type="number" step="any" min="0" value="${s.allowOther||0}">`)}${fld(_tr('Lembur'),_h`<input name="overtime" type="number" step="any" min="0" value="0">`)}</div>
+    ${fld(_tr('Bonus / THR'),_h`<input name="bonus" type="number" step="any" min="0" value="0">`)}
+    <div class="subh" style="margin:0 -2px 8px;border-radius:6px">Potongan</div>
+    <div class="g2">${fld(_tr('Potongan BPJS'),_h`<input name="dedBpjs" type="number" step="any" min="0" value="${s.dedBpjs||0}">`)}${fld(_tr('Potongan lain'),_h`<input name="dedOther" type="number" step="any" min="0" value="${s.dedOther||0}">`)}</div>
+    ${kb>0.5?fld(_tr('Potong kasbon (sisa ')+rp(kb)+')',_h`<input name="kasbon" type="number" step="any" min="0" max="${kb}" value="${kb}">`):''}
+    <div class="g2">${fld(_tr('Metode'),_h`<select name="method"><option value="Transfer">Transfer</option><option value="Tunai">Tunai</option></select>`)}${fld(_tr('Biaya dibebankan ke proyek'),_h`<select name="projectId">${projOpts('',_tr('Kantor / umum'))}</select>`)}</div>
+    <div class="totals" id="saltot"></div>
+    <div class="btns"><button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Bayar gaji</button></div></form>`);
+  salTotals();
+}
+function salCalc(f){const v=k=>+(f[k]&&f[k].value)||0;const inc=v('base')+v('allowMeal')+v('allowOther')+v('overtime')+v('bonus'),ded=v('dedBpjs')+v('dedOther'),kb=Math.min(v('kasbon'),Math.max(0,inc-ded));return{inc,ded,kb,net:Math.max(0,inc-ded-kb)}}
+function salTotals(){const f=document.querySelector('form[data-form=salary]'),el=$('#saltot');if(!f||!el)return;const c=salCalc(f);el.innerHTML=_h`<div><span>Total pendapatan</span><span class="num">${rp(c.inc)}</span></div><div><span>Total potongan</span><span class="num">-${rp(c.ded+c.kb)}</span></div><div class="grand"><span>Gaji bersih dibayar</span><span class="num">${rp(c.net)}</span></div>`}
+document.addEventListener('input',e=>{if(e.target.form&&e.target.form.dataset.form==='salary')salTotals()});
+SUB.salary=(f,d)=>{
+  const w=wById(f.dataset.w);if(!w)return;const c=salCalc(f),n=k=>+d[k]||0;
+  if(c.inc<=0)return toast(_tr('Isi gaji pokok atau pendapatan lain'));
+  const pid=uid(),inc=[['Gaji pokok',n('base')],['Tunjangan makan & transport',n('allowMeal')],['Tunjangan lain',n('allowOther')],['Lembur',n('overtime')],['Bonus / THR',n('bonus')]].filter(x=>x[1]>0).map(x=>({n:x[0],a:x[1]}));
+  const ded=[['Potongan BPJS',n('dedBpjs')],['Potongan lain',n('dedOther')]].filter(x=>x[1]>0).map(x=>({n:x[0],a:x[1]}));
+  const pr={id:pid,kind:'monthly',workerId:w.id,period:d.period,date:d.date,method:d.method,inc,ded,gross:c.inc,dedTotal:c.ded,kasbon:c.kb,amount:c.net,days:S.att.filter(a=>a.workerId===w.id&&a.date.startsWith(d.period)&&(+a.units||0)>0).length,txIds:[]};
+  pr.no=nextNo('slipg');
+  if(c.net>0){const tid=uid();pr.txIds.push(tid);S.tx.push({id:tid,type:'out',date:d.date,amount:c.net,category:'Upah tenaga kerja',desc:_h`Gaji ${w.name} ${monthLabel(d.period)}`,projectId:d.projectId||'',workerId:w.id,payrollId:pid})}
+  let left=c.kb;kbOpen(w.id).forEach(k=>{if(left<=0.5)return;const a=Math.min(left,kbBal(k));k.deds=k.deds||[];k.deds.push({payId:pid,date:d.date,amount:a});left=rnd(left-a)});
+  S.payroll.push(pr);save();render();openSalSlip(pid);toast(_tr('Gaji dibayar dan slip dibuat'));
+};
+function salSlipSheet(pr){
+  const s=S.settings,w=wById(pr.workerId)||{},co=[s.address,[s.phone,s.email].filter(Boolean).join(' · ')].filter(Boolean).join('\n');
+  const row=(l,v,neg)=>_h`<tr><td>${esc(_tr(l))}</td><td class="r">${neg?'-':''}${rp(v)}</td></tr>`;
+  return _h`<div class="sheetdoc"><div class="tape"></div><div class="sd-in"><div class="sd-head"><div class="sd-co">${s.logo?_h`<img src="${s.logo}" alt="">`:''}<div><h2>${esc(s.company)}</h2><p>${esc(co)}</p></div></div><div class="sd-title"><h1 style="font-size:30px">SLIP GAJI</h1><div><b>${esc(pr.no||'')}</b></div><div>Periode: ${monthLabel(pr.period)}</div><div>Dibayar: ${fmtD(pr.date)}</div></div></div>
+  <div class="sd-meta"><div><small>Nama</small><p><b>${esc(w.name||'')}</b></p><p>${esc(w.role||'')}</p></div><div><small>Kehadiran</small><p><b>${fmtQty(pr.days||0)} hari</b></p><p>${esc(_tr(pr.method||''))}</p></div></div>
+  <div class="slipcols"><table><thead><tr><th>Pendapatan</th><th class="r">Jumlah</th></tr></thead><tbody>${pr.inc.map(x=>row(x.n,x.a)).join('')}<tr><td><b>Total pendapatan</b></td><td class="r"><b>${rp(pr.gross)}</b></td></tr></tbody></table>
+  <table><thead><tr><th>Potongan</th><th class="r">Jumlah</th></tr></thead><tbody>${pr.ded.map(x=>row(x.n,x.a,1)).join('')}${pr.kasbon?row('Potongan kasbon',pr.kasbon,1):''}${!pr.ded.length&&!pr.kasbon?_h`<tr><td class="muted">Tidak ada potongan</td><td></td></tr>`:''}<tr><td><b>Total potongan</b></td><td class="r"><b>-${rp((pr.dedTotal||0)+(pr.kasbon||0))}</b></td></tr></tbody></table></div>
+  <div class="rc-amt" style="margin-top:14px">${rp(pr.amount)}</div><div class="sd-say">Terbilang: ${terbilang(pr.amount)}</div>
+  <div class="sd-two"><div class="sd-sign"><div>Penerima</div><div class="sp"></div><b>${esc(w.name||'')}</b></div><div class="sd-sign"><div>Hormat kami,</div><div class="sp"></div><b>${esc(s.owner||s.company)}</b></div></div></div></div>`;
+}
+function openSalSlip(id){
+  const pr=S.payroll.find(x=>x.id===id);if(!pr)return;closeModal();$('#preview').hidden=false;
+  $('#preview').innerHTML=_h`<div class="pv-bar"><button class="btn sm" data-act="pv-close">Tutup</button><span style="font-weight:600">${esc(pr.no||'')}</span><span style="display:flex;gap:8px"><button class="btn sm" data-act="slipg-wa" data-id="${id}">${ic('send',16)}WA</button><button class="btn sm primary" data-act="pv-print">${ic('print',16)}Cetak / PDF</button></span></div>${salSlipSheet(pr)}`;
+}
+
+/* ---------- detail pekerja ---------- */
+function openWorker(id){
+  const w=wById(id);if(!w)return;const m=isMonthly(w),s=salOf(w);
+  const un=unpaidAtt(id),hist=S.payroll.filter(p=>p.workerId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const h=hist.map(p=>p.kind==='monthly'?_h`<div class="hrow"><span>${monthLabel(p.period)} · ${fmtD(p.date)}${p.kasbon?' · '+_tr('potong kasbon')+' '+rp(p.kasbon):''}</span><span><button class="btn sm" data-act="slipg-open" data-id="${p.id}">Slip gaji</button> <b class="num">${rp(p.amount)}</b> <button class="icon-btn" data-act="payroll-del" data-id="${p.id}" aria-label="Batalkan pembayaran">${ic('trash',17)}</button></span></div>`
+    :_h`<div class="hrow"><span>${fmtD(p.date)} · ${fmtQty(p.days)} hari${p.kasbon?' · '+_tr('potong kasbon')+' '+rp(p.kasbon):''}</span><span><button class="btn sm" data-act="rc-open" data-k="slip" data-a="${p.id}">Slip</button> <b class="num">${rp(p.amount)}</b> <button class="icon-btn" data-act="payroll-del" data-id="${p.id}" aria-label="Batalkan pembayaran">${ic('trash',17)}</button></span></div>`).join('');
+  const thisM=S.att.filter(a=>a.workerId===id&&a.date.startsWith(ymNow())&&(+a.units||0)>0).length;
+  modal(w.name,_h`<dl class="kv"><dt>Peran</dt><dd>${esc(w.role||'-')}</dd>${m?_h`<dt>Sistem</dt><dd>Gaji bulanan</dd><dt>Gaji pokok</dt><dd class="num">${rp(s.base)}</dd><dt>Hadir bulan ini</dt><dd>${thisM} hari</dd>`:_h`<dt>Upah harian</dt><dd class="num">${rp(w.rate)}</dd><dt>Belum dibayar</dt><dd class="num ${un.length?'neg':''}"><b>${rp(sumBy(un,attAmt))}</b> (${fmtQty(sumBy(un,a=>a.units))} hari)</dd>`}${w.phone?_h`<dt>Telepon</dt><dd>${esc(w.phone)}</dd>`:''}${kbTotal(id)>0.5?_h`<dt>Kasbon belum lunas</dt><dd class="num neg"><b>${rp(kbTotal(id))}</b></dd>`:''}</dl>
+  ${workerLinkBox(w)}
+  ${h?_h`<h3 class="h3s">${m?_tr('Riwayat gaji'):_tr('Riwayat pembayaran upah')}</h3>`+h:''}
+  ${kasbonSection(id)}<div class="btns start" style="margin-top:16px">${m?_h`<button class="btn primary" data-act="pay-salary" data-id="${id}">Bayar gaji</button>`:(un.length?_h`<button class="btn primary" data-act="pay-worker" data-id="${id}">Bayar upah</button>`:'')}<button class="btn" data-act="new-kasbon" data-id="${id}">+ Kasbon</button><button class="btn" data-act="edit-worker" data-id="${id}">${ic('edit',18)}Ubah</button></div>`);
+}
+
+/* ---------- link pekerja ---------- */
+function workerLinkBox(w){
+  if(!canChat())return '';const sh=w.share;
+  if(!sh)return MGR()?_h`<div class="wlink"><div><b>Halaman pekerja</b><div class="muted" style="font-size:13.5px">Absen dengan selfie & lokasi, tugas, lapor kerja, upah, kasbon, dan chat lewat link pribadi ber-PIN.</div></div><button class="btn sm primary" data-act="wshare-new" data-id="${w.id}">Buat link</button></div>`:'';
+  const un=(WCHAT[w.id]||[]).filter(m=>m.from==='worker'&&m.ts>lastRead('w'+w.id)).length;
+  return _h`<div class="wlink"><div style="min-width:0"><b>Halaman pekerja</b> ${chip(sh.active?_tr('Link aktif'):_tr('Link mati'),sh.active?'ok':'mute')}<div class="linkbox" style="margin-top:6px">${esc(wUrl(sh.token))}</div></div>
+  <div class="btns start" style="margin-top:8px;width:100%"><button class="btn sm primary" data-act="wchat-open" data-id="${w.id}">Chat${un?_h` <b class="badge">${un}</b>`:''}</button>${MGR()&&sh.active?_h`<button class="btn sm" data-act="wshare-wa" data-id="${w.id}">${ic('send',16)}Kirim link</button><button class="btn sm" data-act="wshare-pin" data-id="${w.id}">Ganti PIN</button>`:''}<a class="btn sm" href="${esc(wUrl(sh.token))}" target="_blank" rel="noopener">Lihat</a>${MGR()?_h`<button class="btn sm ${sh.active?'danger':''}" data-act="wshare-toggle" data-id="${w.id}" data-on="${sh.active?'0':'1'}">${sh.active?_tr('Matikan link'):_tr('Aktifkan lagi')}</button>`:''}</div></div>`;
+}
+function pinForm(wid,title){
+  modal(title,_h`<form data-form="wpin" data-w="${wid}"><p class="muted" style="margin-top:0">PIN 4 angka ini diminta saat pekerja membuka link di HP-nya. Beri tahu PIN langsung ke pekerja, jangan lewat chat grup.</p>
+  ${fld('PIN',_h`<input name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required autocomplete="off" style="font-size:24px;letter-spacing:.4em;text-align:center" value="${String(Math.floor(1000+Math.random()*9000))}">`)}
+  <div class="btns"><button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`);
+}
+function wSnap(w){
+  const s=S.settings,since=addDays(todayStr(),-45),nm=(w.name||'').trim().toLowerCase();
+  const att=S.att.filter(a=>a.workerId===w.id&&a.date>=since).sort((a,b)=>b.date.localeCompare(a.date)).map(a=>({date:a.date,units:+a.units||0,amt:attAmt(a),paid:!!a.payId,proj:projName(a.projectId)||'',note:a.note||'',inT:a.inT||'',outT:a.outT||''}));
+  const un=unpaidAtt(w.id);
+  const slips=S.payroll.filter(p=>p.workerId===w.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12).map(p=>p.kind==='monthly'?{id:p.id,kind:'m',no:p.no||'',date:p.date,period:p.period,days:p.days||0,inc:p.inc||[],ded:p.ded||[],gross:p.gross||0,dedTotal:p.dedTotal||0,kasbon:p.kasbon||0,amount:p.amount,method:p.method||''}:{id:p.id,kind:'d',no:p.no||'',date:p.date,from:p.from||'',to:p.to||'',days:p.days||0,gross:p.gross||p.amount,kasbon:p.kasbon||0,amount:p.amount,method:p.method||''});
+  const tasks=S.tasks.filter(t=>(t.workerId===w.id||((t.assignee||'').trim().toLowerCase()===nm&&nm))&&(t.status!=='done'||(t.doneAt||'')>=addDays(todayStr(),-7))).map(t=>({id:t.id,title:t.title,proj:projName(t.projectId)||'',due:t.due||'',status:t.status,notes:t.notes||''}));
+  const projects=S.projects.filter(p=>p.status==='active'||p.status==='prospect').map(p=>({id:p.id,name:p.name,address:p.address||'',geo:p.geo?{lat:p.geo.lat,lng:p.geo.lng,r:p.geo.r||200}:null}));
+  return{cid:COMPANY.id,wid:w.id,pinHash:(w.share&&w.share.pinHash)||'',
+    co:{name:s.company||'',logo:s.logo||'',phone:s.phone||'',cur:baseCur()},
+    w:{name:w.name,role:w.role||'',type:isMonthly(w)?'monthly':'daily',rate:+w.rate||0,base:isMonthly(w)?salOf(w).base:0},
+    projects,att,unpaid:{days:sumBy(un,a=>a.units),amt:sumBy(un,attAmt)},kasbon:{bal:kbTotal(w.id),list:L('kasbon').filter(k=>k.workerId===w.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10).map(k=>({date:k.date,amount:k.amount,bal:kbBal(k),note:k.note||''}))},slips,tasks};
+}
+function schedPub(){
+  if(!S)return;const any=S.projects.some(p=>p.share&&p.share.active)||S.workers.some(w=>w.share&&w.share.active);if(!any)return;
+  clearTimeout(pubT);pubT=setTimeout(async()=>{await publishShares();await publishWorkers()},2500);
+}
+async function publishWorkers(){
+  if(!S||!COMPANY||!canChat()||!navigator.onLine)return;
+  let nn=false;S.payroll.forEach(p=>{const w=wById(p.workerId);if(!p.no&&w&&w.share&&w.share.active){p.no=nextNo(p.kind==='monthly'?'slipg':'slip');nn=true}});if(nn)save();
+  for(const w of S.workers){if(!w.share||!w.share.active)continue;
+    try{const t=w.share.token,ref=FS().collection('wshares').doc(t),snap=wSnap(w),h=fnv(JSON.stringify(snap));if(WPUB[t]===h)continue;await ref.update(Object.assign(snap,{u:TSV()}));WPUB[t]=h}catch(e){}}
+}
+async function wShareCreate(w,pin){
+  if(!MGR())return;if(!navigator.onLine)return toast(_tr('Butuh koneksi internet untuk membuat link'));
+  const t=newToken(),ph=await sha(t+':'+pin);
+  w.share={token:t,active:true,created:todayStr(),pinHash:ph};
+  try{await FS().collection('wshares').doc(t).set(Object.assign(wSnap(w),{active:true,created:TSV()}))}catch(e){delete w.share;return toast(errMsg(e))}
+  save();listenW(w);openWorker(w.id);toast(_tr('Link pekerja dibuat. PIN: ')+pin);
+}
+function wShareWa(w){openWa(w.phone,_h`Halo ${w.name},\n\nIni link pribadi untuk absen, melihat tugas, lapor pekerjaan, cek upah, dan chat dengan kantor ${S.settings.company}:\n\n${wUrl(w.share.token)}\n\nPIN akan diberikan langsung oleh admin. Jangan bagikan link ini ke orang lain.`)}
+
+/* ---------- mendengarkan aktivitas pekerja ---------- */
+function listenW(w){
+  const t=w.share&&w.share.token;if(!t||WSL[t]||!canChat())return;
+  const ref=FS().collection('wshares').doc(t),wid=w.id,un=[];WQ[wid]=WQ[wid]||{checks:[],reports:[],reqs:[]};
+  const rows=s=>s.docs.map(d=>Object.assign({_id:d.id,_ref:d.ref},d.data({serverTimestamps:'estimate'})));
+  un.push(ref.collection('msgs').onSnapshot(s=>{WCHAT[wid]=s.docs.map(d=>{const x=d.data({serverTimestamps:'estimate'});return{id:d.id,from:x.from,name:x.name||'',text:x.text||'',img:x.img||'',ts:tsMs(x.ts)}}).sort((a,b)=>a.ts-b.ts);if(OPENWCHAT===wid&&$('#chatlist')){renderWChat();markRead('w'+wid)}else scheduleRender()},()=>{}));
+  un.push(ref.collection('checks').onSnapshot(s=>{WQ[wid].checks=rows(s);scheduleRender()},()=>{}));
+  un.push(ref.collection('reports').onSnapshot(s=>{WQ[wid].reports=rows(s).filter(r=>r.status==='wait');scheduleRender()},()=>{}));
+  un.push(ref.collection('reqs').onSnapshot(s=>{WQ[wid].reqs=rows(s);scheduleRender()},()=>{}));
+  un.push(ref.collection('taskups').onSnapshot(s=>{s.docs.forEach(d=>applyTaskUp(wid,d))},()=>{}));
+  WSL[t]={un:()=>un.forEach(f=>{try{f()}catch(e){}}),wid};
+}
+function ensureWorkers(){if(!S||!canChat())return;S.workers.forEach(w=>{if(w.share&&w.share.token&&!WSL[w.share.token])listenW(w)})}
+function stopWorkers(){Object.values(WSL).forEach(x=>x.un());WSL={};WPUB={};WCHAT={};WQ={};OPENWCHAT=null}
+function applyTaskUp(wid,d){
+  if(!S||ROLE==='viewer')return;const a=d.data()||{},t=S.tasks.find(x=>x.id===a.taskId),w=wById(wid);
+  if(t&&['doing','done'].includes(a.status)){t.status=a.status;if(a.status==='done')t.doneAt=todayStr();if(a.photo){t.photos=(t.photos||[]).slice(-3);t.photos.push(a.photo)}if(a.note)t.notes=((t.notes||'')+_h`\n${fmtD(todayStr())} – ${w?w.name:''}: ${a.note}`).trim();save();toast(_h`${w?w.name:''}: ${t.title} – ${_tr(TS[a.status])}`)}
+  d.ref.delete().catch(()=>{});
+}
+const pendChecks=()=>Object.entries(WQ).flatMap(([wid,q])=>q.checks.filter(c=>c.status==='wait').map(c=>Object.assign({wid},c)));
+const pendCount=()=>{const g=new Set(pendChecks().map(c=>c.wid+'|'+c.date));return g.size+Object.values(WQ).reduce((n,q)=>n+q.reports.length+q.reqs.filter(r=>r.status==='wait').length,0)};
+
+/* ---------- antrean konfirmasi (di halaman Absensi) ---------- */
+function workerQueuePanel(){
+  if(!canChat())return '';
+  const groups={};pendChecks().forEach(c=>{const k=c.wid+'|'+c.date;(groups[k]=groups[k]||{wid:c.wid,date:c.date,ins:[],outs:[]})[c.type==='out'?'outs':'ins'].push(c)});
+  const g=Object.values(groups).sort((a,b)=>b.date.localeCompare(a.date));
+  const reps=Object.entries(WQ).flatMap(([wid,q])=>q.reports.map(r=>Object.assign({wid},r)));
+  const reqs=Object.entries(WQ).flatMap(([wid,q])=>q.reqs.filter(r=>r.status==='wait').map(r=>Object.assign({wid},r)));
+  if(!g.length&&!reps.length&&!reqs.length)return '';
+  const tm=ms=>ms?new Date(ms).toTimeString().slice(0,5):'-';
+  return _h`<div class="panel" style="margin-bottom:16px;border-color:var(--accent)"><div class="ph"><h2>Menunggu konfirmasi</h2><span class="chip warn">${g.length+reps.length+reqs.length}</span></div><div class="list">
+  ${g.map(x=>{const w=wById(x.wid)||{},i=x.ins[0],o=x.outs[0],far=[i,o].some(c=>c&&c.far);return _h`<button class="item" data-act="chk-open" data-w="${x.wid}" data-d="${x.date}"><div class="main2"><div class="t">Absen ${esc(w.name||'')}</div><div class="s">${fmtD(x.date)} · masuk ${tm(i&&tsMs(i.ts))} · pulang ${tm(o&&tsMs(o.ts))}${i&&i.pname?' · '+esc(i.pname):''}</div></div>${far?chip(_tr('Di luar lokasi'),'bad'):chip(_tr('Absen HP'),'info')}</button>`}).join('')}
+  ${reps.map(r=>{const w=wById(r.wid)||{};return _h`<button class="item" data-act="rep-open" data-w="${r.wid}" data-id="${r._id}"><div class="main2"><div class="t">Laporan kerja ${esc(w.name||'')}</div><div class="s">${fmtD(r.date)} · ${esc((r.text||'').slice(0,60))}</div></div>${chip((r.photos||[]).length+' '+_tr('foto'),'info')}</button>`}).join('')}
+  ${reqs.map(r=>{const w=wById(r.wid)||{};return _h`<button class="item" data-act="req-open" data-w="${r.wid}" data-id="${r._id}"><div class="main2"><div class="t">${r.type==='kasbon'?_h`Pengajuan kasbon ${rp(r.amount)}`:r.type==='sakit'?_tr('Izin sakit'):_tr('Izin tidak masuk')} · ${esc(w.name||'')}</div><div class="s">${fmtD(r.date)}${r.note?' · '+esc(r.note):''}</div></div>${chip(_tr('Pengajuan'),'warn')}</button>`}).join('')}
+  </div></div>`;
+}
+function openCheck(wid,date){
+  const w=wById(wid),q=WQ[wid];if(!w||!q)return;const cs=q.checks.filter(c=>c.date===date&&c.status==='wait'),i=cs.find(c=>c.type!=='out'),o=cs.find(c=>c.type==='out');
+  const ex=S.att.find(a=>a.workerId===wid&&a.date===date);
+  let sug=1;if(i&&o){const hrs=(tsMs(o.ts)-tsMs(i.ts))/36e5;sug=hrs>=10?1.5:hrs>=6?1:0.5}
+  const box=c=>c?_h`<div class="chk"><img src="${c.selfie||''}" alt="Selfie"><div><b>${c.type==='out'?_tr('Pulang'):_tr('Masuk')} ${new Date(tsMs(c.ts)).toTimeString().slice(0,5)}</b><div class="muted" style="font-size:13px">${esc(c.pname||_tr('Tanpa proyek'))}</div><div style="font-size:13px" class="${c.far?'neg':''}">${c.dist!=null&&c.dist>=0?_h`${Math.round(c.dist)} m dari lokasi proyek`:_tr('Lokasi proyek belum diatur')}${c.acc?_h` (akurasi ±${Math.round(c.acc)} m)`:''}</div>${c.lat?_h`<a href="https://maps.google.com/?q=${c.lat},${c.lng}" target="_blank" rel="noopener" style="font-size:13px">Lihat di peta</a>`:''}</div></div>`:'';
+  modal(_tr('Konfirmasi absen – ')+w.name,_h`<p class="muted" style="margin-top:0">${fmtD(date)}${ex?_h` · sudah tercatat ${unitLabel(ex.units)}${ex.payId?_tr(' (sudah dibayar)'):''}`:''}</p>${box(i)}${box(o)}${!o?_tr('<p class="muted" style="font-size:13.5px">Belum absen pulang. Kamu tetap bisa mengonfirmasi sekarang.</p>'):''}
+  <div class="bt" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">${[[1,_tr('Hadir')],[0.5,_tr('½ hari')],[1.5,_tr('Lembur')]].map(([u,l])=>_h`<button class="btn ${u===sug?'primary':''}" data-act="chk-ok" data-w="${wid}" data-d="${date}" data-u="${u}" ${ex&&ex.payId?'disabled':''}>${l}</button>`).join('')}<button class="btn danger" data-act="chk-no" data-w="${wid}" data-d="${date}" style="margin-left:auto">Tolak</button></div>`);
+}
+async function setChecks(wid,date,status){const cs=(WQ[wid]||{checks:[]}).checks.filter(c=>c.date===date&&c.status==='wait');for(const c of cs){try{await c._ref.update({status})}catch(e){toast(errMsg(e))}}}
+
+/* ---------- chat pekerja ---------- */
+function openWChat(wid){
+  const w=wById(wid);if(!w||!w.share)return;OPENWCHAT=wid;WCIMG='';markRead('w'+wid);const mgr=MGR();
+  modal(_tr('Chat – ')+w.name,_h`<div id="chatlist" class="chatlist" aria-live="polite"></div>
+  <form class="chatform" data-form="wchat" data-w="${wid}"><div id="chimg"></div><textarea name="text" rows="2" placeholder="${mgr?_tr('Tulis pesan untuk pekerja atau catatan internal…'):_tr('Tulis catatan internal untuk admin…')}"></textarea>
+  <div class="btns" style="margin-top:8px">${mgr?_h`<label class="btn sm" style="margin-right:auto">${ic('plus',16)}Foto<input type="file" accept="image/*" id="wchatPhoto" hidden></label>`:''}<button type="button" class="btn sm" data-act="wchat-note" data-w="${wid}">Catatan internal</button>${mgr?_h`<button type="submit" class="btn sm primary">${ic('send',16)}Kirim ke pekerja</button>`:''}</div></form>`,true);
+  renderWChat();
+}
+function renderWChat(){
+  const el=$('#chatlist');if(!el){OPENWCHAT=null;return}const wid=OPENWCHAT;
+  const notes=L('cnotes').filter(n=>n.workerId===wid).map(n=>({note:1,id:n.id,name:n.by,text:n.text,ts:n.ts}));
+  const all=[...(WCHAT[wid]||[]),...notes].sort((a,b)=>a.ts-b.ts);
+  el.innerHTML=all.length?all.map(m=>m.note?_h`<div class="cm note"><small>Catatan internal · ${esc(m.name||'')} · ${fmtTime(m.ts)}</small><div>${esc(m.text)}</div></div>`:_h`<div class="cm ${m.from==='worker'?'in':'out'}"><small>${esc(m.name||'')} · ${fmtTime(m.ts)}</small>${m.img?_h`<img src="${m.img}" alt="Foto">`:''}${m.text?_h`<div>${esc(m.text)}</div>`:''}</div>`).join(''):_tr('<div class="empty">Belum ada pesan.</div>');
+  el.scrollTop=el.scrollHeight;
+}
+document.addEventListener('change',async e=>{const t=e.target;if(t.id!=='wchatPhoto'||!t.files[0])return;try{WCIMG=await shrinkImg(t.files[0],1000,.6)}catch(x){}t.value='';const b=$('#chimg');if(b)b.innerHTML=WCIMG?_h`<div class="chimg"><img src="${WCIMG}" alt=""></div>`:''});
+SUB.wchat=async(f,d)=>{
+  if(!MGR())return;const w=wById(f.dataset.w),txt=(d.text||'').trim();if(!txt&&!WCIMG)return;if(!w.share.active)return toast(_tr('Link sedang dimatikan.'));
+  try{await FS().collection('wshares').doc(w.share.token).collection('msgs').add({from:'team',name:(myName()||S.settings.company||'').slice(0,80),text:txt.slice(0,2000),img:WCIMG||'',ts:TSV()});f.text.value='';WCIMG='';$('#chimg').innerHTML=''}catch(e){toast(errMsg(e))}
+};
+SUB.wpin=async(f,d)=>{
+  const w=wById(f.dataset.w),pin=String(d.pin||'');if(!/^\d{4}$/.test(pin))return toast(_tr('PIN harus 4 angka'));
+  if(!w.share)return wShareCreate(w,pin);
+  w.share.pinHash=await sha(w.share.token+':'+pin);try{await FS().collection('wshares').doc(w.share.token).update({pinHash:w.share.pinHash})}catch(e){return toast(errMsg(e))}save();openWorker(w.id);toast(_tr('PIN diganti: ')+pin);
+};
+
+/* ---------- lokasi proyek ---------- */
+function geoPanel(p){
+  if(!canChat()||p.status==='done')return '';const g=p.geo;
+  return _h`<div class="panel section"><div class="ph"><h2>Lokasi absen</h2>${g?chip(_h`Radius ${g.r||200} m`,'ok'):chip(_tr('Belum diatur'),'mute')}</div><div class="cat"><span class="muted" style="font-size:14px">${g?_h`Pekerja hanya bisa absen dalam radius ${g.r||200} m dari titik ini. <a href="https://maps.google.com/?q=${g.lat},${g.lng}" target="_blank" rel="noopener">Lihat di peta</a>`:_tr('Berdiri di lokasi proyek, lalu tekan tombol di bawah supaya absen pekerja hanya bisa dilakukan di sini.')}</span>
+  <div class="btns start" style="margin-top:10px"><button class="btn sm ${g?'':'primary'}" data-act="geo-set" data-id="${p.id}">Pakai lokasi saya sekarang</button>${g?_h`<button class="btn sm" data-act="geo-r" data-id="${p.id}">Ubah radius</button><button class="btn sm" data-act="geo-del" data-id="${p.id}">Hapus</button>`:''}</div></div></div>`;
+}
+
+Object.assign(A,{
+  'pay-salary':el=>salaryForm(el.dataset.id),
+  'slipg-open':el=>openSalSlip(el.dataset.id),
+  'slipg-wa':el=>{const pr=S.payroll.find(x=>x.id===el.dataset.id),w=pr&&wById(pr.workerId);if(!w)return;openWa(w.phone,_h`Halo ${w.name}, gaji ${monthLabel(pr.period)} sebesar ${rp(pr.amount)} sudah dibayar (${pr.no}).${w.share&&w.share.active?_tr(' Slip gaji bisa dilihat di halaman pekerja Anda.'):''}\n\n${S.settings.company}`)},
+  'wshare-new':el=>pinForm(el.dataset.id,_tr('Buat link pekerja')),
+  'wshare-pin':el=>pinForm(el.dataset.id,_tr('Ganti PIN')),
+  'wshare-wa':el=>wShareWa(wById(el.dataset.id)),
+  'wshare-toggle':async el=>{const w=wById(el.dataset.id),on=el.dataset.on==='1';try{await FS().collection('wshares').doc(w.share.token).update({active:on})}catch(e){return toast(errMsg(e))}w.share.active=on;save();if(on){WPUB[w.share.token]='';schedPub()}openWorker(w.id);toast(on?_tr('Link pekerja diaktifkan'):_tr('Link pekerja dimatikan'))},
+  'wchat-open':el=>openWChat(el.dataset.id),
+  'wchat-note':el=>{const f=el.closest('form'),txt=(f.text.value||'').trim();if(!txt)return toast(_tr('Tulis catatannya dulu'));L('cnotes').push({id:uid(),workerId:el.dataset.w,text:txt.slice(0,2000),by:myName()||(USER&&USER.email)||'',ts:Date.now()});f.text.value='';save();renderWChat()},
+  'chk-open':el=>openCheck(el.dataset.w,el.dataset.d),
+  'chk-ok':async el=>{const wid=el.dataset.w,date=el.dataset.d,u=+el.dataset.u,w=wById(wid),cs=(WQ[wid]||{checks:[]}).checks.filter(c=>c.date===date&&c.status==='wait'),i=cs.find(c=>c.type!=='out'),o=cs.find(c=>c.type==='out');
+    let a=S.att.find(x=>x.workerId===wid&&x.date===date);if(a&&a.payId)return toast(_tr('Absensi tanggal ini sudah dibayar'));
+    const pid=(i&&i.pid)||(o&&o.pid)||attProjId();
+    if(!a){a={id:uid(),workerId:wid,date,projectId:pid,units:u,rate:isMonthly(w)?0:w.rate};S.att.push(a)}else{a.units=u;a.projectId=pid||a.projectId}
+    if(i)a.inT=new Date(tsMs(i.ts)).toTimeString().slice(0,5);if(o)a.outT=new Date(tsMs(o.ts)).toTimeString().slice(0,5);a.src='hp';
+    save();closeModal();await setChecks(wid,date,'ok');render();toast(_tr('Absen dikonfirmasi'))},
+  'chk-no':el=>confirmBox(_tr('Absen ini ditolak dan tidak dihitung. Pekerja akan melihat statusnya di HP.'),async()=>{closeModal();await setChecks(el.dataset.w,el.dataset.d,'no');render();toast(_tr('Absen ditolak'))},_tr('Tolak')),
+  'rep-open':el=>{const r=(WQ[el.dataset.w]||{reports:[]}).reports.find(x=>x._id===el.dataset.id),w=wById(el.dataset.w);if(!r)return;
+    modal(_tr('Laporan kerja – ')+w.name,_h`<p class="muted" style="margin-top:0">${fmtD(r.date)} · ${esc(projName(r.pid)||r.pname||'')}</p><p class="pre">${esc(r.text||'')}</p>${(r.photos||[]).length?_h`<div class="phgrid view">${r.photos.map(s=>_h`<div class="ph"><img src="${s}" alt=""></div>`).join('')}</div>`:''}
+    <div class="btns"><button class="btn" data-act="rep-skip" data-w="${el.dataset.w}" data-id="${r._id}" style="margin-right:auto">Abaikan</button><button class="btn primary" data-act="rep-add" data-w="${el.dataset.w}" data-id="${r._id}">Masukkan ke laporan harian</button></div>`)},
+  'rep-add':async el=>{const r=(WQ[el.dataset.w]||{reports:[]}).reports.find(x=>x._id===el.dataset.id),w=wById(el.dataset.w);if(!r)return;
+    const pid=r.pid||attProjId();if(!pid)return toast(_tr('Laporan ini tidak punya proyek'));
+    let d=L('daily').find(x=>x.projectId===pid&&x.date===r.date);const line=_h`• ${w.name}: ${r.text||''}`;
+    if(!d){d={id:uid(),ts:Date.now(),projectId:pid,date:r.date,weather:'Cerah',crew:crewOn(pid,r.date)||1,work:line,issues:'',photos:[],by:myName()||''};L('daily').push(d)}else d.work=((d.work||'')+'\n'+line).trim();
+    d.photos=[...(d.photos||[]),...(r.photos||[])].slice(0,6);
+    if(JSON.stringify(d).length>950000){d.photos=d.photos.slice(0,3)}
+    save();closeModal();try{await r._ref.update({status:'ok'})}catch(e){}render();toast(_tr('Ditambahkan ke laporan harian'))},
+  'rep-skip':async el=>{const r=(WQ[el.dataset.w]||{reports:[]}).reports.find(x=>x._id===el.dataset.id);if(!r)return;closeModal();try{await r._ref.update({status:'no'})}catch(e){}render()},
+  'req-open':el=>{const r=(WQ[el.dataset.w]||{reqs:[]}).reqs.find(x=>x._id===el.dataset.id),w=wById(el.dataset.w);if(!r)return;
+    modal(r.type==='kasbon'?_tr('Pengajuan kasbon'):_tr('Pengajuan izin'),_h`<dl class="kv"><dt>Pekerja</dt><dd>${esc(w.name)}</dd><dt>Tanggal</dt><dd>${fmtD(r.date)}</dd>${r.type==='kasbon'?_h`<dt>Jumlah</dt><dd class="num"><b>${rp(r.amount)}</b></dd><dt>Kasbon saat ini</dt><dd class="num">${rp(kbTotal(w.id))}</dd>`:_h`<dt>Jenis</dt><dd>${r.type==='sakit'?_tr('Sakit'):_tr('Izin')}</dd>`}</dl>${r.note?_h`<p class="pre" style="margin-top:10px">${esc(r.note)}</p>`:''}
+    ${fld(_tr('Catatan untuk pekerja (opsional)'),_h`<input id="reqNote">`)}
+    <div class="btns"><button class="btn danger" data-act="req-no" data-w="${el.dataset.w}" data-id="${r._id}" style="margin-right:auto">Tolak</button><button class="btn primary" data-act="req-ok" data-w="${el.dataset.w}" data-id="${r._id}">Setujui</button></div>`)},
+  'req-ok':async el=>{const r=(WQ[el.dataset.w]||{reqs:[]}).reqs.find(x=>x._id===el.dataset.id),w=wById(el.dataset.w);if(!r)return;const note=($('#reqNote')||{}).value||'';
+    if(r.type==='kasbon'){if(!MGR())return toast(_tr('Hanya pemilik atau admin yang bisa menyetujui kasbon'));const k={id:uid(),workerId:w.id,date:todayStr(),amount:+r.amount||0,method:'Tunai',projectId:'',note:(r.note||_tr('Pengajuan dari HP')).slice(0,200),deds:[]};S.tx.push({id:uid(),type:'out',date:k.date,amount:k.amount,category:'Upah tenaga kerja',desc:_h`Kasbon ${w.name}${k.note?' – '+k.note:''}`,projectId:'',workerId:w.id,kasbonId:k.id});L('kasbon').push(k)}
+    else if(!S.att.find(a=>a.workerId===w.id&&a.date===r.date))S.att.push({id:uid(),workerId:w.id,date:r.date,projectId:'',units:0,rate:0,note:r.type==='sakit'?'Sakit':'Izin'});
+    save();closeModal();try{await r._ref.update({status:'ok',reply:note.slice(0,300)})}catch(e){}render();toast(_tr('Pengajuan disetujui'))},
+  'req-no':async el=>{const r=(WQ[el.dataset.w]||{reqs:[]}).reqs.find(x=>x._id===el.dataset.id);if(!r)return;const note=($('#reqNote')||{}).value||'';closeModal();try{await r._ref.update({status:'no',reply:note.slice(0,300)})}catch(e){}render();toast(_tr('Pengajuan ditolak'))},
+  'geo-set':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);if(!navigator.geolocation)return toast(_tr('HP ini tidak mendukung lokasi'));toast(_tr('Mengambil lokasi…'));
+    navigator.geolocation.getCurrentPosition(pos=>{p.geo={lat:+pos.coords.latitude.toFixed(6),lng:+pos.coords.longitude.toFixed(6),r:(p.geo&&p.geo.r)||200,acc:Math.round(pos.coords.accuracy)};save();render();toast(_h`Lokasi proyek disimpan (akurasi ±${Math.round(pos.coords.accuracy)} m)`)},
+      err=>toast(_tr('Lokasi tidak bisa diambil. Izinkan akses lokasi di browser.')),{enableHighAccuracy:true,timeout:20000,maximumAge:0})},
+  'geo-r':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);modal(_tr('Radius absen'),_h`<form data-form="georad" data-id="${p.id}">${fld(_tr('Radius (meter)'),_h`<input name="r" type="number" min="50" max="5000" step="10" value="${p.geo.r||200}" required>`)}<div class="btns"><button type="button" class="btn" data-act="close-modal">Batal</button><button class="btn primary" type="submit">Simpan</button></div></form>`)},
+  'geo-del':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);delete p.geo;save();render()}
+});
+SUB.georad=(f,d)=>{const p=S.projects.find(x=>x.id===f.dataset.id);p.geo.r=Math.max(50,Math.min(5000,+d.r||200));save();closeModal();render()};
+SUB.worker=(f,d)=>{
+  const m=d.wtype==='monthly',o={name:d.name.trim(),role:d.role.trim(),phone:d.phone.trim(),rate:m?0:(+d.rate||0),active:!!d.active,type:m?'monthly':'daily'};
+  if(m)o.salary={base:+d.base||0,allowMeal:+d.allowMeal||0,allowOther:+d.allowOther||0,dedBpjs:+d.dedBpjs||0,dedOther:+d.dedOther||0};
+  if(f.dataset.id)Object.assign(wById(f.dataset.id),o);else{o.id=uid();S.workers.push(o)}
+  save();closeModal();render();toast(_tr('Pekerja disimpan'));
+};
+['wchat-open','slipg-open'].forEach(a=>RO_OK.add(a));
+
+Object.assign(EN,{"Sistem pembayaran":"Pay system","Upah harian (dari absensi)":"Daily wage (from attendance)","Gaji bulanan (karyawan tetap)":"Monthly salary (permanent staff)","Gaji pokok per bulan (":"Monthly base salary (","Tunjangan makan & transport":"Meal & transport allowance","Tunjangan lain":"Other allowance","Potongan BPJS":"BPJS deduction","Potongan lain":"Other deduction","Absensi tetap dicatat untuk kehadiran, tapi tidak dihitung sebagai upah harian.":"Attendance is still recorded, but not paid as daily wages.","Bayar gaji – ":"Pay salary – ","Periode gaji":"Pay period","Tanggal bayar":"Payment date","Kehadiran tercatat bulan ini:":"Attendance recorded this month:","Pendapatan":"Earnings","Gaji pokok":"Base salary","Lembur":"Overtime","Bonus / THR":"Bonus","Potongan":"Deductions","Biaya dibebankan ke proyek":"Charge cost to project","Kantor / umum":"Office / general","Total pendapatan":"Total earnings","Total potongan":"Total deductions","Gaji bersih dibayar":"Net salary paid","Bayar gaji":"Pay salary","Isi gaji pokok atau pendapatan lain":"Enter a base salary or other earnings","Gaji dibayar dan slip dibuat":"Salary paid and payslip created","SLIP GAJI":"PAYSLIP","Periode:":"Period:","Dibayar:":"Paid:","Nama":"Name","Kehadiran":"Attendance","Potongan kasbon":"Advance deduction","Tidak ada potongan":"No deductions","Penerima":"Recipient","Sistem":"System","Gaji bulanan":"Monthly salary","Hadir bulan ini":"Present this month","Riwayat gaji":"Salary history","Slip gaji":"Payslip","Halaman pekerja":"Worker page","Absen dengan selfie & lokasi, tugas, lapor kerja, upah, kasbon, dan chat lewat link pribadi ber-PIN.":"Selfie & location check-in, tasks, work reports, wages, advances and chat through a private PIN-protected link.","Buat link":"Create link","Ganti PIN":"Change PIN","Lihat":"View","PIN 4 angka ini diminta saat pekerja membuka link di HP-nya. Beri tahu PIN langsung ke pekerja, jangan lewat chat grup.":"This 4-digit PIN is asked when the worker opens the link. Tell the worker the PIN in person, not in a group chat.","Link pekerja dibuat. PIN: ":"Worker link created. PIN: ","Menunggu konfirmasi":"Awaiting confirmation","Di luar lokasi":"Outside site","Absen HP":"Phone check-in","Laporan kerja":"Work report","Pengajuan kasbon":"Advance request","Izin sakit":"Sick leave","Izin tidak masuk":"Leave request","Pengajuan":"Request","Konfirmasi absen – ":"Confirm attendance – ","Pulang":"Out","Masuk":"In","Tanpa proyek":"No project","Lokasi proyek belum diatur":"Site location not set","Lihat di peta":"View on map","Belum absen pulang. Kamu tetap bisa mengonfirmasi sekarang.":"No check-out yet. You can still confirm now.","Tolak":"Reject","Chat – ":"Chat – ","Tulis pesan untuk pekerja atau catatan internal…":"Write a message to the worker or an internal note…","Kirim ke pekerja":"Send to worker","PIN harus 4 angka":"PIN must be 4 digits","PIN diganti: ":"PIN changed: ","Lokasi absen":"Check-in location","Belum diatur":"Not set","Berdiri di lokasi proyek, lalu tekan tombol di bawah supaya absen pekerja hanya bisa dilakukan di sini.":"Stand at the project site, then press the button below so workers can only check in here.","Pakai lokasi saya sekarang":"Use my current location","Ubah radius":"Change radius","Link pekerja diaktifkan":"Worker link turned on","Link pekerja dimatikan":"Worker link turned off","Absensi tanggal ini sudah dibayar":"This date's attendance has already been paid","Absen dikonfirmasi":"Attendance confirmed","Absen ini ditolak dan tidak dihitung. Pekerja akan melihat statusnya di HP.":"This check-in is rejected and not counted. The worker will see the status.","Absen ditolak":"Check-in rejected","Laporan kerja – ":"Work report – ","Abaikan":"Ignore","Masukkan ke laporan harian":"Add to daily report","Laporan ini tidak punya proyek":"This report has no project","Ditambahkan ke laporan harian":"Added to daily report","Catatan untuk pekerja (opsional)":"Note to worker (optional)","Setujui":"Approve","Pengajuan disetujui":"Request approved","Pengajuan ditolak":"Request rejected","Hanya pemilik atau admin yang bisa menyetujui kasbon":"Only the owner or an admin can approve advances","HP ini tidak mendukung lokasi":"This phone doesn't support location","Mengambil lokasi…":"Getting location…","Lokasi tidak bisa diambil. Izinkan akses lokasi di browser.":"Location unavailable. Allow location access in the browser.","Radius absen":"Check-in radius","Radius (meter)":"Radius (meters)","absen / pengajuan pekerja menunggu konfirmasi":"worker check-ins / requests awaiting confirmation","Buka Absensi untuk menerima atau menolak":"Open Attendance to accept or reject","Pesan baru dari":"New message from","Pekerja":"Workers"});
+Object.assign(MSD,{"Gaji bulanan":"Gaji bulanan","Slip gaji":"Slip gaji","Halaman pekerja":"Halaman pekerja","Menunggu konfirmasi":"Menunggu pengesahan","Lokasi absen":"Lokasi kehadiran","Pakai lokasi saya sekarang":"Guna lokasi saya sekarang"});
 _TRE={};
 
 boot();
