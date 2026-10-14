@@ -1,6 +1,6 @@
-// Zui Kontraktor service worker
+// ZUI KONTRAKTOR service worker
 // Naikkan angka versi ini setiap kali kamu mengubah file aplikasi.
-const VERSION = 'zui-kontraktor-v7';
+const VERSION = 'zui-kontraktor-v8';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './config.js'];
 // File dari luar yang aman disimpan untuk offline (Firebase, jsPDF, dan font).
 const CDN = ['www.gstatic.com', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
@@ -71,7 +71,7 @@ self.addEventListener('periodicsync', e => {
     const last = await c.match('./zk-rem-last'); if (last && (await last.text()) === today) return;
     const items = (data.items || []).filter(x => x.d <= today); if (!items.length) return;
     const en = data.lang === 'en';
-    await self.registration.showNotification('Zui Kontraktor – ' + items.length + (en ? ' items need attention' : ' hal perlu ditindaklanjuti'), {
+    await self.registration.showNotification('ZUI KONTRAKTOR – ' + items.length + (en ? ' items need attention' : ' hal perlu ditindaklanjuti'), {
       body: items.slice(0, 4).map(x => '• ' + x.t).join('\n'), icon: 'icon-192.png', badge: 'icon-192.png', tag: 'zk-due', data: { url: './#beranda' }
     });
     await c.put('./zk-rem-last', new Response(today));

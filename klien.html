@@ -174,7 +174,7 @@ function vHome(){
   <div class="panel"><div class="ph"><h2>Ringkasan pembayaran</h2></div>
     <div class="metrics"><div style="border-top:0"><div class="k">Nilai kontrak</div><div class="v num">${money(p.contract)}</div>${changed?`<div class="muted" style="font-size:12px">Awal ${money(p.value)}</div>`:''}</div><div style="border-top:0"><div class="k">Sudah dibayar</div><div class="v num pos">${money(p.paid)}</div></div><div><div class="k">Sisa pembayaran</div><div class="v num">${money(p.remaining)}</div></div><div><div class="k">Laporan harian</div><div class="v num">${Object.keys(D.dh||{}).length}</div></div></div>
   </div>
-  <div class="foot">${D.co.phone?`<a class="btn" href="https://wa.me/${waNum(D.co.phone)}" target="_blank" rel="noopener">Hubungi ${esc(D.co.name)} via WhatsApp</a><br><br>`:''}Halaman ini khusus untuk Anda. Mohon tidak dibagikan ke orang lain.<br>Dibuat dengan Zui Kontraktor</div>`;
+  <div class="foot">${D.co.phone?`<a class="btn" href="https://wa.me/${waNum(D.co.phone)}" target="_blank" rel="noopener">Hubungi ${esc(D.co.name)} via WhatsApp</a><br><br>`:''}Halaman ini khusus untuk Anda. Mohon tidak dibagikan ke orang lain.<br>Dibuat dengan ZUI KONTRAKTOR</div>`;
 }
 const waNum=s=>{let p=(s||'').replace(/[^\d]/g,'');if(p.startsWith('0'))p='62'+p.slice(1);return p};
 async function vDaily(){

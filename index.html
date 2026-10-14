@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zui Kontraktor – Aplikasi Kontraktor</title>
+<title>ZUI KONTRAKTOR – Aplikasi Kontraktor</title>
 <meta name="theme-color" content="#1B2333">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -55,7 +55,7 @@ a{color:inherit}
 @media (min-width:860px){
   .mtop,.tabbar{display:none}
   .side{display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;width:232px;background:var(--side);color:var(--sideink);padding:24px 14px}
-  .side .brand{font-size:30px;padding:0 10px 22px;color:#fff}
+  .side .brand{font-size:24px;letter-spacing:.3px;padding:0 10px 22px;color:#fff}
   .side nav{display:flex;flex-direction:column;gap:2px}
   .side a.nl{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:6px;text-decoration:none;color:var(--sidemuted);font-weight:500}
   .side a.nl:hover{background:rgba(255,255,255,.06);color:#fff}
@@ -235,6 +235,23 @@ label.f input,label.f select,label.f textarea{color:var(--ink);font-weight:400;f
 .tbl th:first-child,.tbl td:first-child{text-align:left;white-space:normal;min-width:150px}
 .tbl th{font-weight:600;color:var(--muted);font-size:13px;border-top:0}
 .tbl tfoot td{font-weight:700;background:var(--soft)}
+.tbl tfoot tr.lite td{font-weight:500;background:none}
+.st td{border-top:0;padding:6px 12px}.st td:first-child{min-width:220px}
+.st tr.sec td{font-weight:700;color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;padding-top:16px}
+.st tr.ind td:first-child{padding-left:26px}
+.st tr.sub td{border-top:1px solid var(--line);font-weight:600}
+.st tr.hl td{background:var(--soft)}
+.st tr.grand td{border-top:2px solid var(--ink);font-weight:700;font-size:16px;padding-top:10px;padding-bottom:12px}
+.metrics .s{font-size:12.5px;color:var(--muted);margin-top:2px}
+.rep-m>div{min-width:0}.rep-m .v{font-size:clamp(17px,4.6vw,22px);overflow-wrap:anywhere}
+.rep-seg{margin-top:16px}
+@media (max-width:600px){.rep-seg .seg button{padding:9px 8px;font-size:14.5px}}
+.tbl th.tl,.tbl td.tl{text-align:left}
+@media (max-width:600px){.st td:first-child{min-width:0}.st td.pc{display:none}.st td{padding:6px 8px}.st tr.ind td:first-child{padding-left:18px}}
+.rep-note{font-size:13.5px;line-height:1.5}
+.rep-kv{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.tlink{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.tlink:hover{text-decoration-color:currentColor}
 .rc-box{margin:20px 0 14px;border:1px solid #d5d9d1}
 .rc-row{display:grid;grid-template-columns:130px 1fr;gap:10px;padding:10px 12px;border-bottom:1px solid #e1e4dd}
 .rc-row:last-child{border-bottom:0}
@@ -402,13 +419,13 @@ window.splReady=function(){setTimeout(splEnd,Math.max(0,600-(Date.now()-t0)))};s
 else setTimeout(splEnd,10000)})()</script>
 <div id="app">
   <aside class="side" aria-label="Menu utama">
-    <a class="brand" href="#beranda"><i></i><span data-appname>Zui Kontraktor</span></a>
+    <a class="brand" href="#beranda"><i></i><span data-appname>ZUI KONTRAKTOR</span></a>
     <nav id="sidenav"></nav>
     <div class="grow"></div>
     <button class="ib inst" onclick="install()" style="display:none">⬇ Instal aplikasi</button>
     <nav><a class="nl" data-nav="pengaturan" href="#pengaturan"></a></nav>
   </aside>
-  <div class="mtop"><a class="brand" href="#beranda"><i></i><span data-appname>Zui Kontraktor</span></a><span class="rt"><button class="ib inst" onclick="install()" style="display:none">⬇ Instal</button><a class="icon-btn" href="#pengaturan" aria-label="Pengaturan" id="mset"></a></span></div>
+  <div class="mtop"><a class="brand" href="#beranda"><i></i><span data-appname>ZUI KONTRAKTOR</span></a><span class="rt"><button class="ib inst" onclick="install()" style="display:none">⬇ Instal</button><a class="icon-btn" href="#pengaturan" aria-label="Pengaturan" id="mset"></a></span></div>
   <main class="main"><div id="view"></div></main>
   <nav class="tabbar" id="tabbar" aria-label="Menu utama"></nav>
 </div>
@@ -440,7 +457,7 @@ try{var _zo=new MutationObserver(function(){var A=document.getElementById('auth'
 const _CFG=window.MANDOR_CONFIG||{};
 const FB_CFG=_CFG.firebase||{};
 const ENABLE_GOOGLE=!!_CFG.enableGoogle;
-const APP_NAME='Zui Kontraktor';
+const APP_NAME='ZUI KONTRAKTOR';
 document.title=APP_NAME+' – '+(_CFG.tagline||'Aplikasi Kontraktor');
 
 /* Penyimpanan file di hosting biasa: unduh langsung lewat browser */
@@ -1310,11 +1327,11 @@ function viewKeuangan(){
   const tab=ui.finTab;
   const acts={tx:_h`<button class="btn" data-act="new-tx" data-type="in">+ Uang masuk</button>${addBtn('new-tx',_tr('Uang keluar'),'data-type="out"')}`,
     bills:addBtn('new-bill',_tr('Tagihan vendor')),vendors:addBtn('new-vendor',_tr('Vendor baru')),
-    recv:_h`<button class="btn" data-act="csv-recv">Unduh CSV piutang</button>`,report:_h`<button class="btn" data-act="csv-proj">Unduh CSV proyek</button><button class="btn" data-act="csv-tx">Unduh CSV transaksi</button>`}[tab];
-  const tabs=[['tx',_tr('Transaksi')],['recv',_tr('Piutang')],['bills',_tr('Hutang')],['vendors',_tr('Vendor')],['report',_tr('Laporan')]];
+    recv:_h`<button class="btn" data-act="csv-recv">Unduh CSV piutang</button>`}[tab];
+  const tabs=[['tx',_tr('Transaksi')],['recv',_tr('Piutang')],['bills',_tr('Hutang')],['vendors',_tr('Vendor')]];
   const seg=_h`<div class="filters"><div class="seg" role="group" aria-label="Bagian keuangan">${tabs.map(([k,l])=>_h`<button data-act="fin-tab" data-v="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div></div>`;
-  const sub={tx:_tr('Catat setiap uang masuk dan keluar'),recv:_tr('Sisa tagihan dari klien per proyek dan per klien'),bills:_tr('Tagihan dari supplier dan subkontraktor'),vendors:_tr('Daftar supplier, subkontraktor, dan tukang'),report:_tr('Laba rugi per proyek dan per bulan')}[tab];
-  return pageHead(_tr('Keuangan'),sub,acts)+seg+({tx:finTx,recv:finRecv,bills:finBills,vendors:finVendors,report:finReport}[tab])();
+  const sub={tx:_tr('Catat setiap uang masuk dan keluar'),recv:_tr('Sisa tagihan dari klien per proyek dan per klien'),bills:_tr('Tagihan dari supplier dan subkontraktor'),vendors:_tr('Daftar supplier, subkontraktor, dan tukang')}[tab];
+  return pageHead(_tr('Keuangan'),sub,acts)+seg+({tx:finTx,recv:finRecv,bills:finBills,vendors:finVendors}[tab]||finTx)();
 }
 function finTx(){
   const months=[...new Set(S.tx.map(x=>x.date.slice(0,7)))].sort().reverse();
@@ -1350,21 +1367,6 @@ function finVendors(){
 function projReport(){
   return S.projects.map(p=>{const st=pStats(p);return{p,st,bt:budgetTotal(p),piu:sumBy(S.invoices.filter(v=>v.projectId===p.id&&invState(v)!=='Draft'),v=>toBase(v,balance(v))),hut:sumBy(S.bills.filter(b=>b.projectId===p.id),billBal)}});
 }
-function finReport(){
-  const rows=projReport();
-  const T={v:sumBy(rows,r=>r.p.value),inc:sumBy(rows,r=>r.st.inc),exp:sumBy(rows,r=>r.st.exp),piu:sumBy(rows,r=>r.piu),hut:sumBy(rows,r=>r.hut)};
-  const over=sumBy(S.tx.filter(t=>t.type==='out'&&!t.projectId),t=>t.amount);
-  const now=new Date(),ms=[];
-  for(let i=0;i<12;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=iso(d).slice(0,7);ms.push({k,i:sumBy(S.tx.filter(x=>x.type==='in'&&x.date.startsWith(k)),x=>x.amount),o:sumBy(S.tx.filter(x=>x.type==='out'&&x.date.startsWith(k)),x=>x.amount)})}
-  const mg=(inc,pr)=>inc>0?Math.round(pr/inc*100)+'%':'-';
-  const cell=(n,cls='')=>_h`<td class="num ${cls}">${rp(n)}</td>`;
-  return _h`<div class="panel"><div class="ph"><h2>Laba rugi per proyek</h2></div><div class="scrollx"><table class="tbl"><thead><tr><th>Proyek</th><th>Kontrak</th><th>Diterima</th><th>Biaya</th><th>Laba kas</th><th>Margin</th><th>Piutang</th><th>Hutang</th></tr></thead><tbody>
-    ${rows.length?rows.map(r=>_h`<tr><td>${esc(r.p.name)}</td>${cell(r.p.value)}${cell(r.st.inc,'pos')}${cell(r.st.exp)}${cell(r.st.profit,r.st.profit<0?'neg':'')}<td class="num">${mg(r.st.inc,r.st.profit)}</td>${cell(r.piu)}${cell(r.hut)}</tr>`).join(''):_tr('<tr><td colspan="8" class="muted">Belum ada proyek.</td></tr>')}
-    </tbody>${rows.length?_h`<tfoot><tr><td>Total</td>${cell(T.v)}${cell(T.inc)}${cell(T.exp)}${cell(T.inc-T.exp)}<td class="num">${mg(T.inc,T.inc-T.exp)}</td>${cell(T.piu)}${cell(T.hut)}</tr></tfoot>`:''}</table></div>
-    <p class="muted" style="font-size:13.5px;margin:0;padding:10px 16px 14px">Laba kas = uang diterima dikurangi uang keluar. ${over>0?_h`Belum termasuk pengeluaran tanpa proyek (${rp(over)}), misalnya operasional kantor.`:''}</p></div>
-  <div class="panel section"><div class="ph"><h2>Arus kas 12 bulan</h2></div><div class="scrollx"><table class="tbl"><thead><tr><th>Bulan</th><th>Masuk</th><th>Keluar</th><th>Selisih</th></tr></thead><tbody>${ms.map(m=>_h`<tr><td>${monthLabel(m.k)}</td>${cell(m.i,'pos')}${cell(m.o)}${cell(m.i-m.o,m.i-m.o<0?'neg':'')}</tr>`).join('')}</tbody></table></div></div>`;
-}
-
 /* ============ Dokumen ============ */
 function docRow(kind,d){
   const rp=n=>rpd(n,d);
@@ -1426,9 +1428,11 @@ function viewPengaturan(){
 /* ============ Router ============ */
 /*NOTR_START*/
 const NAV=[['beranda','Beranda','home'],['proyek','Proyek','folder'],['tugas','Tugas','tasks'],['keuangan','Keuangan','wallet'],['dokumen','Dokumen','file']];
+const navItems=()=>ROLE==='owner'?[...NAV,['laporan',Lw('Laporan','Reports','Laporan'),'chart']]:NAV;
 /*NOTR_END*/
 function buildNav(){
   document.querySelectorAll('[data-appname]').forEach(e=>{e.textContent=APP_NAME});
+  const NAV=navItems();
   $('#sidenav').innerHTML=NAV.map(n=>_h`<a class="nl" data-nav="${n[0]}" href="#${n[0]}">${ic(n[2])}${_tr(n[1])}</a>`).join('');
   $('#tabbar').innerHTML=NAV.map(n=>_h`<a data-nav="${n[0]}" href="#${n[0]}">${ic(n[2],22)}<span>${_tr(n[1])}</span></a>`).join('');
   $('.side [data-nav="pengaturan"]').innerHTML=ic('gear')+_tr('Pengaturan');
@@ -1444,6 +1448,7 @@ function render(){
     case 'tugas':h=viewTugas();break;
     case 'keuangan':h=viewKeuangan();break;
     case 'dokumen':h=viewDokumen();break;
+    case 'laporan':h=viewLaporan();break;
     case 'pengaturan':h=viewPengaturan();break;
     default:h=viewBeranda();
   }
@@ -3080,8 +3085,8 @@ async function notifyDue(force){
   const it=dueItems().filter(x=>x.d<=t);if(!it.length&&!force)return false;
   const title=it.length?_h`${it.length} hal perlu ditindaklanjuti`:_tr('Tidak ada yang jatuh tempo hari ini');
   const body=it.slice(0,4).map(x=>'• '+x.t).join('\n')+(it.length>4?_h`\n+${it.length-4} lainnya`:'');
-  try{const r=await swReady();await r.showNotification('Zui Kontraktor – '+title,{body,icon:'icon-192.png',badge:'icon-192.png',tag:'zk-due',data:{url:'./#beranda'}})}
-  catch(e){try{new Notification('Zui Kontraktor – '+title,{body,icon:'icon-192.png'})}catch(x){return false}}
+  try{const r=await swReady();await r.showNotification(APP_NAME+' – '+title,{body,icon:'icon-192.png',badge:'icon-192.png',tag:'zk-due',data:{url:'./#beranda'}})}
+  catch(e){try{new Notification(APP_NAME+' – '+title,{body,icon:'icon-192.png'})}catch(x){return false}}
   try{localStorage.setItem(key,t);caches.open('zk-rem').then(c=>c.put('./zk-rem-last',new Response(t))).catch(()=>{})}catch(e){}return true;
 }
 async function enableReminders(){
@@ -3618,6 +3623,387 @@ SUB.worker=(f,d)=>{
   save();closeModal();render();toast(_tr('Pekerja disimpan'));
 };
 ['wchat-open','slipg-open'].forEach(a=>RO_OK.add(a));
+
+/* ============ Laporan pemilik: laba rugi, arus kas, rekap PPh, ekspor Excel ============ */
+/*NOTR_START*/
+IC.chart='<path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/>';
+IC.down='<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>';
+Object.assign(ui,{repTab:'pl',repYear:String(new Date().getFullYear())});
+const isOwner=()=>ROLE==='owner';
+const W=(id,en,ms)=>Lw(id,en,ms==null?id:ms);
+const ymAdd=(ym,n)=>{const [y,m]=ym.split('-').map(Number),d=new Date(y,m-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const ymShort=ym=>MSL[LANG][+ym.slice(5)-1]+' '+ym.slice(0,4);
+const pct=n=>{n=Number.isFinite(n)?Math.round(n*1000)/10:0;return (n===0?0:n).toLocaleString(LOC(),{maximumFractionDigits:1})+'%'};
+const catOrder=(keys,base)=>{const k=[...keys];return [...base.filter(c=>k.includes(c)),...k.filter(c=>!base.includes(c)).sort()]};
+
+/* Buku besar laporan: setiap transaksi kas, dengan uang dari invoice dipecah jadi pendapatan, PPN, dan PPh */
+function repLedger(){
+  const inv=new Map(S.invoices.map(v=>[v.id,v]));
+  return S.tx.filter(t=>t&&t.date&&(t.type==='in'||t.type==='out')).map(t=>{
+    const a=+t.amount||0,e={t,date:t.date,ym:t.date.slice(0,7),type:t.type,cat:t.category||'Lain-lain',amt:a,pid:t.projectId||'',rev:0,ppn:0,pph:0,v:null,client:false};
+    if(t.type==='in'){
+      const v=t.invoiceId&&inv.get(t.invoiceId);
+      if(v){const N=toBase(v,netDue(v)),T=docTotals(v),f=N>0?a/N:0;e.v=v;e.ppn=rnd(toBase(v,T.tax)*f);e.pph=rnd(toBase(v,pphAmt(v))*f);e.rev=a-e.ppn+e.pph}
+      else e.rev=a;
+      e.client=CLIENT_PAY_CATS.includes(t.category);
+    }
+    return e;
+  });
+}
+function repAgg(list){
+  const o={revC:0,revO:0,pph:0,ppn:0,proj:0,ovh:0,pc:{},oc:{},cin:0,cout:0,inCat:{},outCat:{},n:list.length};
+  const add=(m,k,v)=>{m[k]=(m[k]||0)+v};
+  list.forEach(e=>{
+    if(e.type==='in'){o.cin+=e.amt;add(o.inCat,e.cat,e.amt);if(e.client)o.revC+=e.rev;else o.revO+=e.rev;o.pph+=e.pph;o.ppn+=e.ppn}
+    else{o.cout+=e.amt;add(o.outCat,e.cat,e.amt);if(e.pid){o.proj+=e.amt;add(o.pc,e.cat,e.amt)}else{o.ovh+=e.amt;add(o.oc,e.cat,e.amt)}}
+  });
+  o.rev=o.revC+o.revO;o.netRev=o.rev-o.pph;o.gross=o.netRev-o.proj;o.net=o.gross-o.ovh;o.cost=o.cout;o.profit=o.netRev-o.cout;
+  o.gm=o.rev?o.gross/o.rev:0;o.margin=o.rev?o.net/o.rev:0;
+  return o;
+}
+function repData(){
+  const Y=ui.repYear,all=Y==='all',L=repLedger(),P=L.filter(e=>all||e.date.startsWith(Y)),now=ymNow();
+  const months=[];
+  if(all){const y=L.map(e=>e.ym).sort(),a=y[0]||now,b=[y[y.length-1]||now,now].sort()[1];for(let m=a;m<=b;m=ymAdd(m,1))months.push(m)}
+  else{const mx=P.map(e=>e.ym).sort().pop()||'',cy=now.slice(0,4);let last=Y<cy?Y+'-12':Y===cy?now:(mx||Y+'-01');if(mx>last)last=mx;for(let m=Y+'-01';m<=last;m=ymAdd(m,1))months.push(m)}
+  const byM=months.map(ym=>({ym,a:repAgg(P.filter(e=>e.ym===ym))}));
+  const open0=+S.settings.cashOpen||0;
+  let bal=open0+sumBy(L.filter(e=>e.ym<months[0]),e=>e.type==='in'?e.amt:-e.amt);
+  const open=bal;
+  const cash=byM.map(m=>{const o={ym:m.ym,open:bal,cin:m.a.cin,cout:m.a.cout,inCat:m.a.inCat,outCat:m.a.outCat};bal+=m.a.cin-m.a.cout;o.close=bal;return o});
+  const pids=new Set(P.filter(e=>e.pid).map(e=>e.pid)),known=new Set(S.projects.map(p=>p.id));
+  const projs=S.projects.filter(p=>pids.has(p.id)||p.status==='active').map(p=>({p,a:repAgg(P.filter(e=>e.pid===p.id)),value:contractNow(p),piu:sumBy(projInvs(p),v=>toBase(v,balance(v))),hut:sumBy(S.bills.filter(b=>b.projectId===p.id),billBal),bt:budgetTotal(p)}))
+    .sort((x,y)=>(y.a.rev-x.a.rev)||(y.a.cout-x.a.cout)||x.p.name.localeCompare(y.p.name));
+  const orph=P.filter(e=>e.pid&&!known.has(e.pid));
+  const pphRows=P.filter(e=>e.pph>0).sort((a,b)=>a.date.localeCompare(b.date));
+  const pphPend=sumBy(S.invoices.filter(v=>v.pph&&invState(v)!=='Draft'),v=>Math.max(0,toBase(v,pphAmt(v)-pphCred(v))));
+  return{Y,all,L,P,months,byM,tot:repAgg(P),cash,open,close:bal,open0,projs,orph:orph.length?repAgg(orph):null,ovh:repAgg(P.filter(e=>!e.pid)),pphRows,pphPend,
+    piuNow:receivables().tot.invOpen,hutNow:sumBy(S.bills,billBal)};
+}
+const repPer=D=>D.all?W('Semua waktu','All time','Semua masa'):W('Tahun ','Year ','Tahun ')+D.Y;
+const L_={
+  revC:()=>W('Pembayaran klien & DP','Client payments & deposits','Bayaran pelanggan & deposit'),
+  revO:()=>W('Pendapatan lain','Other income'),
+  rev:()=>W('Total pendapatan (tanpa PPN)','Total revenue (excl. VAT)','Jumlah pendapatan (tanpa PPN)'),
+  pph:()=>W('PPh final dipotong klien','Final income tax withheld by clients','PPh final dipotong pelanggan'),
+  netRev:()=>W('Pendapatan bersih','Net revenue'),
+  proj:()=>W('Biaya proyek','Project costs','Kos projek'),
+  gross:()=>W('Laba kotor','Gross profit','Untung kasar'),
+  ovh:()=>W('Biaya overhead (tanpa proyek)','Overhead (no project)','Kos overhed (tanpa projek)'),
+  net:()=>W('Laba bersih','Net profit','Untung bersih')
+};
+/*NOTR_END*/
+
+function repStatement(a,proj){
+  const r=[],rev=a.rev;
+  const row=(cls,l,v,showPct)=>r.push(`<tr class="${cls}"><td>${l}</td><td class="num ${v<0&&!/ind/.test(cls)&&!/cost/.test(cls)?'neg':''}">${v==null?'':rp(v)}</td><td class="num muted pc">${showPct&&rev?pct(v/rev):''}</td></tr>`);
+  const sec=l=>r.push(`<tr class="sec"><td colspan="3">${l}</td></tr>`);
+  sec(W('Pendapatan','Revenue'));
+  row('ind',L_.revC(),a.revC);if(a.revO)row('ind',L_.revO(),a.revO);
+  row('sub',L_.rev(),a.rev,true);
+  row('ind',W('Dikurangi: ','Less: ','Tolak: ')+L_.pph(),-a.pph,true);
+  row('sub',L_.netRev(),a.netRev,true);
+  sec(L_.proj());
+  const pc=catOrder(Object.keys(a.pc),COUT);
+  if(pc.length)pc.forEach(c=>row('ind',esc(_tr(c)),-a.pc[c],true));else row('ind muted',W('Belum ada biaya proyek','No project costs yet','Tiada kos projek'),null);
+  row('sub cost',W('Total biaya proyek','Total project costs','Jumlah kos projek'),-a.proj,true);
+  row('sub hl',L_.gross(),a.gross,true);
+  if(proj){row('grand',W('Laba proyek','Project profit','Untung projek'),a.gross,true);return `<div class="scrollx"><table class="tbl st"><tbody>${r.join('')}</tbody></table></div>`}
+  sec(L_.ovh());
+  const oc=catOrder(Object.keys(a.oc),COUT);
+  if(oc.length)oc.forEach(c=>row('ind',esc(_tr(c)),-a.oc[c],true));else row('ind muted',W('Tidak ada','None','Tiada'),null);
+  row('sub cost',W('Total overhead','Total overhead','Jumlah overhed'),-a.ovh,true);
+  row('grand',L_.net(),a.net,true);
+  return `<div class="scrollx"><table class="tbl st"><tbody>${r.join('')}</tbody></table></div>`;
+}
+
+function viewLaporan(){
+  const title=W('Laporan','Reports');
+  if(!isOwner())return pageHead(title,'')+`<div class="panel"><div class="empty"><b>${W('Khusus pemilik','Owner only','Khas untuk pemilik')}</b>${W('Laporan keuangan hanya bisa dibuka oleh pemilik perusahaan.','Financial reports can only be opened by the company owner.','Laporan kewangan hanya boleh dibuka oleh pemilik syarikat.')}</div></div>`;
+  const D=repData(),t=D.tot,tab=ui.repTab;
+  const years=[...new Set([String(new Date().getFullYear()),...S.tx.map(x=>(x.date||'').slice(0,4)).filter(y=>/^\d{4}$/.test(y))])].sort().reverse();
+  const sel=`<select data-flt="repYear" aria-label="${W('Periode','Period','Tempoh')}" style="width:auto">${years.map(y=>`<option value="${y}"${ui.repYear===y?' selected':''}>${W('Tahun','Year','Tahun')} ${y}</option>`).join('')}<option value="all"${D.all?' selected':''}>${W('Semua waktu','All time','Semua masa')}</option></select>`;
+  const acts=`${sel}<button class="btn primary" data-act="rep-xlsx">${ic('down',18)}${W('Unduh Excel','Download Excel','Muat turun Excel')}</button>`;
+  const tabs=[['pl',W('Laba rugi','Profit & loss','Untung rugi')],['proj',W('Per proyek','By project','Ikut projek')],['cash',W('Arus kas','Cash flow','Aliran tunai')],['tax',W('Rekap PPh','Tax summary','Ringkasan cukai')]];
+  const seg=`<div class="filters rep-seg"><div class="seg" role="group" aria-label="${W('Bagian laporan','Report section','Bahagian laporan')}">${tabs.map(([k,l])=>`<button data-act="rep-tab" data-v="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div></div>`;
+  const met=`<div class="metrics rep-m section" style="margin-top:0">
+    <div><div class="k">${W('Pendapatan','Revenue')}</div><div class="v num">${rp(t.rev)}</div><div class="s">${W('tanpa PPN','excl. VAT')}</div></div>
+    <div><div class="k">${W('Biaya','Costs','Kos')}</div><div class="v num">${rp(t.cout+t.pph)}</div><div class="s">${W('termasuk PPh final','incl. final tax','termasuk PPh final')}</div></div>
+    <div><div class="k">${L_.net()}</div><div class="v num ${t.net<0?'neg':'pos'}">${rp(t.net)}</div><div class="s">${W('margin ','margin ')}${pct(t.margin)}</div></div>
+    <div><div class="k">${W('Saldo kas akhir','Closing cash','Baki tunai akhir')}</div><div class="v num ${D.close<0?'neg':''}">${rp(D.close)}</div><div class="s">${W('awal ','opening ','awal ')}${rp(D.open)}</div></div></div>`;
+  const body={pl:repPL,proj:repProj,cash:repCash,tax:repTax}[tab]||repPL;
+  const empty=!D.L.length?`<div class="panel section"><div class="empty"><b>${W('Belum ada transaksi','No transactions yet','Belum ada transaksi')}</b>${W('Laporan disusun dari uang masuk dan keluar di menu Keuangan, termasuk pembayaran invoice dan tagihan vendor.','Reports are built from money in and out in Finance, including invoice payments and vendor bills.','Laporan disusun daripada wang masuk dan keluar di menu Kewangan.')}</div></div>`:'';
+  return pageHead(title,W('Ringkasan keuangan untuk pemilik','Financial overview for the owner','Ringkasan kewangan untuk pemilik')+' · '+repPer(D),acts)+met+seg+(empty||body(D));
+}
+function repPL(D){
+  const cell=(n,cls='')=>`<td class="num ${n<0?'neg':''} ${cls}">${rp(n)}</td>`;
+  const act=D.byM.filter(m=>m.a.n),rows=(act.length?act:D.byM).slice().reverse().map(m=>{const a=m.a;return `<tr><td>${monthLabel(m.ym)}</td>${cell(a.rev)}${cell(a.pph)}${cell(a.proj)}${cell(a.gross)}${cell(a.ovh)}${cell(a.net)}<td class="num">${a.rev?pct(a.margin):'-'}</td></tr>`}).join('');
+  const t=D.tot;
+  return `<div class="panel section"><div class="ph"><h2>${W('Laporan laba rugi','Income statement','Penyata untung rugi')}</h2><span class="muted" style="font-size:14px">${repPer(D)}</span></div>${repStatement(t)}</div>
+  <div class="panel section"><div class="ph"><h2>${W('Laba rugi per bulan','Profit & loss by month','Untung rugi ikut bulan')}</h2></div><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Bulan','Month')}</th><th>${W('Pendapatan','Revenue')}</th><th>PPh</th><th>${L_.proj()}</th><th>${L_.gross()}</th><th>Overhead</th><th>${L_.net()}</th><th>Margin</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td>Total</td>${cell(t.rev)}${cell(t.pph)}${cell(t.proj)}${cell(t.gross)}${cell(t.ovh)}${cell(t.net)}<td class="num">${t.rev?pct(t.margin):'-'}</td></tr></tfoot></table></div></div>
+  <p class="muted rep-note">${W('Basis kas: dihitung dari uang yang benar-benar diterima dan dibayar pada bulan itu. Tagihan vendor yang belum dibayar belum masuk biaya.','Cash basis: based on money actually received and paid in each month. Unpaid vendor bills are not yet counted as costs.','Asas tunai: dikira daripada wang yang benar-benar diterima dan dibayar pada bulan itu.')} ${t.ppn>0?W('PPN yang ikut dibayar klien ('+rp(t.ppn)+') tidak dihitung sebagai pendapatan karena harus disetor ke negara.','VAT paid by clients ('+rp(t.ppn)+') is not counted as revenue because it must be remitted.','PPN yang dibayar pelanggan ('+rp(t.ppn)+') tidak dikira sebagai pendapatan.'):''}</p>`;
+}
+function repProj(D){
+  const cell=(n,cls='')=>`<td class="num ${n<0?'neg':''} ${cls}">${n==null?'':rp(n)}</td>`;
+  const r=(id,name,sub,a,value,piu,hut)=>`<tr><td><button class="tlink" data-act="rep-proj" data-id="${id}">${esc(name)}</button>${sub?`<div class="muted" style="font-size:12.5px">${esc(sub)}</div>`:''}</td>${cell(value)}${cell(a.rev)}${cell(a.pph)}${cell(a.cout)}${cell(a.profit)}<td class="num">${a.rev?pct(a.profit/a.rev):'-'}</td>${cell(piu)}${cell(hut)}</tr>`;
+  const rows=D.projs.map(x=>r(x.p.id,x.p.name,[x.p.client,_tr(PS[x.p.status]?PS[x.p.status][0]:'')].filter(Boolean).join(' · '),x.a,x.value,x.piu,x.hut));
+  if(D.orph)rows.push(r('_orph',W('Proyek yang sudah dihapus','Deleted projects','Projek yang telah dipadam'),'',D.orph,null,null,null));
+  const pa=repAgg(D.P.filter(e=>e.pid)),T={value:sumBy(D.projs,x=>x.value),piu:sumBy(D.projs,x=>x.piu),hut:sumBy(D.projs,x=>x.hut)};
+  const o=D.ovh,t=D.tot;
+  return `<div class="panel section"><div class="ph"><h2>${W('Laba rugi per proyek','Profit & loss by project','Untung rugi ikut projek')}</h2></div><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Proyek','Project','Projek')}</th><th>${W('Kontrak','Contract')}</th><th>${W('Pendapatan','Revenue')}</th><th>PPh</th><th>${W('Biaya','Costs','Kos')}</th><th>${W('Laba','Profit','Untung')}</th><th>Margin</th><th>${W('Piutang','Receivable','Penghutang')}</th><th>${W('Hutang vendor','Payable','Hutang vendor')}</th></tr></thead>
+  <tbody>${rows.join('')||`<tr><td colspan="9" class="muted">${W('Belum ada proyek pada periode ini.','No projects in this period.','Tiada projek dalam tempoh ini.')}</td></tr>`}</tbody>
+  <tfoot><tr><td>${W('Total proyek','Projects total','Jumlah projek')}</td>${cell(T.value)}${cell(pa.rev)}${cell(pa.pph)}${cell(pa.cout)}${cell(pa.profit)}<td class="num">${pa.rev?pct(pa.profit/pa.rev):'-'}</td>${cell(T.piu)}${cell(T.hut)}</tr>
+  <tr class="lite"><td><button class="tlink" data-act="rep-proj" data-id="_none">${W('Tanpa proyek (overhead kantor)','No project (office overhead)','Tanpa projek (overhed pejabat)')}</button></td><td></td>${cell(o.rev)}${cell(o.pph)}${cell(o.cout)}${cell(o.profit)}<td></td><td></td><td></td></tr>
+  <tr><td>${L_.net()}</td><td></td>${cell(t.rev)}${cell(t.pph)}${cell(t.cout)}${cell(t.net)}<td class="num">${t.rev?pct(t.margin):'-'}</td><td></td><td></td></tr></tfoot></table></div>
+  <p class="muted rep-note" style="padding:0 16px 14px;margin:0">${W('Pendapatan, PPh, dan biaya mengikuti periode yang dipilih. Kontrak, piutang (invoice belum dibayar), dan hutang vendor adalah posisi hari ini. Ketuk nama proyek untuk rinciannya.','Revenue, tax and costs follow the selected period. Contract, receivables (unpaid invoices) and vendor payables are as of today. Tap a project for details.','Pendapatan, cukai dan kos mengikut tempoh dipilih. Kontrak, penghutang dan hutang vendor ialah kedudukan hari ini.')}</p></div>`;
+}
+function repCash(D){
+  const cell=(n,cls='')=>`<td class="num ${n<0?'neg':''} ${cls}">${rp(n)}</td>`;
+  const rows=D.cash.slice().reverse().map(c=>`<tr><td>${monthLabel(c.ym)}</td>${cell(c.open)}${cell(c.cin,'pos')}${cell(c.cout)}${cell(c.cin-c.cout)}${cell(c.close)}</tr>`).join('');
+  const t=D.tot;
+  const bars=(m,tot)=>{const l=catOrder(Object.keys(m),[...CIN,...COUT]);return l.length?l.map(k=>`<div class="cat"><div class="r"><span>${esc(_tr(k))}</span><b class="num">${rp(m[k])}</b></div><div class="bar"><i style="width:${tot?m[k]/tot*100:0}%"></i></div></div>`).join(''):`<div class="empty" style="border-top:1px solid var(--line)">${W('Tidak ada','None','Tiada')}</div>`};
+  return `<div class="panel section"><div class="ph"><h2>${W('Arus kas per bulan','Cash flow by month','Aliran tunai ikut bulan')}</h2><button class="btn sm" data-act="rep-open">${W('Atur saldo awal','Set opening balance','Tetapkan baki awal')}</button></div><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Bulan','Month')}</th><th>${W('Saldo awal','Opening','Baki awal')}</th><th>${W('Masuk','In')}</th><th>${W('Keluar','Out')}</th><th>${W('Arus bersih','Net flow','Aliran bersih')}</th><th>${W('Saldo akhir','Closing','Baki akhir')}</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td>Total</td>${cell(D.open)}${cell(t.cin)}${cell(t.cout)}${cell(t.cin-t.cout)}${cell(D.close)}</tr></tfoot></table></div>
+  <p class="muted rep-note" style="padding:0 16px 14px;margin:0">${D.open0?W('Saldo kas awal sebelum transaksi pertama: ','Opening cash before the first transaction: ','Baki tunai awal sebelum transaksi pertama: ')+rp(D.open0)+'.':W('Saldo kas awal belum diisi, jadi saldo dihitung mulai dari nol. Isi lewat tombol Atur saldo awal agar cocok dengan kas dan rekening.','Opening cash is not set, so balances start from zero. Use Set opening balance to match your cash and bank.','Baki tunai awal belum diisi, jadi baki dikira bermula dari sifar.')}</p></div>
+  <div class="cols two section"><div class="panel" style="align-self:start"><div class="ph"><h2>${W('Uang masuk','Money in','Wang masuk')}</h2><b class="num pos">${rp(t.cin)}</b></div>${bars(t.inCat,t.cin)}</div><div class="panel" style="align-self:start"><div class="ph"><h2>${W('Uang keluar','Money out','Wang keluar')}</h2><b class="num">${rp(t.cout)}</b></div>${bars(t.outCat,t.cout)}</div></div>`;
+}
+function repTaxMonths(D){
+  return D.months.map(ym=>{const l=D.pphRows.filter(e=>e.ym===ym),m=D.byM.find(x=>x.ym===ym);return{ym,dpp:sumBy(l,e=>e.rev),pph:sumBy(l,e=>e.pph),ppn:m?m.a.ppn:0,n:l.length,ref:l.filter(e=>e.v&&e.v.pphRef).length}});
+}
+function repTax(D){
+  const cell=(n,cls='')=>`<td class="num ${cls}">${rp(n)}</td>`;
+  const ms=repTaxMonths(D),R=D.pphRows,miss=R.filter(e=>!(e.v&&e.v.pphRef)).length;
+  const sum=ms.slice().reverse().filter(m=>m.n||m.ppn).map(m=>`<tr><td>${monthLabel(m.ym)}</td>${cell(m.dpp)}${cell(m.pph)}${cell(m.ppn)}<td class="num">${m.n}</td><td class="num">${m.n?`${m.ref}/${m.n}`:'-'}</td></tr>`).join('');
+  const det=R.slice().reverse().map(e=>{const v=e.v;return `<tr><td>${fmtD(e.date)}</td><td class="tl"><button class="tlink" data-act="doc-open" data-kind="invoice" data-id="${v.id}">${esc(v.number||'-')}</button></td><td class="tl">${esc(v.client||'')}</td><td class="tl">${esc(projName(v.projectId))}</td>${cell(e.rev)}<td class="num">${fmtQty(v.pphRate)}%</td>${cell(e.pph)}<td class="tl">${v.pphRef?esc(v.pphRef):chip('Belum ada','warn')}</td></tr>`}).join('');
+  const t=D.tot;
+  return `<div class="metrics rep-m section" style="margin-top:0"><div><div class="k">${W('PPh final dipotong','Final tax withheld','PPh final dipotong')}</div><div class="v num">${rp(t.pph)}</div></div><div><div class="k">${W('DPP (pendapatan kena PPh)','Taxable base','DPP')}</div><div class="v num">${rp(sumBy(R,e=>e.rev))}</div></div><div><div class="k">${W('PPN dipungut dari klien','VAT collected','PPN dipungut')}</div><div class="v num">${rp(t.ppn)}</div></div><div><div class="k">${W('PPh menunggu pelunasan','Tax pending payment','PPh menunggu bayaran')}</div><div class="v num">${rp(D.pphPend)}</div></div></div>
+  <div class="panel section"><div class="ph"><h2>${W('Rekap PPh per masa pajak','Tax summary by month','Ringkasan cukai ikut bulan')}</h2></div><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Masa pajak','Tax period','Tempoh cukai')}</th><th>DPP</th><th>${W('PPh dipotong','Tax withheld','PPh dipotong')}</th><th>${W('PPN dipungut','VAT collected','PPN dipungut')}</th><th>${W('Pembayaran','Payments','Bayaran')}</th><th>${W('Bukti potong','Slips','Bukti potong')}</th></tr></thead><tbody>${sum||`<tr><td colspan="6" class="muted">${W('Belum ada PPh atau PPN pada periode ini.','No withholding tax or VAT in this period.','Tiada PPh atau PPN dalam tempoh ini.')}</td></tr>`}</tbody>${sum?`<tfoot><tr><td>Total</td>${cell(sumBy(ms,m=>m.dpp))}${cell(t.pph)}${cell(t.ppn)}<td class="num">${R.length}</td><td class="num">${R.length-miss}/${R.length}</td></tr></tfoot>`:''}</table></div></div>
+  ${R.length?`<div class="panel section"><div class="ph"><h2>${W('Rincian pemotongan PPh','Withholding details','Butiran potongan PPh')}</h2>${miss?chip(miss+' '+W('tanpa bukti potong','without slip','tanpa bukti potong'),'warn'):''}</div><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Tanggal bayar','Paid on','Tarikh bayar')}</th><th class="tl">Invoice</th><th class="tl">${W('Klien','Client','Pelanggan')}</th><th class="tl">${W('Proyek','Project','Projek')}</th><th>DPP</th><th>${W('Tarif','Rate','Kadar')}</th><th>PPh</th><th class="tl">${W('No. bukti potong','Slip no.','No. bukti potong')}</th></tr></thead><tbody>${det}</tbody></table></div></div>`:''}
+  <p class="muted rep-note">${W('PPh dihitung saat klien membayar invoice yang diberi tanda "Klien memotong PPh". Untuk pembayaran sebagian, PPh dihitung sebanding. Nomor bukti potong diisi di invoice.','Withholding tax is counted when the client pays an invoice marked as withholding PPh, pro rata for partial payments. Enter the slip number on the invoice.','PPh dikira apabila pelanggan membayar invoice yang ditanda memotong PPh.')}</p>`;
+}
+function repProjModal(id){
+  const D=repData();let name,a,x=null;
+  if(id==='_none'){name=W('Tanpa proyek (overhead kantor)','No project (office overhead)','Tanpa projek (overhed pejabat)');a=D.ovh}
+  else if(id==='_orph'){name=W('Proyek yang sudah dihapus','Deleted projects','Projek yang telah dipadam');a=D.orph||repAgg([])}
+  else{const p=S.projects.find(q=>q.id===id);if(!p)return;x={p,value:contractNow(p),piu:sumBy(projInvs(p),v=>toBase(v,balance(v))),hut:sumBy(S.bills.filter(b=>b.projectId===p.id),billBal),bt:budgetTotal(p),allA:repAgg(D.L.filter(e=>e.pid===p.id))};name=p.name;a=repAgg(D.P.filter(e=>e.pid===id))}
+  const kv=x?`<dl class="kv rep-kv"><dt>${W('Nilai kontrak','Contract value','Nilai kontrak')}</dt><dd class="num">${rp(x.value)}</dd>${x.bt?`<dt>${W('Anggaran biaya (RAB)','Cost budget','Bajet kos')}</dt><dd class="num">${rp(x.bt)} · ${W('terpakai ','used ','digunakan ')}${pct(x.allA.cout/x.bt)}</dd>`:''}<dt>${W('Piutang (invoice belum dibayar)','Receivable (unpaid invoices)','Penghutang')}</dt><dd class="num">${rp(x.piu)}</dd><dt>${W('Hutang vendor','Vendor payable','Hutang vendor')}</dt><dd class="num">${rp(x.hut)}</dd>${x.hut?`<dt>${W('Laba setelah hutang dibayar','Profit after payables','Untung selepas hutang')}</dt><dd class="num ${a.profit-x.hut<0?'neg':''}">${rp(a.profit-x.hut)}</dd>`:''}</dl>`:'';
+  modal(name,`<p class="muted" style="margin-top:0">${repPer(D)}</p>${repStatement(a,!!x||id==='_orph')}${kv}<div class="btns">${x?`<a class="btn" href="#proyek/${x.p.id}" data-act="close-modal">${W('Buka proyek','Open project','Buka projek')}</a>`:''}<button class="btn primary" data-act="close-modal">${W('Tutup','Close')}</button></div>`);
+}
+
+/* ---- Penulis file Excel (.xlsx) tanpa pustaka luar: SpreadsheetML + zip ---- */
+const XLSX_W=(()=>{
+  const NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main',NSR='http://schemas.openxmlformats.org/officeDocument/2006/relationships',PR='http://schemas.openxmlformats.org/package/2006/relationships';
+  const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+  const crc=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=crcT[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+  function zip(files){
+    const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+    const d=new Date(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+    for(const f of files){
+      const nm=enc.encode(f.name),data=typeof f.data==='string'?enc.encode(f.data):f.data,c=crc(data);
+      const h=new DataView(new ArrayBuffer(30));
+      h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint16(10,tm,true);h.setUint16(12,dt,true);
+      h.setUint32(14,c,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,nm.length,true);h.setUint16(28,0,true);
+      parts.push(new Uint8Array(h.buffer),nm,data);
+      const e=new DataView(new ArrayBuffer(46));
+      e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint16(10,0,true);e.setUint16(12,tm,true);e.setUint16(14,dt,true);
+      e.setUint32(16,c,true);e.setUint32(20,data.length,true);e.setUint32(24,data.length,true);e.setUint16(28,nm.length,true);e.setUint32(42,off,true);
+      cd.push(new Uint8Array(e.buffer),nm);
+      off+=30+nm.length+data.length;
+    }
+    const cs=cd.reduce((s,a)=>s+a.length,0),end=new DataView(new ArrayBuffer(22));
+    end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cs,true);end.setUint32(16,off,true);
+    return new Blob([...parts,...cd,new Uint8Array(end.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+  const xe=s=>String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const colL=i=>{let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s};
+  /* gaya: [nama, numFmt, font, fill, border, alignment] */
+  const XF=[['def',0,0,0,0],['title',0,2,0,0],['b',0,1,0,0],['h',0,4,2,0,'<alignment vertical="center" wrapText="1"/>'],['hr',0,4,2,0,'<alignment horizontal="right" vertical="center" wrapText="1"/>'],
+    ['m',164,0,0,0],['ms',164,1,0,1],['mt',164,1,3,1],['mg',164,1,3,2],['p',165,0,0,0],['ps',165,1,0,1],['pt',165,1,3,1],['pg',165,1,3,2],['p2',167,0,0,0],['d',166,0,0,0],
+    ['note',0,3,0,0],['ind',0,0,0,0,'<alignment indent="1"/>'],['ts',0,1,0,1],['tt',0,1,3,1],['tg',0,1,3,2],['sec',0,1,3,0],['i',1,0,0,0],['it',1,1,3,1],['wrap',0,0,0,0,'<alignment vertical="top" wrapText="1"/>'],['dt',166,1,3,1]];
+  const SI={};XF.forEach((x,i)=>SI[x[0]]=i);
+  function styles(moneyFmt){
+    const xf=XF.map(([,n,f,fi,b,al])=>`<xf numFmtId="${n}" fontId="${f}" fillId="${fi}" borderId="${b}" xfId="0"${n?' applyNumberFormat="1"':''}${f?' applyFont="1"':''}${fi?' applyFill="1"':''}${b?' applyBorder="1"':''}${al?` applyAlignment="1">${al}</xf>`:'/>'}`).join('');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="${NS}"><numFmts count="4"><numFmt numFmtId="164" formatCode="${xe(moneyFmt)}"/><numFmt numFmtId="165" formatCode="0.0%"/><numFmt numFmtId="166" formatCode="d mmm yyyy"/><numFmt numFmtId="167" formatCode="0.00%"/></numFmts>`+
+      `<fonts count="5"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="15"/><name val="Calibri"/><family val="2"/></font><font><i/><sz val="10"/><color rgb="FF5E6676"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font></fonts>`+
+      `<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1B2333"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEDEFE9"/><bgColor indexed="64"/></patternFill></fill></fills>`+
+      `<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top style="thin"><color rgb="FF9AA3B3"/></top><bottom/><diagonal/></border><border><left/><right/><top style="thin"><color rgb="FF1B2333"/></top><bottom style="double"><color rgb="FF1B2333"/></bottom><diagonal/></border></borders>`+
+      `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${XF.length}">${xf}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles><dxfs count="0"/><tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/></styleSheet>`;
+  }
+  const num=v=>{const x=Math.round(v*1e6)/1e6;return Object.is(x,-0)?0:x};
+  function cellXml(c,ref){
+    if(c==null)return '';
+    if(typeof c!=='object')c={v:c};
+    const si=SI[c.s||'def']||0,sa=si?` s="${si}"`:'';
+    if(c.f!=null){const v=+c.v;return `<c r="${ref}"${sa}><f>${xe(c.f)}</f>${Number.isFinite(v)?`<v>${num(v)}</v>`:''}</c>`}
+    if((c.s==='d'||c.s==='dt')&&typeof c.v==='string'&&/^\d{4}-\d\d-\d\d/.test(c.v))return `<c r="${ref}"${sa}><v>${dnum(c.v)+25569}</v></c>`;
+    if(typeof c.v==='number')return Number.isFinite(c.v)?`<c r="${ref}"${sa}><v>${num(c.v)}</v></c>`:`<c r="${ref}"${sa}/>`;
+    if(c.v==null||c.v==='')return sa?`<c r="${ref}"${sa}/>`:'';
+    return `<c r="${ref}"${sa} t="inlineStr"><is><t xml:space="preserve">${xe(c.v)}</t></is></c>`;
+  }
+  function sheetXml(sh,first){
+    const nc=Math.max(1,...sh.rows.map(r=>r.length)),nr=Math.max(1,sh.rows.length);
+    let pane='';
+    if(sh.freeze||sh.fcol){const xs=sh.fcol||0,ys=sh.freeze||0,tl=colL(xs)+(ys+1),ap=xs&&ys?'bottomRight':ys?'bottomLeft':'topRight';
+      pane=`<pane${xs?` xSplit="${xs}"`:''}${ys?` ySplit="${ys}"`:''} topLeftCell="${tl}" activePane="${ap}" state="frozen"/><selection pane="${ap}" activeCell="${tl}" sqref="${tl}"/>`}
+    const cols=sh.cols.length?`<cols>${sh.cols.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols>`:'';
+    const rows=sh.rows.map((r,i)=>`<row r="${i+1}"${sh.hts[i+1]?` ht="${sh.hts[i+1]}" customHeight="1"`:''}>${r.map((c,j)=>cellXml(c,colL(j)+(i+1))).join('')}</row>`).join('');
+    const mg=sh.merges.length?`<mergeCells count="${sh.merges.length}">${sh.merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells>`:'';
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="${NS}" xmlns:r="${NSR}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${colL(nc-1)}${nr}"/><sheetViews><sheetView${first?' tabSelected="1"':''} workbookViewId="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${rows}</sheetData>${sh.filter?`<autoFilter ref="${sh.filter}"/>`:''}${mg}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="${sh.portrait?'portrait':'landscape'}" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+  }
+  function book(sheets,o){
+    const n=sheets.length,now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+    const dn=sheets.map((s,i)=>s.filter?`<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${s.name.replace(/'/g,"''")}'!${s.filter.replace(/([A-Z]+)(\d+)/g,'$$$1$$$2')}</definedName>`:'').join('');
+    const files=[
+      {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((s,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`},
+      {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="${PR}"><Relationship Id="rId1" Type="${NSR}/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="${NSR}/extended-properties" Target="docProps/app.xml"/></Relationships>`},
+      {name:'docProps/core.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xe(o.title||'')}</dc:title><dc:creator>${xe(o.creator||'')}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`},
+      {name:'docProps/app.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Microsoft Excel</Application></Properties>`},
+      {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="${NS}" xmlns:r="${NSR}"><bookViews><workbookView activeTab="0"/></bookViews><sheets>${sheets.map((s,i)=>`<sheet name="${xe(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets>${dn?`<definedNames>${dn}</definedNames>`:''}<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`},
+      {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="${PR}">${sheets.map((s,i)=>`<Relationship Id="rId${i+1}" Type="${NSR}/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}<Relationship Id="rId${n+1}" Type="${NSR}/styles" Target="styles.xml"/></Relationships>`},
+      {name:'xl/styles.xml',data:styles(o.moneyFmt||'#,##0')},
+      ...sheets.map((s,i)=>({name:`xl/worksheets/sheet${i+1}.xml`,data:sheetXml(s,i===0)}))
+    ];
+    return zip(files);
+  }
+  const sheet=name=>{const s={name:name.replace(/[\[\]:*?\/\\]/g,' ').slice(0,31),rows:[],cols:[],merges:[],hts:{},freeze:0,fcol:0,filter:'',
+    row(cells){s.rows.push(cells||[]);return s.rows.length},get next(){return s.rows.length+1}};return s};
+  return{book,sheet,colL};
+})();
+
+function repXlsx(D){
+  const X=XLSX_W,cL=X.colL,cur=baseCur(),dec=curDec(cur),sym=cur==='IDR'?'Rp':cur,z=dec?'.'+'0'.repeat(dec):'';
+  const moneyFmt=`"${sym}" #,##0${z};[Red]("${sym}" #,##0${z});"-"`;
+  const co=(S.settings.company||(COMPANY&&COMPANY.name)||'').trim(),per=repPer(D);
+  const T_=(v,s)=>({v:v==null?'':String(v),s}),M=(v,s='m')=>({v:rnd(v),s}),F=(f,v,s='m')=>({f,v,s});
+  const head=(sh,title,nc)=>{sh.row([T_(co||APP_NAME,'title')]);sh.row([T_(title,'b')]);sh.row([T_(W('Periode: ','Period: ','Tempoh: ')+per+'   ·   '+W('Dibuat ','Generated ','Dijana ')+fmtD(todayStr())+' '+W('dengan ','with ','dengan ')+APP_NAME,'note')]);sh.row([]);
+    if(nc>1)sh.merges.push(`A1:${cL(nc-1)}1`,`A2:${cL(nc-1)}2`,`A3:${cL(nc-1)}3`)};
+  const note=(sh,txt,nc)=>{const r=sh.row([T_(txt,'note')]);if(nc>1)sh.merges.push(`A${r}:${cL(nc-1)}${r}`)};
+  const basisNote=W('Basis kas: angka dihitung dari uang yang benar-benar diterima dan dibayar. PPN yang dibayar klien bukan pendapatan (titipan pajak). Tagihan vendor yang belum dibayar belum masuk biaya.','Cash basis: figures come from money actually received and paid. VAT paid by clients is not revenue. Unpaid vendor bills are not yet counted as costs.','Asas tunai: angka dikira daripada wang yang benar-benar diterima dan dibayar.');
+  const t=D.tot,mc=D.months.length,sheets=[];
+
+  /* 1. Ringkasan */
+  {const sh=X.sheet(W('Ringkasan','Summary'));sh.cols=[50,22];sh.portrait=true;head(sh,W('Laporan Keuangan Pemilik','Owner Financial Report','Laporan Kewangan Pemilik'),2);
+    sh.row([T_(W('Uraian','Item','Perkara'),'h'),T_(W('Jumlah','Amount'),'hr')]);
+    const kv=(l,v,s='m',ls='ind')=>sh.row([T_(l,ls),s==='p'||s==='ps'?{v:v,s}:M(v,s)]);
+    sh.row([T_(W('LABA RUGI','PROFIT & LOSS','UNTUNG RUGI'),'sec'),T_('','sec')]);
+    kv(L_.rev(),t.rev);kv(W('Dikurangi: ','Less: ','Tolak: ')+L_.pph(),t.pph);kv(L_.netRev(),t.netRev,'ms','ts');kv(L_.proj(),t.proj);kv(L_.gross(),t.gross,'ms','ts');kv(L_.ovh(),t.ovh);kv(L_.net(),t.net,'mg','tg');kv(W('Margin laba bersih','Net margin','Margin untung bersih'),t.rev?t.net/t.rev:0,'p');
+    sh.row([]);sh.row([T_(W('ARUS KAS','CASH FLOW','ALIRAN TUNAI'),'sec'),T_('','sec')]);
+    kv(W('Saldo kas awal periode','Opening cash','Baki tunai awal'),D.open);kv(W('Uang masuk','Money in','Wang masuk'),t.cin);kv(W('Uang keluar','Money out','Wang keluar'),t.cout);kv(W('Saldo kas akhir periode','Closing cash','Baki tunai akhir'),D.close,'mg','tg');
+    sh.row([]);sh.row([T_(W('PAJAK','TAX','CUKAI'),'sec'),T_('','sec')]);
+    kv(W('PPh final dipotong klien (periode)','Final tax withheld (period)','PPh final dipotong (tempoh)'),t.pph);kv(W('PPN dipungut dari klien (periode)','VAT collected (period)','PPN dipungut (tempoh)'),t.ppn);kv(W('PPh menunggu pelunasan invoice (hari ini)','Tax pending invoice payment (today)','PPh menunggu bayaran (hari ini)'),D.pphPend);
+    sh.row([]);sh.row([T_(W('POSISI HARI INI','POSITION TODAY','KEDUDUKAN HARI INI'),'sec'),T_('','sec')]);
+    kv(W('Piutang klien (invoice belum dibayar)','Client receivables (unpaid invoices)','Penghutang pelanggan'),D.piuNow);kv(W('Hutang vendor (tagihan belum dibayar)','Vendor payables (unpaid bills)','Hutang vendor'),D.hutNow);
+    sh.row([]);note(sh,basisNote,2);sheets.push(sh)}
+
+  /* 2. Laba rugi bulanan */
+  {const nc=mc+2,sh=X.sheet(W('Laba Rugi Bulanan','Monthly P&L','Untung Rugi Bulanan'));sh.cols=[46,...D.months.map(()=>16),18];head(sh,W('Laporan Laba Rugi per Bulan','Profit & Loss by Month','Penyata Untung Rugi ikut Bulan'),nc);
+    sh.freeze=sh.row([T_(W('Uraian','Item','Perkara'),'h'),...D.months.map(m=>T_(ymShort(m),'hr')),T_('Total','hr')]);sh.fcol=1;
+    const tc=cL(mc+1),mcol=i=>cL(i+1);
+    const sec=l=>sh.row([T_(l,'sec'),...D.months.map(()=>T_('','sec')),T_('','sec')]);
+    const val=(l,arr,s='m',ls='ind')=>{const r=sh.next;return sh.row([T_(l,ls),...arr.map(v=>M(v,s)),F(mc?`SUM(${mcol(0)}${r}:${mcol(mc-1)}${r})`:'0',sumBy(arr,x=>x),s)])};
+    const fr=(l,fx,arr,tot,s='ms',ls='ts')=>sh.row([T_(l,ls),...arr.map((v,i)=>F(fx(mcol(i)),v,s)),F(fx(tc),tot,s)]);
+    const A=D.byM.map(m=>m.a),col=k=>A.map(a=>a[k]);
+    sec(W('PENDAPATAN','REVENUE'));
+    const rC=val(L_.revC(),col('revC')),rO=val(L_.revO(),col('revO'));
+    const rRev=fr(L_.rev(),c=>`${c}${rC}+${c}${rO}`,col('rev'),t.rev);
+    const rP=val(W('Dikurangi: ','Less: ','Tolak: ')+L_.pph(),col('pph'));
+    const rN=fr(L_.netRev(),c=>`${c}${rRev}-${c}${rP}`,col('netRev'),t.netRev);
+    sh.row([]);sec(L_.proj().toUpperCase());
+    const pcs=catOrder(Object.keys(t.pc),COUT),p0=sh.next;pcs.forEach(k=>val(_tr(k),A.map(a=>a.pc[k]||0)));const p1=sh.next-1;
+    const rPr=fr(W('Total biaya proyek','Total project costs','Jumlah kos projek'),c=>pcs.length?`SUM(${c}${p0}:${c}${p1})`:'0',col('proj'),t.proj);
+    sh.row([]);
+    const rG=fr(L_.gross().toUpperCase(),c=>`${c}${rN}-${c}${rPr}`,col('gross'),t.gross,'mt','tt');
+    fr(W('Margin laba kotor','Gross margin','Margin untung kasar'),c=>`IF(${c}${rRev}=0,0,${c}${rG}/${c}${rRev})`,col('gm'),t.gm,'p','ind');
+    sh.row([]);sec(L_.ovh().toUpperCase());
+    const ocs=catOrder(Object.keys(t.oc),COUT),o0=sh.next;ocs.forEach(k=>val(_tr(k),A.map(a=>a.oc[k]||0)));const o1=sh.next-1;
+    const rO2=fr(W('Total overhead','Total overhead','Jumlah overhed'),c=>ocs.length?`SUM(${c}${o0}:${c}${o1})`:'0',col('ovh'),t.ovh);
+    sh.row([]);
+    const rNP=fr(L_.net().toUpperCase(),c=>`${c}${rG}-${c}${rO2}`,col('net'),t.net,'mg','tg');
+    fr(W('Margin laba bersih','Net margin','Margin untung bersih'),c=>`IF(${c}${rRev}=0,0,${c}${rNP}/${c}${rRev})`,col('margin'),t.margin,'p','ind');
+    sh.row([]);sec(W('CATATAN','MEMO'));
+    val(W('PPN dipungut dari klien (bukan pendapatan)','VAT collected (not revenue)','PPN dipungut (bukan pendapatan)'),col('ppn'));
+    val(W('Uang masuk (kas)','Cash in','Wang masuk'),col('cin'));val(W('Uang keluar (kas)','Cash out','Wang keluar'),col('cout'));
+    sh.row([]);note(sh,basisNote,Math.min(nc,8));sheets.push(sh)}
+
+  /* 3. Laba rugi per proyek */
+  {const all=[...D.projs.map(x=>x.a),D.ovh,...(D.orph?[D.orph]:[])],cats=catOrder(new Set(all.flatMap(a=>Object.keys(a.outCat))),COUT),k=cats.length;
+    const hd=[W('Proyek','Project','Projek'),W('Klien','Client','Pelanggan'),'Status',W('Nilai kontrak','Contract value','Nilai kontrak'),W('Pendapatan (tanpa PPN)','Revenue (excl. VAT)','Pendapatan (tanpa PPN)'),L_.pph(),...cats.map(c=>_tr(c)),W('Total biaya','Total costs','Jumlah kos'),W('Laba','Profit','Untung'),'Margin',W('Piutang (hari ini)','Receivable (today)','Penghutang (hari ini)'),W('Hutang vendor (hari ini)','Vendor payable (today)','Hutang vendor (hari ini)')];
+    const nc=hd.length,sh=X.sheet(W('Laba Rugi Proyek','P&L by Project','Untung Rugi Projek'));sh.cols=[34,24,12,18,20,18,...cats.map(()=>17),18,18,10,18,18];
+    head(sh,W('Laba Rugi per Proyek','Profit & Loss by Project','Untung Rugi ikut Projek'),nc);
+    sh.freeze=sh.row(hd.map((h,i)=>T_(h,i<3?'h':'hr')));sh.hts[sh.freeze]=32;sh.fcol=1;
+    const E='E',Fc='F',c0=6,TB=cL(c0+k),LB=cL(c0+k+1),MG=cL(c0+k+2);
+    const line=(name,client,st,value,a,piu,hut,ns='def',ms='m',ps='p')=>{const r=sh.next;sh.row([T_(name,ns),T_(client,ns),T_(st,ns),value==null?T_('',ms):M(value,ms),M(a.rev,ms),M(a.pph,ms),...cats.map(c=>M(a.outCat[c]||0,ms)),
+      F(k?`SUM(${cL(c0)}${r}:${cL(c0+k-1)}${r})`:'0',a.cout,ms),F(`${E}${r}-${Fc}${r}-${TB}${r}`,a.profit,ms),F(`IF(${E}${r}=0,0,${LB}${r}/${E}${r})`,a.rev?a.profit/a.rev:0,ps),piu==null?T_('',ms):M(piu,ms),hut==null?T_('',ms):M(hut,ms)]);return r};
+    const f0=sh.next;
+    D.projs.forEach(x=>line(x.p.name,x.p.client||'',_tr(PS[x.p.status]?PS[x.p.status][0]:''),x.value,x.a,x.piu,x.hut));
+    if(D.orph)line(W('Proyek yang sudah dihapus','Deleted projects','Projek yang telah dipadam'),'','',null,D.orph,null,null);
+    const f1=sh.next-1,pa=repAgg(D.P.filter(e=>e.pid)),has=f1>=f0;
+    const sumC=(ci,v,s)=>F(has?`SUM(${cL(ci)}${f0}:${cL(ci)}${f1})`:'0',v,s);
+    const rT=sh.next;
+    sh.row([T_(W('Total proyek','Projects total','Jumlah projek'),'tt'),T_('','tt'),T_('','tt'),sumC(3,sumBy(D.projs,x=>x.value),'mt'),sumC(4,pa.rev,'mt'),sumC(5,pa.pph,'mt'),...cats.map((c,i)=>sumC(c0+i,pa.outCat[c]||0,'mt')),sumC(c0+k,pa.cout,'mt'),F(`${E}${rT}-${Fc}${rT}-${TB}${rT}`,pa.profit,'mt'),F(`IF(${E}${rT}=0,0,${LB}${rT}/${E}${rT})`,pa.rev?pa.profit/pa.rev:0,'pt'),sumC(c0+k+3,sumBy(D.projs,x=>x.piu),'mt'),sumC(c0+k+4,sumBy(D.projs,x=>x.hut),'mt')]);
+    const rOv=line(W('Tanpa proyek (overhead kantor)','No project (office overhead)','Tanpa projek (overhed pejabat)'),'','',null,D.ovh,null,null,'ind');
+    const rG=sh.next,sm=(ci,v,s)=>F(`${cL(ci)}${rT}+${cL(ci)}${rOv}`,v,s);
+    sh.row([T_(L_.net().toUpperCase(),'tg'),T_('','tg'),T_('','tg'),T_('','mg'),sm(4,t.rev,'mg'),sm(5,t.pph,'mg'),...cats.map((c,i)=>sm(c0+i,t.outCat[c]||0,'mg')),sm(c0+k,t.cout,'mg'),F(`${E}${rG}-${Fc}${rG}-${TB}${rG}`,t.net,'mg'),F(`IF(${E}${rG}=0,0,${LB}${rG}/${E}${rG})`,t.margin,'pg'),T_('','mg'),T_('','mg')]);
+    sh.row([]);note(sh,W('Pendapatan, PPh, dan biaya mengikuti periode laporan. Nilai kontrak (termasuk pekerjaan tambah/kurang yang disetujui), piutang, dan hutang vendor adalah posisi hari ini.','Revenue, tax and costs follow the report period. Contract value (incl. approved change orders), receivables and vendor payables are as of today.','Pendapatan, cukai dan kos mengikut tempoh laporan. Nilai kontrak, penghutang dan hutang vendor ialah kedudukan hari ini.'),Math.min(nc,10));
+    note(sh,basisNote,Math.min(nc,10));sheets.push(sh)}
+
+  /* 4. Arus kas */
+  {const ic_=catOrder(Object.keys(t.inCat),CIN),oc_=catOrder(Object.keys(t.outCat),COUT),ni=ic_.length,no=oc_.length;
+    const hd=[W('Bulan','Month'),W('Saldo awal','Opening balance','Baki awal'),...ic_.map(c=>W('Masuk: ','In: ','Masuk: ')+_tr(c)),W('Total masuk','Total in','Jumlah masuk'),...oc_.map(c=>W('Keluar: ','Out: ','Keluar: ')+_tr(c)),W('Total keluar','Total out','Jumlah keluar'),W('Arus kas bersih','Net cash flow','Aliran tunai bersih'),W('Saldo akhir','Closing balance','Baki akhir')];
+    const nc=hd.length,sh=X.sheet(W('Arus Kas','Cash Flow','Aliran Tunai'));sh.cols=[16,18,...ic_.map(()=>18),18,...oc_.map(()=>17),18,18,18];head(sh,W('Laporan Arus Kas per Bulan','Cash Flow by Month','Aliran Tunai ikut Bulan'),nc);
+    sh.freeze=sh.row(hd.map((h,i)=>T_(h,i?'hr':'h')));sh.hts[sh.freeze]=32;sh.fcol=1;
+    const TI=cL(2+ni),TO=cL(3+ni+no),NT=cL(4+ni+no),CL=cL(5+ni+no),f0=sh.next;
+    D.cash.forEach((c,i)=>{const r=sh.next;sh.row([T_(monthLabel(c.ym)),i?F(`${CL}${r-1}`,c.open):M(c.open),...ic_.map(k=>M(c.inCat[k]||0)),F(ni?`SUM(C${r}:${cL(1+ni)}${r})`:'0',c.cin,'ms'),...oc_.map(k=>M(c.outCat[k]||0)),F(no?`SUM(${cL(3+ni)}${r}:${cL(2+ni+no)}${r})`:'0',c.cout,'ms'),F(`${TI}${r}-${TO}${r}`,c.cin-c.cout),F(`B${r}+${NT}${r}`,c.close,'ms')])});
+    const f1=sh.next-1,sc=(ci,v)=>F(`SUM(${cL(ci)}${f0}:${cL(ci)}${f1})`,v,'mt');
+    if(D.cash.length){const r=sh.next;sh.row([T_('Total','tt'),F(`B${f0}`,D.open,'mt'),...ic_.map((k,i)=>sc(2+i,t.inCat[k]||0)),sc(2+ni,t.cin),...oc_.map((k,i)=>sc(3+ni+i,t.outCat[k]||0)),sc(3+ni+no,t.cout),F(`${TI}${r}-${TO}${r}`,t.cin-t.cout,'mt'),F(`B${r}+${NT}${r}`,D.close,'mg')])}
+    sh.row([]);note(sh,D.open0?W('Saldo kas awal sebelum transaksi pertama: ','Opening cash before the first transaction: ','Baki tunai awal: ')+moneyPdf(D.open0):W('Saldo kas awal belum diisi di aplikasi, jadi saldo dihitung mulai dari nol.','Opening cash is not set in the app, so balances start from zero.','Baki tunai awal belum diisi, jadi baki bermula dari sifar.'),Math.min(nc,8));
+    sheets.push(sh)}
+
+  /* 5. Rekap PPh */
+  {const ms=repTaxMonths(D),R=D.pphRows,nc=8,sh=X.sheet(W('Rekap PPh','Tax Summary','Ringkasan Cukai'));sh.cols=[16,18,24,28,18,10,18,26];head(sh,W('Rekap PPh Final Dipotong Klien & PPN','Withholding Tax & VAT Summary','Ringkasan PPh & PPN'),nc);
+    sh.row([T_(W('Masa pajak','Tax period','Tempoh cukai'),'h'),T_(W('DPP (pendapatan)','Tax base (revenue)','DPP (pendapatan)'),'hr'),T_(W('PPh final dipotong','Final tax withheld','PPh final dipotong'),'hr'),T_(W('PPN dipungut','VAT collected','PPN dipungut'),'hr'),T_(W('Jumlah pembayaran','Payments','Bilangan bayaran'),'hr'),T_(W('Bukti potong tercatat','Slips recorded','Bukti potong direkod'),'hr')]);sh.hts[sh.rows.length]=32;
+    const a0=sh.next;ms.forEach(m=>sh.row([T_(monthLabel(m.ym)),M(m.dpp),M(m.pph),M(m.ppn),{v:m.n,s:'i'},{v:m.ref,s:'i'}]));const a1=sh.next-1;
+    if(ms.length)sh.row([T_('Total','tt'),...['B','C','D'].map((c,i)=>F(`SUM(${c}${a0}:${c}${a1})`,[sumBy(ms,m=>m.dpp),t.pph,t.ppn][i],'mt')),F(`SUM(E${a0}:E${a1})`,R.length,'it'),F(`SUM(F${a0}:F${a1})`,R.filter(e=>e.v&&e.v.pphRef).length,'it')]);
+    sh.row([]);sh.row([]);
+    const hr=sh.row([W('Tanggal bayar','Paid on','Tarikh bayar'),W('No. invoice','Invoice no.','No. invoice'),W('Klien','Client','Pelanggan'),W('Proyek','Project','Projek'),'DPP',W('Tarif','Rate','Kadar'),W('PPh dipotong','Tax withheld','PPh dipotong'),W('No. bukti potong','Slip no.','No. bukti potong')].map((h,i)=>T_(h,[4,5,6].includes(i)?'hr':'h')));
+    const b0=sh.next;R.forEach(e=>{const v=e.v;sh.row([T_(e.date,'d'),T_(v.number||''),T_(v.client||''),T_(projName(v.projectId)),M(e.rev),{v:(+v.pphRate||0)/100,s:'p2'},M(e.pph),T_(v.pphRef||W('(belum ada)','(missing)','(tiada)'))])});const b1=sh.next-1;
+    if(R.length){sh.row([T_('Total','tt'),T_('','tt'),T_('','tt'),T_('','tt'),F(`SUM(E${b0}:E${b1})`,sumBy(R,e=>e.rev),'mt'),T_('','tt'),F(`SUM(G${b0}:G${b1})`,t.pph,'mt'),T_('','tt')]);sh.filter=`A${hr}:H${b1}`}
+    else note(sh,W('Belum ada pemotongan PPh pada periode ini.','No withholding in this period.','Tiada potongan PPh dalam tempoh ini.'),nc);
+    sh.row([]);note(sh,W('PPh dihitung saat klien membayar invoice yang diberi tanda memotong PPh; pembayaran sebagian dihitung sebanding. PPh yang menunggu pelunasan invoice (hari ini): ','Withholding is counted when the client pays an invoice marked as withholding, pro rata for partial payments. Tax pending invoice payment (today): ','PPh dikira apabila pelanggan membayar invoice. PPh menunggu bayaran (hari ini): ')+moneyPdf(D.pphPend),nc);
+    sheets.push(sh)}
+
+  /* 6. Transaksi */
+  {const hd=[W('Tanggal','Date','Tarikh'),W('Jenis','Type'),W('Kategori','Category'),W('Keterangan','Description'),W('Proyek','Project','Projek'),W('Vendor','Vendor'),W('Masuk','In'),W('Keluar','Out'),W('Pendapatan (tanpa PPN)','Revenue (excl. VAT)','Pendapatan (tanpa PPN)'),'PPN',W('PPh dipotong','Tax withheld','PPh dipotong')];
+    const nc=hd.length,sh=X.sheet(W('Transaksi','Transactions','Transaksi'));sh.cols=[13,9,22,44,26,22,17,17,19,15,15];head(sh,W('Daftar Transaksi','Transaction List','Senarai Transaksi'),nc);
+    const hr=sh.row(hd.map((h,i)=>T_(h,i>5?'hr':'h')));sh.freeze=hr;sh.hts[hr]=32;
+    const L=D.P.slice().sort((a,b)=>a.date.localeCompare(b.date)),f0=sh.next;
+    L.forEach(e=>{const x=e.t,inn=e.type==='in';sh.row([T_(e.date,'d'),T_(inn?W('Masuk','In'):W('Keluar','Out')),T_(_tr(e.cat)),T_(x.desc||''),T_(projName(e.pid)||(e.pid?W('(proyek dihapus)','(deleted project)','(projek dipadam)'):'')),T_(vName(x.vendorId)),inn?M(e.amt):T_(''),inn?T_(''):M(e.amt),inn?M(e.rev):T_(''),inn&&e.ppn?M(e.ppn):T_(''),inn&&e.pph?M(e.pph):T_('')])});
+    const f1=sh.next-1;
+    if(L.length){sh.filter=`A${hr}:K${f1}`;sh.row([T_('Total','tt'),T_('','tt'),T_('','tt'),T_('','tt'),T_('','tt'),T_('','tt'),...['G','H','I','J','K'].map((c,i)=>F(`SUM(${c}${f0}:${c}${f1})`,[t.cin,t.cout,t.rev,t.ppn,t.pph][i],'mt'))])}
+    sheets.push(sh)}
+
+  return XLSX_W.book(sheets,{title:W('Laporan Keuangan','Financial Report','Laporan Kewangan')+' '+per,creator:co||APP_NAME,moneyFmt});
+}
+async function saveBlob(fname,blob){
+  try{const dl=window.claude&&await window.claude.use('downloads');if(!dl)throw {code:'unavailable'};await dl.save({filename:fname,data:blob});toast(W('File disimpan','File saved','Fail disimpan'));return}
+  catch(err){if(err&&err.code==='declined')return}
+  const url=URL.createObjectURL(blob);
+  if('download' in HTMLAnchorElement.prototype&&!(isIOS()&&isStd())){const a=document.createElement('a');a.href=url;a.download=fname;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);toast(W('File Excel diunduh','Excel file downloaded','Fail Excel dimuat turun'));return}
+  modal(W('File siap','File ready','Fail sedia'),`<p style="margin-top:0">${W('Buka file berikut lalu simpan atau bagikan dari sana.','Open the file below, then save or share it from there.','Buka fail berikut lalu simpan dari sana.')}</p><div class="btns start"><a class="btn primary" href="${url}" target="_blank" rel="noopener" download="${esc(fname)}">${esc(fname)}</a></div>`);
+}
+Object.assign(A,{
+  'rep-tab':el=>{ui.repTab=el.dataset.v;render()},
+  'rep-proj':el=>repProjModal(el.dataset.id),
+  'rep-xlsx':async()=>{
+    if(!isOwner())return toast(W('Laporan khusus pemilik','Reports are for the owner only','Laporan khas untuk pemilik'));
+    let blob;try{blob=repXlsx(repData())}catch(err){console.error(err);toast(W('Excel gagal dibuat: ','Could not create Excel: ','Excel gagal dibuat: ')+(err&&err.message||err));return}
+    const slug=s=>String(s||'').normalize('NFKD').replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+    await saveBlob(`${W('Laporan-Keuangan','Financial-Report','Laporan-Kewangan')}-${slug(S.settings.company)||'ZUI'}-${ui.repYear==='all'?W('semua','all','semua'):ui.repYear}.xlsx`,blob);
+  },
+  'rep-open':()=>modal(W('Saldo kas awal','Opening cash balance','Baki tunai awal'),`<form data-form="cashopen"><p class="muted" style="margin-top:0">${W('Jumlah uang kas dan rekening sebelum transaksi pertama yang dicatat di aplikasi. Dipakai untuk menghitung saldo di laporan arus kas.','Cash and bank balance before the first transaction recorded in the app. Used to compute balances in the cash flow report.','Jumlah wang tunai dan akaun sebelum transaksi pertama yang direkod.')}</p>${fld(W('Saldo awal (','Opening balance (','Baki awal (')+baseCur()+')',`<input name="cashOpen" type="number" step="any" inputmode="decimal" value="${+S.settings.cashOpen||''}" autofocus>`)}<div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel')}</button><button class="btn primary" type="submit">${W('Simpan','Save')}</button></div></form>`)
+});
+SUB.cashopen=(f,d)=>{if(!isOwner())return;S.settings.cashOpen=+d.cashOpen||0;save();closeModal();render();toast(W('Saldo awal disimpan','Opening balance saved','Baki awal disimpan'))};
 
 Object.assign(EN,{"Sistem pembayaran":"Pay system","Upah harian (dari absensi)":"Daily wage (from attendance)","Gaji bulanan (karyawan tetap)":"Monthly salary (permanent staff)","Gaji pokok per bulan (":"Monthly base salary (","Tunjangan makan & transport":"Meal & transport allowance","Tunjangan lain":"Other allowance","Potongan BPJS":"BPJS deduction","Potongan lain":"Other deduction","Absensi tetap dicatat untuk kehadiran, tapi tidak dihitung sebagai upah harian.":"Attendance is still recorded, but not paid as daily wages.","Bayar gaji – ":"Pay salary – ","Periode gaji":"Pay period","Tanggal bayar":"Payment date","Kehadiran tercatat bulan ini:":"Attendance recorded this month:","Pendapatan":"Earnings","Gaji pokok":"Base salary","Lembur":"Overtime","Bonus / THR":"Bonus","Potongan":"Deductions","Biaya dibebankan ke proyek":"Charge cost to project","Kantor / umum":"Office / general","Total pendapatan":"Total earnings","Total potongan":"Total deductions","Gaji bersih dibayar":"Net salary paid","Bayar gaji":"Pay salary","Isi gaji pokok atau pendapatan lain":"Enter a base salary or other earnings","Gaji dibayar dan slip dibuat":"Salary paid and payslip created","SLIP GAJI":"PAYSLIP","Periode:":"Period:","Dibayar:":"Paid:","Nama":"Name","Kehadiran":"Attendance","Potongan kasbon":"Advance deduction","Tidak ada potongan":"No deductions","Penerima":"Recipient","Sistem":"System","Gaji bulanan":"Monthly salary","Hadir bulan ini":"Present this month","Riwayat gaji":"Salary history","Slip gaji":"Payslip","Halaman pekerja":"Worker page","Absen dengan selfie & lokasi, tugas, lapor kerja, upah, kasbon, dan chat lewat link pribadi ber-PIN.":"Selfie & location check-in, tasks, work reports, wages, advances and chat through a private PIN-protected link.","Buat link":"Create link","Ganti PIN":"Change PIN","Lihat":"View","PIN 4 angka ini diminta saat pekerja membuka link di HP-nya. Beri tahu PIN langsung ke pekerja, jangan lewat chat grup.":"This 4-digit PIN is asked when the worker opens the link. Tell the worker the PIN in person, not in a group chat.","Link pekerja dibuat. PIN: ":"Worker link created. PIN: ","Menunggu konfirmasi":"Awaiting confirmation","Di luar lokasi":"Outside site","Absen HP":"Phone check-in","Laporan kerja":"Work report","Pengajuan kasbon":"Advance request","Izin sakit":"Sick leave","Izin tidak masuk":"Leave request","Pengajuan":"Request","Konfirmasi absen – ":"Confirm attendance – ","Pulang":"Out","Masuk":"In","Tanpa proyek":"No project","Lokasi proyek belum diatur":"Site location not set","Lihat di peta":"View on map","Belum absen pulang. Kamu tetap bisa mengonfirmasi sekarang.":"No check-out yet. You can still confirm now.","Tolak":"Reject","Chat – ":"Chat – ","Tulis pesan untuk pekerja atau catatan internal…":"Write a message to the worker or an internal note…","Kirim ke pekerja":"Send to worker","PIN harus 4 angka":"PIN must be 4 digits","PIN diganti: ":"PIN changed: ","Lokasi absen":"Check-in location","Belum diatur":"Not set","Berdiri di lokasi proyek, lalu tekan tombol di bawah supaya absen pekerja hanya bisa dilakukan di sini.":"Stand at the project site, then press the button below so workers can only check in here.","Pakai lokasi saya sekarang":"Use my current location","Ubah radius":"Change radius","Link pekerja diaktifkan":"Worker link turned on","Link pekerja dimatikan":"Worker link turned off","Absensi tanggal ini sudah dibayar":"This date's attendance has already been paid","Absen dikonfirmasi":"Attendance confirmed","Absen ini ditolak dan tidak dihitung. Pekerja akan melihat statusnya di HP.":"This check-in is rejected and not counted. The worker will see the status.","Absen ditolak":"Check-in rejected","Laporan kerja – ":"Work report – ","Abaikan":"Ignore","Masukkan ke laporan harian":"Add to daily report","Laporan ini tidak punya proyek":"This report has no project","Ditambahkan ke laporan harian":"Added to daily report","Catatan untuk pekerja (opsional)":"Note to worker (optional)","Setujui":"Approve","Pengajuan disetujui":"Request approved","Pengajuan ditolak":"Request rejected","Hanya pemilik atau admin yang bisa menyetujui kasbon":"Only the owner or an admin can approve advances","HP ini tidak mendukung lokasi":"This phone doesn't support location","Mengambil lokasi…":"Getting location…","Lokasi tidak bisa diambil. Izinkan akses lokasi di browser.":"Location unavailable. Allow location access in the browser.","Radius absen":"Check-in radius","Radius (meter)":"Radius (meters)","absen / pengajuan pekerja menunggu konfirmasi":"worker check-ins / requests awaiting confirmation","Buka Absensi untuk menerima atau menolak":"Open Attendance to accept or reject","Pesan baru dari":"New message from","Pekerja":"Workers"});
 Object.assign(MSD,{"Gaji bulanan":"Gaji bulanan","Slip gaji":"Slip gaji","Halaman pekerja":"Halaman pekerja","Menunggu konfirmasi":"Menunggu pengesahan","Lokasi absen":"Lokasi kehadiran","Pakai lokasi saya sekarang":"Guna lokasi saya sekarang"});

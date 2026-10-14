@@ -1,4 +1,4 @@
-/* Pengaturan Zui Kontraktor (versi Firebase).
+/* Pengaturan ZUI KONTRAKTOR (versi Firebase).
    Isi bagian "firebase" dengan data dari Firebase Console:
    Project settings (ikon roda gigi) → General → Your apps → aplikasi Web → SDK setup and configuration → Config.
    Lihat PANDUAN-FIREBASE.md untuk langkah lengkap. */

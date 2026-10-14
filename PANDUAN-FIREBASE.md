@@ -1,10 +1,10 @@
-# Panduan memasang Zui Kontraktor di Firebase
+# Panduan memasang ZUI KONTRAKTOR di Firebase
 
 Lakukan dengan akun Google yang sama seperti project Zui lainnya. Semua langkah di Firebase Console bisa dari laptop atau HP (mode situs desktop).
 
 ## A. Cadangkan data lama dulu (wajib kalau ingin memindahkan data)
 
-1. Buka Zui Kontraktor yang **masih memakai Supabase** (versi sekarang).
+1. Buka ZUI KONTRAKTOR yang **masih memakai Supabase** (versi sekarang).
 2. Masuk ke **Pengaturan → Data → Cadangkan data (.json)**.
 3. Simpan file itu. Ulangi untuk setiap perusahaan kalau kamu punya lebih dari satu.
 
@@ -36,7 +36,7 @@ Kalau ingin hanya akun tertentu yang boleh membuat perusahaan, ubah fungsi `canC
 ## E. Sambungkan aplikasi ke Firebase
 
 1. Klik ikon roda gigi → **Project settings → General**.
-2. Di bagian **Your apps**, tekan ikon **Web `</>`**, beri nama `Zui Kontraktor`, lalu **Register app**. Hosting tidak perlu dicentang.
+2. Di bagian **Your apps**, tekan ikon **Web `</>`**, beri nama `ZUI KONTRAKTOR`, lalu **Register app**. Hosting tidak perlu dicentang.
 3. Salin nilai `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, dan `appId`.
 4. Buka file **`config.js`** dari paket ini dan ganti setiap `ISI_...` dengan nilai tadi.
 5. Kalau config.js lama punya pengaturan `tagline`, `showLanding`, atau `pricing`, salin juga ke bagian bawah config.js baru.
