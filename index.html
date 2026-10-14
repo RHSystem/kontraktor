@@ -720,8 +720,8 @@ function fbClient(cfg){
       const u=auth.currentUser;if(!u||!u.email)return 0;const em=lower(u.email);
       const s=await db.collection('invites').doc(em).collection('companies').get();let n=0;
       for(const d of s.docs){const cid=d.id,inv=d.data();
-        try{const m=await co(cid).collection('members').doc(u.uid).get();const b=db.batch();
-          if(!m.exists){b.set(co(cid).collection('members').doc(u.uid),{user_id:u.uid,role:inv.role,email:em,display_name:u.displayName||'',created_at:now()});b.set(db.collection('users').doc(u.uid).collection('companies').doc(cid),{role:inv.role,created_at:now()})}
+        try{let ex=false;try{ex=(await co(cid).collection('members').doc(u.uid).get()).exists}catch(e){}const b=db.batch();
+          if(!ex){b.set(co(cid).collection('members').doc(u.uid),{user_id:u.uid,role:inv.role,email:em,display_name:u.displayName||'',created_at:now()});b.set(db.collection('users').doc(u.uid).collection('companies').doc(cid),{role:inv.role,created_at:now()})}
           b.delete(d.ref);b.delete(co(cid).collection('invites').doc(em));await b.commit();n++}catch(e){}}
       return n;
     },
