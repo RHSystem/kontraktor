@@ -1,6 +1,6 @@
 // Zui Kontraktor service worker
 // Naikkan angka versi ini setiap kali kamu mengubah file aplikasi.
-const VERSION = 'zui-kontraktor-v4';
+const VERSION = 'zui-kontraktor-v5';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './config.js'];
 // File dari luar yang aman disimpan untuk offline (Firebase, jsPDF, dan font).
 const CDN = ['www.gstatic.com', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
@@ -24,6 +24,9 @@ self.addEventListener('fetch', e => {
 
   // Halaman aplikasi: ambil versi terbaru dulu, pakai simpanan kalau offline.
   if (req.mode === 'navigate') {
+    // Halaman klien (klien.html) selalu diambil langsung dan tidak menimpa simpanan aplikasi.
+    const isApp = url.origin === location.origin && /\/(index\.html)?$/.test(url.pathname);
+    if (!isApp) return;
     e.respondWith(
       fetch(req)
         .then(res => { const cp = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', cp)); return res; })

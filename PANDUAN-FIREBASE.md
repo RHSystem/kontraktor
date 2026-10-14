@@ -63,3 +63,21 @@ Kalau ingin hanya akun tertentu yang boleh membuat perusahaan, ubah fungsi `canC
 - **Kuota gratis:** paket gratis Firebase (Spark) punya batas baca/tulis harian. Untuk satu perusahaan kecil biasanya cukup. Kalau tim bertambah besar, pantau di menu **Usage** dan pertimbangkan paket Blaze (bayar sesuai pemakaian).
 - **Lupa kata sandi:** tautan reset dari email membuka halaman Firebase untuk membuat kata sandi baru, lalu kembali masuk ke aplikasi.
 - **Mode offline dan pengingat** tetap berjalan seperti sebelumnya.
+
+## H. Halaman klien + chat (fitur baru)
+
+1. **Wajib:** buka Firestore Database → **Rules**, tempel ulang **seluruh isi `firestore.rules` yang baru**, lalu **Publish**. Tanpa ini, link klien dan chat tidak bisa dipakai.
+2. Unggah juga file **`klien.html`** ke repo GitHub, di folder yang sama dengan `index.html`.
+3. Di aplikasi, buka sebuah proyek → panel **Halaman klien** → **Buat link klien** (hanya pemilik/admin).
+4. Tekan **Kirim link** untuk mengirimnya lewat WhatsApp, atau **Lihat sebagai klien** untuk melihat tampilannya.
+
+Yang terlihat klien: progres + kurva S, laporan harian + foto, tagihan dan jadwal pembayaran, dokumen yang perlu disetujui (penawaran, pekerjaan tambah-kurang, berita acara), dan chat.
+Yang **tidak** terlihat: RAB internal, biaya, upah, kasbon, vendor, PO, dan catatan internal tim.
+
+Siapa bisa apa di chat:
+- **Pemilik & admin**: membalas klien, kirim foto, mematikan/mengaktifkan link.
+- **Staf**: membaca chat dan menulis catatan internal (tidak terlihat klien).
+- **Hanya lihat**: tidak melihat chat.
+
+Setiap proyek punya link dan ruang chat sendiri. Kalau link tersebar ke orang lain, tekan **Matikan link**; riwayat chat tetap tersimpan.
+Data di halaman klien diperbarui otomatis beberapa detik setelah timmu menyimpan perubahan, selama ada anggota tim yang membuka aplikasi.

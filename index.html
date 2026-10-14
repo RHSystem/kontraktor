@@ -367,6 +367,20 @@ label.btn:focus-within{outline:2px solid var(--info);outline-offset:2px}
 .sigbox.on .sighint{display:none}
 .sgimg{display:block;max-height:64px;max-width:180px;margin:4px auto 2px}
 #sync.off{background:var(--warn);color:#fff}
+
+.linkbox{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--neg);color:#fff;font-size:12px;margin-left:4px}
+.lastmsg{margin-top:12px;border-left:3px solid var(--accent);padding:4px 10px;font-size:14px}.lastmsg small{color:var(--muted)}
+.chatlist{max-height:52vh;min-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px 10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.cm{max-width:82%;padding:8px 11px;border-radius:12px;font-size:15px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;position:relative}
+.cm small{display:block;font-size:11.5px;color:var(--muted);margin-bottom:2px;white-space:normal}
+.cm.in{align-self:flex-start;background:var(--soft);border-bottom-left-radius:4px}
+.cm.out{align-self:flex-end;background:color-mix(in srgb,var(--accent) 22%,var(--surface));border-bottom-right-radius:4px}
+.cm.note{align-self:center;max-width:92%;background:color-mix(in srgb,var(--warn) 14%,var(--surface));border:1px dashed var(--warn);padding-right:34px}
+.cm.note .icon-btn{position:absolute;top:2px;right:2px;padding:4px}
+.cm img{display:block;max-width:220px;max-height:220px;border-radius:8px;margin:4px 0;cursor:zoom-in}
+.chatform textarea{width:100%}
+.chimg{position:relative;display:inline-block;margin-bottom:6px}.chimg img{max-height:90px;border-radius:8px;display:block}
 </style>
 </head>
 <body>
@@ -549,8 +563,8 @@ const TERMS={ms:{q:'1. Harga termasuk upah dan bahan seperti dalam butiran.\n2. 
  en:{q:"1. Prices include labour and materials as itemised.\n2. Payment: 30% down payment, progress-based instalments, final payment on handover.\n3. Additional or reduced work is priced separately with both parties' approval.",i:'Please pay before the due date to the bank account above. Confirm your transfer via WhatsApp.'}};
 const CO_DEF={id:'Nama Perusahaan Anda',en:'Your Company Name',ms:'Nama Syarikat Anda'};
 const defaults=()=>({v:1,settings:{company:CO_DEF[LANG],owner:'',address:'',phone:'',email:'',npwp:'',bank:'',ppnRate:11,ppnDefault:false,quotePrefix:'QT',invoicePrefix:'INV',validDays:14,dueDays:7,currency:'IDR',quoteTerms:TERMS[LANG].q,invoiceTerms:TERMS[LANG].i,logo:''},
-  projects:[],tasks:[],tx:[],quotes:[],invoices:[],vendors:[],bills:[],catalog:[],workers:[],att:[],payroll:[],clients:[],surveys:[],daily:[],po:[],mmove:[],changes:[],kasbon:[],cnt:{}});
-const COLLS=['projects','tasks','tx','quotes','invoices','vendors','bills','catalog','workers','att','payroll','clients','surveys','daily','po','mmove','changes','kasbon'];
+  projects:[],tasks:[],tx:[],quotes:[],invoices:[],vendors:[],bills:[],catalog:[],workers:[],att:[],payroll:[],clients:[],surveys:[],daily:[],po:[],mmove:[],changes:[],kasbon:[],cnotes:[],cnt:{}});
+const COLLS=['projects','tasks','tx','quotes','invoices','vendors','bills','catalog','workers','att','payroll','clients','surveys','daily','po','mmove','changes','kasbon','cnotes'];
 const SB_OK=!!(window.firebase&&FB_CFG.apiKey&&FB_CFG.projectId&&!/^ISI|YOUR/i.test(FB_CFG.apiKey));
 const SB=SB_OK?fbClient(FB_CFG):null;
 /* ============ Penghubung Firebase (Auth + Firestore) dengan antarmuka mirip Supabase ============ */
@@ -751,7 +765,7 @@ function setSync(st){
 function save(){
   if(!S||!COMPANY||ROLE==='viewer')return;
   ensureClients();
-  dirty=true;clearTimeout(saveT);saveT=setTimeout(push,600);setSync('saving');cacheSoon();
+  dirty=true;clearTimeout(saveT);saveT=setTimeout(push,600);setSync('saving');cacheSoon();if(typeof schedPub==='function')schedPub();
 }
 const flush=()=>push();
 async function push(){
@@ -778,12 +792,12 @@ async function push(){
   finally{pushing=false;if(dirty&&SYNC!=='error'){clearTimeout(saveT);saveT=setTimeout(push,300)}}
 }
 window.addEventListener('beforeunload',e=>{if((dirty||pushing)&&!CACHED){e.preventDefault();e.returnValue=''}});
-function unsub(){try{if(CHAN&&SB)SB.removeChannel(CHAN)}catch(e){}CHAN=null}
+function unsub(){try{if(CHAN&&SB)SB.removeChannel(CHAN)}catch(e){}CHAN=null;if(typeof stopShares==='function')stopShares()}
 function subscribe(){
   unsub();
   CHAN=SB.channel('rec-'+COMPANY.id).on('postgres_changes',{event:'*',schema:'public',table:'records',filter:'company_id=eq.'+COMPANY.id},onRemote).subscribe();
 }
-function scheduleRender(){clearTimeout(rT);rT=setTimeout(()=>{if(S)render()},250);cacheSoon()}
+function scheduleRender(){clearTimeout(rT);rT=setTimeout(()=>{if(S){if(typeof ensureShares==='function')ensureShares();render()}},250);cacheSoon()}
 function onRemote(p){
   if(!S)return;
   const r=p.eventType==='DELETE'?p.old:p.new;if(!r||!r.coll)return;
@@ -982,7 +996,7 @@ async function openCompany(m){
   }
   subscribe();startApp();
   if(_pend){save();toast(_tr('Perubahan offline dikirim ke server'))}
-  cacheSoon();if(OFFLINE)setSync(dirty?'error':'ok');setTimeout(()=>{notifyDue();storeDue()},2500);
+  cacheSoon();if(OFFLINE)setSync(dirty?'error':'ok');setTimeout(()=>{notifyDue();storeDue()},2500);if(!OFFLINE)setTimeout(()=>{ensureShares();schedPub()},1200);
 }
 async function switchCompany(id){
   await push();const m=COMPANIES.find(x=>x.company_id===id);if(!m)return;
@@ -1184,6 +1198,7 @@ function viewBeranda(){
     ...(wagesDue>0?[_h`<button class="item" data-act="go-att"><div class="main2"><div class="t">Upah tukang belum dibayar</div><div class="s">${rp(wagesDue)} dari absensi yang belum dibayarkan</div></div>${chip(_tr('Upah'),'info')}</button>`]:[]),
     ...overBills.slice(0,3).map(b=>_h`<button class="item" data-act="bill-open" data-id="${b.id}"><div class="main2"><div class="t">Bayar ${esc(vName(b.vendorId)||'vendor')}</div><div class="s">${esc(b.desc)} · sisa ${rp(billBal(b))} · jatuh tempo ${fmtD(b.due)}</div></div>${chip(_tr('Hutang'),'bad')}</button>`),
     ...lateTasks.slice(0,4).map(x=>_h`<button class="item" data-act="edit-task" data-id="${x.id}"><div class="main2"><div class="t">${esc(x.title)}</div><div class="s">Terlambat sejak ${fmtD(x.due)}${x.projectId?' · '+esc(projName(x.projectId)):''}</div></div>${chip(_tr('Tugas'),'warn')}</button>`),
+    ...(typeof unreadOf==='function'?S.projects.filter(p=>p.share&&unreadOf(p.id)>0).map(p=>_h`<button class="item" data-act="chat-open" data-id="${p.id}"><div class="main2"><div class="t">${unreadOf(p.id)} pesan baru dari klien</div><div class="s">${esc(p.name)} · ${esc(p.client||'')}</div></div>${chip(_tr('Chat'),'info')}</button>`):[]),
     ...S.projects.filter(p=>{const w=warrantyState(p);return w&&w.left<=14&&w.left>=-30&&(p.terms||[]).some(x=>!x.invoiceId&&/retensi|retention|tahanan/i.test(x.name||''))}).map(p=>_h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">Garansi ${esc(p.name)} ${warrantyState(p).left<0?_tr('sudah berakhir'):_tr('segera berakhir')}</div><div class="s">${fmtD(wEnd(p))} · tagih retensi</div></div>${chip(_tr('Garansi'),'warn')}</button>`),
     ...S.projects.flatMap(p=>(p.claims||[]).filter(c=>c.status!=='done').map(c=>_h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">Klaim garansi: ${esc(c.desc)}</div><div class="s">${esc(p.name)} · ${fmtD(c.date)}</div></div>${chip(_tr('Garansi'),'bad')}</button>`)).slice(0,3),
     ...S.projects.filter(p=>p.status==='active'&&(schedState(p)||{}).tone==='bad').slice(0,3).map(p=>{const s=schedState(p);return _h`<button class="item" data-act="open-project" data-id="${p.id}"><div class="main2"><div class="t">${esc(p.name)} terlambat dari jadwal</div><div class="s">Rencana ${Math.round(s.pl)}% · realisasi ${s.ac}%</div></div>${chip(_tr('Jadwal'),'bad')}</button>`}),
@@ -1235,6 +1250,7 @@ function viewProyekDetail(id){
     _h`<a class="btn" href="#proyek">Semua proyek</a><button class="btn" data-act="edit-project" data-id="${id}">${ic('edit',18)}Ubah</button>`)+
   _h`<div style="margin-bottom:14px">${(()=>{const sg=stageInfo(projStage(p));return sg?chip(sg[0],sg[1])+' ':''})()}${chip(PS[p.status][0],PS[p.status][1])} <span class="muted" style="font-size:14px;margin-left:6px">${p.start?fmtD(p.start):'-'} s.d. ${p.end?fmtD(p.end):'-'}</span></div>
   ${flowPanel(p)}
+  ${clientPanel(p)}
   ${surveyPanel(p)}
   <div class="metrics" style="margin-top:18px">
     <div><div class="k">Nilai kontrak</div><div class="v num">${rp(contractNow(p))}</div>${contractNow(p)!==(+p.value||0)?_h`<div class="s muted" style="font-size:12.5px">Kontrak awal ${rp(p.value)}</div>`:''}</div>
@@ -3145,6 +3161,182 @@ Object.assign(EN,{"Jadwal &amp; kurva S":"Schedule &amp; S-curve","Isi tanggal":
 "Pengingat jatuh tempo":"Due-date reminders","Notifikasi di HP ini untuk invoice dan tagihan vendor yang jatuh tempo, termin siap ditagih, PO yang belum datang, dan masa garansi. Muncul sekali sehari saat aplikasi dibuka":"Notifications on this phone for due invoices and vendor bills, billable milestones, undelivered POs and warranties. Shown once a day when the app opens",", dan di latar belakang bila HP mendukung":", and in the background when the phone supports it","Kirim pengingat sekarang":"Send reminder now","Diblokir di browser":"Blocked in browser","Buka pengaturan situs di browser, izinkan Notifikasi, lalu muat ulang.":"Open the browser's site settings, allow Notifications, then reload.","Aktifkan pengingat":"Turn on reminders","hal jatuh tempo hari ini":"items due today","hal perlu ditindaklanjuti":"items need attention","Tidak ada yang jatuh tempo hari ini":"Nothing is due today","lainnya":"more","Sisa ":"Balance ","Garansi ":"Warranty ","berakhir":"ends","segera kedaluwarsa":"expiring soon","Browser ini tidak mendukung notifikasi":"This browser doesn't support notifications","Izin notifikasi ditolak. Aktifkan lewat pengaturan situs di browser.":"Notification permission denied. Enable it in the browser's site settings.","Pengingat aktif":"Reminders on","Notifikasi tidak bisa ditampilkan di perangkat ini":"Notifications can't be shown on this device",
 "Offline – perubahan tersimpan di HP":"Offline – changes saved on this phone","Offline":"Offline","Perubahan offline dikirim ke server":"Offline changes sent to the server"});
 Object.assign(MSD,{"Jadwal &amp; kurva S":"Jadual &amp; lengkung S","Sesuai jadwal":"Mengikut jadual","Terlambat jadwal":"Lewat jadual","Sedikit terlambat":"Sedikit lewat","Serah terima &amp; garansi":"Serahan &amp; waranti","Berita acara":"Berita acara","Masa pemeliharaan":"Tempoh penyelenggaraan","Garansi":"Waranti","Klaim garansi":"Tuntutan waranti","Setujui + tanda tangan klien":"Lulus + tandatangan pelanggan","Tanda tangan klien":"Tandatangan pelanggan","PPh dipotong":"Cukai dipotong","Dibayar klien":"Dibayar pelanggan","Pengingat jatuh tempo":"Peringatan tarikh akhir","Aktifkan pengingat":"Aktifkan peringatan","Offline – perubahan tersimpan di HP":"Luar talian – perubahan disimpan di telefon"});
+_TRE={};
+
+/* ============ Halaman klien (link tanpa login) + chat per proyek ============ */
+const FS=()=>firebase.firestore();
+const TSV=()=>firebase.firestore.FieldValue.serverTimestamp();
+const shareUrl=t=>location.origin+location.pathname.replace(/[^/]*$/,'')+'klien.html#'+t;
+const newToken=()=>{const a=new Uint8Array(20);crypto.getRandomValues(a);return [...a].map(x=>(x%36).toString(36)).join('')+Date.now().toString(36).slice(-4)};
+const fnv=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)+s.length.toString(36)};
+const tsMs=v=>v&&v.toMillis?v.toMillis():(v&&v.seconds?v.seconds*1000:(typeof v==='number'?v:Date.now()));
+let SHL={},SHPUB={},CHAT={},pubT=null,OPENCHAT=null,CHIMG='';
+const canChat=()=>ROLE==='owner'||ROLE==='admin'||ROLE==='staff';
+
+/* ---------- data yang dibagikan ke klien (tanpa biaya internal) ---------- */
+function shareSnap(p){
+  const s=S.settings,st=p.start&&p.end?schedState(p):null,its=it=>(it||[]).map(i=>[i.desc||'',+i.qty||0,i.unit||'',+i.price||0]);
+  const inv=S.invoices.filter(v=>v.projectId===p.id&&invState(v)!=='Draft').sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(v=>{const T=docTotals(v);return{id:v.id,no:v.number,date:v.date,due:v.dueDate||'',cur:dcur(v),sub:T.sub,disc:T.disc,tax:T.tax,ppnRate:v.ppn?v.ppnRate:0,total:T.total,pph:pphAmt(v),pphRate:v.pph?v.pphRate:0,paid:paid(v),bal:balance(v),state:invState(v),title:v.title||'',items:its(v.items)}});
+  const q=S.quotes.filter(x=>x.projectId===p.id&&x.status!=='draft').map(x=>{const T=docTotals(x);return{id:x.id,no:x.number,date:x.date,valid:x.validUntil||'',cur:dcur(x),sub:T.sub,disc:T.disc,tax:T.tax,ppnRate:x.ppn?x.ppnRate:0,total:T.total,status:x.status,title:x.title||'',notes:x.notes||'',sign:x.sign?{name:x.sign.name,date:x.sign.date}:null,items:its(x.items)}});
+  const ch=L('changes').filter(x=>x.projectId===p.id&&x.status!=='draft').map(x=>({id:x.id,no:x.no,type:x.type,title:x.title,detail:x.detail||'',amount:+x.amount||0,status:x.status,date:x.date,sign:x.sign?{name:x.sign.name,date:x.sign.date}:null}));
+  let curve=null;
+  if(p.start&&p.end){const s0=dnum(p.start),e0=dnum(p.end),t0=dnum(todayStr()),hi=Math.max(e0,Math.min(t0,e0+Math.max(14,(e0-s0)*.3))),plan=[];
+    for(let i=0;i<=30;i++){const x=s0+(hi-s0)*i/30;plan.push([Math.round(x),Math.round(planAt(p,dstr(Math.round(x)))*10)/10])}
+    const act=[[s0,0],...(p.progLog||[]).filter(r=>dnum(r.d)>=s0).map(r=>[dnum(r.d),r.v])];if(t0>s0)act.push([t0,physProgress(p)]);
+    curve={s:s0,e:e0,hi,plan,act:act.sort((a,b)=>a[0]-b[0])}}
+  const terms=(p.terms||[]).map(t=>{const inv1=t.invoiceId?getDoc('invoice',t.invoiceId):null;return{name:t.name,pct:+t.pct||0,amt:rnd((p.value||0)*(+t.pct||0)/100),state:inv1?invState(inv1):(termReady(p,t)?'Siap ditagih':'Belum ditagih')}});
+  return{cid:COMPANY.id,pid:p.id,
+    co:{name:s.company||'',logo:s.logo||'',phone:s.phone||'',email:s.email||'',bank:s.bank||'',cur:baseCur(),lang:LANG},
+    p:{name:p.name,client:p.client||'',address:p.address||'',start:p.start||'',end:p.end||'',status:p.status,value:+p.value||0,contract:contractNow(p),paid:projPaid(p),remaining:projReceivable(p).remaining},
+    prog:{ac:physProgress(p),pl:st?Math.round(st.pl):null,label:st?st.label:'',tone:st?st.tone:''},curve,inv,q,ch,terms,
+    ho:p.handover?{date:p.handover.date,days:+p.handover.days||0,wend:wEnd(p),note:p.handover.note||'',sign:p.handover.sign?{name:p.handover.sign.name,date:p.handover.sign.date}:null}:null};
+}
+function schedPub(){if(!S||!S.projects.some(p=>p.share&&p.share.active))return;clearTimeout(pubT);pubT=setTimeout(publishShares,2500)}
+async function publishShares(){
+  if(!S||!COMPANY||!canChat()||!navigator.onLine)return;
+  for(const p of S.projects){if(p.share&&p.share.active){try{await publishOne(p)}catch(e){}}}
+}
+async function publishOne(p){
+  const t=p.share.token,ref=FS().collection('shares').doc(t);
+  let st=SHPUB[t];
+  if(!st){const d=await ref.get();if(!d.exists)return;const x=d.data();st=SHPUB[t]={h:x.h||'',dh:x.dh||{}}}
+  const snap=shareSnap(p),h=fnv(JSON.stringify(snap)),dh={},ops=[];
+  L('daily').filter(x=>x.projectId===p.id).forEach(x=>{const o={date:x.date,weather:x.weather||'',crew:+x.crew||0,work:x.work||'',issues:x.issues||'',photos:x.photos||[]},hh=fnv(JSON.stringify(o));dh[x.id]=hh;if(st.dh[x.id]!==hh)ops.push([x.id,o])});
+  Object.keys(st.dh).forEach(id=>{if(!dh[id])ops.push([id,null])});
+  if(h===st.h&&!ops.length)return;
+  for(const [id,o] of ops){const r=ref.collection('daily').doc(id);if(o)await r.set(o);else await r.delete()}
+  await ref.update(Object.assign(snap,{h,dh,u:TSV()}));
+  st.h=h;st.dh=dh;
+}
+
+/* ---------- membuat & mengatur link ---------- */
+async function shareCreate(p){
+  if(!MGR())return toast(_tr('Hanya pemilik atau admin yang bisa membuat link klien'));
+  if(!navigator.onLine)return toast(_tr('Butuh koneksi internet untuk membuat link'));
+  const t=newToken(),ref=FS().collection('shares').doc(t);
+  try{await ref.set(Object.assign(shareSnap(p),{active:true,created:TSV(),h:'',dh:{}}))}catch(e){return toast(errMsg(e))}
+  p.share={token:t,active:true,created:todayStr()};SHPUB[t]={h:'',dh:{}};save();
+  try{await publishOne(p)}catch(e){}
+  listenShare(p);render();toast(_tr('Link klien dibuat'));
+}
+async function shareToggle(p,on){
+  if(!MGR())return;
+  try{await FS().collection('shares').doc(p.share.token).update({active:on})}catch(e){return toast(errMsg(e))}
+  p.share.active=on;save();if(on)schedPub();render();toast(on?_tr('Link klien diaktifkan'):_tr('Link klien dimatikan'));
+}
+function shareWa(p){
+  const s=S.settings,m=_h`Yth. ${p.client||'Bapak/Ibu'},\n\nBerikut link untuk memantau proyek ${p.name}: progres, foto laporan harian, tagihan, dan chat dengan kami.\n\n${shareUrl(p.share.token)}\n\nMohon link ini tidak dibagikan ke orang lain.\n\nTerima kasih,\n${s.company}`;
+  openWa(p.phone||(findClient(p.client)||{}).phone,m);
+}
+
+/* ---------- mendengarkan chat & persetujuan dari klien ---------- */
+function listenShare(p){
+  const t=p.share&&p.share.token;if(!t||SHL[t]||!canChat())return;
+  const ref=FS().collection('shares').doc(t),pid=p.id;CHAT[pid]=CHAT[pid]||[];
+  const u1=ref.collection('msgs').onSnapshot(s=>{CHAT[pid]=s.docs.map(d=>{const x=d.data({serverTimestamps:'estimate'});return{id:d.id,from:x.from,name:x.name||'',text:x.text||'',img:x.img||'',ts:tsMs(x.ts)}}).sort((a,b)=>a.ts-b.ts);chatChanged(pid)},()=>{});
+  const u2=ref.collection('acts').onSnapshot(s=>{s.docs.forEach(d=>applyAct(pid,d))},()=>{});
+  SHL[t]={un:()=>{try{u1()}catch(e){}try{u2()}catch(e){}},pid};
+}
+function stopShares(){Object.values(SHL).forEach(x=>x.un());SHL={};SHPUB={};CHAT={};OPENCHAT=null}
+function ensureShares(){if(!S||!canChat())return;S.projects.forEach(p=>{if(p.share&&p.share.token&&!SHL[p.share.token])listenShare(p)})}
+function applyAct(pid,d){
+  if(!S||!canChat())return;const a=d.data()||{},p=S.projects.find(x=>x.id===pid);if(!p)return;
+  const sg={img:a.img||'',name:(a.name||'').slice(0,100),date:a.date||todayStr(),via:'link'};let msg='';
+  if(a.type==='quote'){const q=getDoc('quote',a.id);if(q&&q.projectId===pid&&!q.sign&&q.status!=='rejected'){q.sign=sg;q.status='approved';try{activateFromQuote(q)}catch(e){}msg=_h`${sg.name} menyetujui penawaran ${q.number}`}}
+  else if(a.type==='change'){const x=L('changes').find(y=>y.id===a.id&&y.projectId===pid);if(x&&x.status!=='approved'&&x.status!=='rejected'){x.sign=sg;x.status='approved';x.approvedDate=sg.date;msg=_h`${sg.name} menyetujui ${x.no}`}}
+  else if(a.type==='bast'){if(p.handover&&!p.handover.sign){p.handover.sign=sg;msg=_h`${sg.name} menandatangani berita acara ${p.name}`}}
+  d.ref.delete().catch(()=>{});
+  if(msg){save();render();toast(msg)}
+}
+
+/* ---------- tanda pesan baru ---------- */
+const readKey=pid=>'zk-read-'+((USER&&USER.id)||'')+'-'+pid;
+const lastRead=pid=>{try{return +localStorage.getItem(readKey(pid))||0}catch(e){return 0}};
+const markRead=pid=>{try{localStorage.setItem(readKey(pid),String(Date.now()))}catch(e){}};
+const unreadOf=pid=>(CHAT[pid]||[]).filter(m=>m.from==='client'&&m.ts>lastRead(pid)).length;
+function chatChanged(pid){if(OPENCHAT===pid&&$('#chatlist')){renderChat();markRead(pid)}else scheduleRender()}
+
+/* ---------- panel di detail proyek ---------- */
+function clientPanel(p){
+  if(!canChat())return '';
+  const sh=p.share;
+  if(!sh)return _h`<div class="panel section"><div class="ph"><h2>Halaman klien</h2>${MGR()?_h`<button class="btn sm primary" data-act="share-new" data-id="${p.id}">Buat link klien</button>`:''}</div><div class="cat"><span class="muted" style="font-size:14px">Klien bisa memantau progres, foto laporan, tagihan, menyetujui dokumen, dan chat dengan timmu lewat satu link, tanpa daftar akun. Biaya internal, upah, dan vendor tidak ikut terlihat.${MGR()?'':_tr(' Minta pemilik atau admin membuat link.')}</span></div></div>`;
+  const msgs=CHAT[p.id]||[],last=msgs[msgs.length-1],un=unreadOf(p.id),url=shareUrl(sh.token);
+  return _h`<div class="panel section"><div class="ph"><h2>Halaman klien</h2>${chip(sh.active?_tr('Link aktif'):_tr('Link mati'),sh.active?'ok':'mute')}</div>
+  <div style="padding:12px 16px">
+    <div class="linkbox"><span>${esc(url)}</span></div>
+    <div class="btns start" style="margin-top:10px">
+      <button class="btn sm primary" data-act="chat-open" data-id="${p.id}">Chat klien${un?_h` <b class="badge">${un}</b>`:''}</button>
+      ${MGR()&&sh.active?_h`<button class="btn sm" data-act="share-wa" data-id="${p.id}">${ic('send',16)}Kirim link</button>`:''}
+      <button class="btn sm" data-act="share-copy" data-id="${p.id}">Salin</button>
+      <a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">Lihat sebagai klien</a>
+      ${MGR()?_h`<button class="btn sm ${sh.active?'danger':''}" data-act="share-toggle" data-id="${p.id}" data-on="${sh.active?'0':'1'}">${sh.active?_tr('Matikan link'):_tr('Aktifkan lagi')}</button>`:''}
+    </div>
+    ${last?_h`<div class="lastmsg"><small>${esc(last.from==='client'?last.name||_tr('Klien'):last.name||_tr('Tim'))} · ${fmtTime(last.ts)}</small><div>${esc(last.text||(last.img?_tr('[foto]'):''))}</div></div>`:''}
+  </div></div>`;
+}
+const fmtTime=ms=>{const d=new Date(ms),t=iso(d);return (t===todayStr()?_tr('Hari ini'):fmtD(t))+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+
+/* ---------- ruang chat ---------- */
+function openChat(pid){
+  const p=S.projects.find(x=>x.id===pid);if(!p||!p.share)return;
+  OPENCHAT=pid;CHIMG='';markRead(pid);
+  const mgr=MGR();
+  modal(_tr('Chat klien')+' · '+p.name,_h`<div id="chatlist" class="chatlist" aria-live="polite"></div>
+  <form class="chatform" data-form="chat" data-p="${pid}">
+    <div id="chimg"></div>
+    <textarea name="text" rows="2" placeholder="${mgr?_tr('Tulis pesan untuk klien atau catatan internal…'):_tr('Tulis catatan internal untuk admin…')}"></textarea>
+    <div class="btns" style="margin-top:8px">
+      ${mgr?_h`<label class="btn sm" style="margin-right:auto">${ic('plus',16)}Foto<input type="file" accept="image/*" id="chatPhoto" hidden></label>`:''}
+      <button type="button" class="btn sm" data-act="chat-note" data-p="${pid}">Catatan internal</button>
+      ${mgr?_h`<button type="submit" class="btn sm primary">${ic('send',16)}Kirim ke klien</button>`:''}
+    </div>
+    <p class="muted" style="font-size:12.5px;margin:6px 0 0">${mgr?_tr('Pesan ke klien terlihat di halaman klien. Catatan internal hanya terlihat timmu.'):_tr('Hanya pemilik dan admin yang membalas klien. Catatanmu hanya terlihat tim.')}</p>
+  </form>`,true);
+  renderChat();
+}
+function renderChat(){
+  const el=$('#chatlist');if(!el){OPENCHAT=null;return}
+  const pid=OPENCHAT,p=S.projects.find(x=>x.id===pid);
+  const notes=L('cnotes').filter(n=>n.projectId===pid).map(n=>({note:1,id:n.id,name:n.by,text:n.text,ts:n.ts}));
+  const all=[...(CHAT[pid]||[]),...notes].sort((a,b)=>a.ts-b.ts);
+  el.innerHTML=all.length?all.map(m=>m.note?_h`<div class="cm note"><small>Catatan internal · ${esc(m.name||'')} · ${fmtTime(m.ts)}</small><div>${esc(m.text)}</div>${MGR()?_h`<button class="icon-btn" data-act="cnote-del" data-id="${m.id}" aria-label="Hapus catatan">${ic('trash',14)}</button>`:''}</div>`
+    :_h`<div class="cm ${m.from==='client'?'in':'out'}"><small>${esc(m.name||(m.from==='client'?_tr('Klien'):_tr('Tim')))} · ${fmtTime(m.ts)}</small>${m.img?_h`<img src="${m.img}" alt="Foto" data-act="chat-img" data-src="${m.img}">`:''}${m.text?_h`<div>${esc(m.text)}</div>`:''}</div>`).join('')
+    :_h`<div class="empty">Belum ada pesan. ${p&&p.share&&p.share.active?_tr('Kirim link ke klien supaya mereka bisa mulai chat.'):_tr('Link sedang dimatikan.')}</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+function renderChImg(){const b=$('#chimg');if(b)b.innerHTML=CHIMG?_h`<div class="chimg"><img src="${CHIMG}" alt=""><button type="button" class="phx" data-act="chimg-del" aria-label="Hapus foto">${ic('x',14)}</button></div>`:''}
+document.addEventListener('change',async e=>{
+  const t=e.target;if(t.id!=='chatPhoto'||!t.files||!t.files[0])return;
+  try{CHIMG=await shrinkImg(t.files[0],1000,.6)}catch(x){toast(_tr('Gambar tidak bisa dibaca'))}t.value='';renderChImg();
+});
+
+Object.assign(A,{
+  'share-new':el=>shareCreate(S.projects.find(p=>p.id===el.dataset.id)),
+  'share-toggle':el=>{const p=S.projects.find(x=>x.id===el.dataset.id),on=el.dataset.on==='1';if(on)shareToggle(p,true);else confirmBox(_tr('Klien tidak bisa membuka link ini lagi sampai kamu mengaktifkannya kembali. Riwayat chat tetap tersimpan.'),()=>{closeModal();shareToggle(p,false)},_tr('Matikan link'))},
+  'share-wa':el=>shareWa(S.projects.find(p=>p.id===el.dataset.id)),
+  'share-copy':async el=>{const p=S.projects.find(x=>x.id===el.dataset.id),u=shareUrl(p.share.token);try{await navigator.clipboard.writeText(u);toast(_tr('Link disalin'))}catch(e){modal(_tr('Salin link'),_h`<textarea readonly rows="3" style="width:100%">${esc(u)}</textarea>`)}},
+  'chat-open':el=>openChat(el.dataset.id),
+  'chat-img':el=>{const pid=OPENCHAT;modal(_tr('Foto'),_h`<img src="${el.dataset.src}" alt="" style="width:100%;border-radius:8px;display:block"><div class="btns"><button class="btn primary" data-act="chat-open" data-id="${pid}">Kembali ke chat</button></div>`,true)},
+  'chimg-del':()=>{CHIMG='';renderChImg()},
+  'chat-note':el=>{const f=el.closest('form'),txt=(f.text.value||'').trim();if(!txt)return toast(_tr('Tulis catatannya dulu'));
+    L('cnotes').push({id:uid(),projectId:el.dataset.p,text:txt.slice(0,2000),by:myName()||(USER&&USER.email)||'',ts:Date.now()});f.text.value='';save();renderChat()},
+  'cnote-del':el=>{S.cnotes=L('cnotes').filter(n=>n.id!==el.dataset.id);save();renderChat()},
+  'chat-notify':el=>{const p=S.projects.find(x=>x.id===el.dataset.id);if(!p)return;openWa(p.phone||(findClient(p.client)||{}).phone,_h`Yth. ${p.client||'Bapak/Ibu'}, ada balasan baru dari ${S.settings.company} untuk proyek ${p.name}. Silakan cek di link berikut:\n${shareUrl(p.share.token)}`)}
+});
+SUB.chat=async(f,d)=>{
+  if(!MGR())return toast(_tr('Hanya pemilik dan admin yang bisa membalas klien'));
+  const pid=f.dataset.p,p=S.projects.find(x=>x.id===pid),txt=(d.text||'').trim();if(!txt&&!CHIMG)return;
+  if(!p.share.active)return toast(_tr('Link sedang dimatikan. Aktifkan dulu supaya klien bisa membaca.'));
+  const btn=f.querySelector('[type=submit]');btn.disabled=true;
+  try{await FS().collection('shares').doc(p.share.token).collection('msgs').add({from:'team',name:(myName()||S.settings.company||'').slice(0,80),text:txt.slice(0,2000),img:CHIMG||'',ts:TSV()});
+    f.text.value='';CHIMG='';renderChImg();
+    const nb=f.querySelector('.notify');if(!nb){const b=document.createElement('button');b.type='button';b.className='btn sm notify';b.dataset.act='chat-notify';b.dataset.id=pid;b.style.marginTop='8px';b.textContent=_tr('Beri tahu klien lewat WhatsApp');f.appendChild(b)}}
+  catch(e){toast(errMsg(e))}finally{btn.disabled=false}
+};
+
+Object.assign(EN,{"Halaman klien":"Client page","Buat link klien":"Create client link","Klien bisa memantau progres, foto laporan, tagihan, menyetujui dokumen, dan chat dengan timmu lewat satu link, tanpa daftar akun. Biaya internal, upah, dan vendor tidak ikut terlihat.":"Clients can follow progress, report photos and invoices, approve documents and chat with your team through one link, without an account. Internal costs, wages and vendors are not shown."," Minta pemilik atau admin membuat link.":" Ask the owner or an admin to create the link.","Link aktif":"Link on","Link mati":"Link off","Chat klien":"Client chat","Kirim link":"Send link","Salin":"Copy","Lihat sebagai klien":"View as client","Matikan link":"Turn off link","Aktifkan lagi":"Turn on again","Klien":"Client","Tim":"Team","[foto]":"[photo]","Hari ini":"Today","Tulis pesan untuk klien atau catatan internal…":"Write a message to the client or an internal note…","Tulis catatan internal untuk admin…":"Write an internal note for the admin…","Foto":"Photo","Catatan internal":"Internal note","Kirim ke klien":"Send to client","Pesan ke klien terlihat di halaman klien. Catatan internal hanya terlihat timmu.":"Messages to the client appear on the client page. Internal notes are only visible to your team.","Hanya pemilik dan admin yang membalas klien. Catatanmu hanya terlihat tim.":"Only the owner and admins reply to clients. Your notes are visible only to the team.","Belum ada pesan.":"No messages yet.","Kirim link ke klien supaya mereka bisa mulai chat.":"Send the link to the client so they can start chatting.","Link sedang dimatikan.":"The link is turned off.","Hapus catatan":"Delete note","Kembali ke chat":"Back to chat","Tulis catatannya dulu":"Write the note first","Hanya pemilik dan admin yang bisa membalas klien":"Only the owner and admins can reply to clients","Link sedang dimatikan. Aktifkan dulu supaya klien bisa membaca.":"The link is off. Turn it on so the client can read it.","Beri tahu klien lewat WhatsApp":"Notify client via WhatsApp","Hanya pemilik atau admin yang bisa membuat link klien":"Only the owner or an admin can create a client link","Butuh koneksi internet untuk membuat link":"An internet connection is needed to create a link","Link klien dibuat":"Client link created","Link klien diaktifkan":"Client link turned on","Link klien dimatikan":"Client link turned off","Klien tidak bisa membuka link ini lagi sampai kamu mengaktifkannya kembali. Riwayat chat tetap tersimpan.":"The client can't open this link until you turn it on again. Chat history is kept.","Link disalin":"Link copied","Salin link":"Copy link","pesan baru dari klien":"new messages from client","Chat":"Chat","menyetujui penawaran":"approved quote","menyetujui":"approved","menandatangani berita acara":"signed the handover report"});
+Object.assign(MSD,{"Halaman klien":"Halaman pelanggan","Buat link klien":"Buat pautan pelanggan","Chat klien":"Sembang pelanggan","Kirim ke klien":"Hantar kepada pelanggan","Catatan internal":"Nota dalaman","Matikan link":"Matikan pautan","pesan baru dari klien":"mesej baharu daripada pelanggan"});
 _TRE={};
 
 boot();
