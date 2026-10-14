@@ -116,7 +116,7 @@ const chip=(t,tone)=>`<span class="chip ${tone}">${esc(t)}</span>`;
 const unitL=u=>u===0?'Tidak masuk':u===0.5?'½ hari':u===1?'Hadir':u===1.5?'Lembur':u+' hari';
 
 const T=decodeURIComponent((location.hash||'').slice(1)).trim();
-let D=null,TAB=ls.get('zk-wt-'+T)||'absen',CHK=[],REP=[],REQ=[],MSG=[],GEO=null,BUSY=false,CIMG='',RPH=[],TPH={},subs=[],PINOK=false,PIN='',fails=0,lockUntil=0;
+let D=null,PUB=null,BASE=null,PRIVUN=null,LEGACY=false,TAB=ls.get('zk-wt-'+T)||'absen',CHK=[],REP=[],REQ=[],MSG=[],GEO=null,BUSY=false,CIMG='',RPH=[],TPH={},subs=[],PINOK=false,PIN='',fails=0,lockUntil=0;
 const money=n=>{const c=(D&&D.co.cur)||'IDR';try{return new Intl.NumberFormat('id-ID',{style:'currency',currency:c,maximumFractionDigits:c==='IDR'?0:2}).format(+n||0)}catch(e){return c+' '+(+n||0)}};
 function dead(msg){document.title='Link tidak aktif';subs.forEach(f=>f());subs=[];$('#root').innerHTML=`<div class="dead"><h1>Link tidak aktif</h1><p class="muted">${esc(msg||'Link ini sudah dimatikan atau tidak ditemukan. Hubungi admin kantor untuk mendapatkan link yang baru.')}</p></div>`;document.body.style.paddingBottom='0'}
 if(!window.firebase||!window.MANDOR_CONFIG||!window.MANDOR_CONFIG.firebase){dead('Halaman ini belum dikonfigurasi.');return}
@@ -127,15 +127,31 @@ const sha=async s=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder
 
 ref.onSnapshot(d=>{
   const x=d.exists?d.data():null;
-  if(!x||!x.active){D=null;dead();return}
-  D=x;document.title=D.w.name+' · '+D.co.name;
-  PINOK=!D.pinHash||ls.get('zk-wp-'+T)===D.pinHash;
-  if(!PINOK){showPin();return}
-  if(!subs.length)startSubs();
-  render();
+  if(!x||!x.active){D=null;PUB=null;dead();return}
+  PUB=x;LEGACY=x.v!==2;document.title=x.w.name+' · '+x.co.name;
+  if(LEGACY){/* link lama: data masih di dokumen publik sampai admin membuka aplikasi */
+    D=x;BASE=ref;PINOK=!D.pinHash||ls.get('zk-wp-'+T)===D.pinHash;
+    if(!PINOK){showPin();return}if(!subs.length)startSubs();render();return}
+  if(D&&PINOK){D=Object.assign({},D,{co:Object.assign({},D.co,x.co)});render();return}
+  const h=ls.get('zk-wp-'+T);
+  if(h)unlock(h).then(ok=>{if(!ok){ls.del('zk-wp-'+T);showPin()}});else showPin();
 },()=>dead('Tidak bisa memuat data. Periksa koneksi internet lalu muat ulang halaman.'));
 
+/* PIN membuka kunci data pribadi: tanpa PIN yang benar, data upah & absen tidak bisa dibaca */
+async function unlock(h){
+  let sk=null;try{const pd=await ref.collection('pin').doc(h).get();if(pd.exists)sk=(pd.data()||{}).sk||null}catch(e){}
+  if(!sk)return false;
+  BASE=ref.collection('p').doc(sk);
+  return await new Promise(res=>{let first=true;
+    PRIVUN=BASE.onSnapshot(d=>{const x=d.exists?d.data():null;if(!x){if(first){first=false;res(false)}return}
+      D=Object.assign({},x,{co:Object.assign({},x.co||{},(PUB&&PUB.co)||{})});PINOK=true;ls.set('zk-wp-'+T,h);
+      if(first){first=false;document.body.style.paddingBottom='';if(!subs.length)startSubs();res(true)}
+      if(!BUSY)render()},()=>{if(first){first=false;res(false)}});
+  });
+}
+
 function startSubs(){
+  const ref=BASE;
   const since=addDays(today(),-14),map=s=>s.docs.map(d=>Object.assign({id:d.id},d.data({serverTimestamps:'estimate'})));
   subs.push(ref.collection('checks').where('date','>=',since).onSnapshot(s=>{CHK=map(s).filter(c=>c.date>=since);if(TAB==='absen'&&!BUSY)render()},()=>{}));
   subs.push(ref.collection('reports').where('date','>=',since).onSnapshot(s=>{REP=map(s).filter(c=>c.date>=since);if(TAB==='tugas')render()},()=>{}));
@@ -146,7 +162,8 @@ function startSubs(){
 /* ---------- PIN ---------- */
 function showPin(){
   document.body.style.paddingBottom='0';
-  $('#root').innerHTML=`<div class="pinbox"><div class="muted">${esc(D.co.name)}</div><h1>Halo, ${esc(D.w.name)}</h1><p class="muted">Masukkan PIN 4 angka dari admin</p><div class="pindots">${[0,1,2,3].map(i=>`<i class="${PIN.length>i?'on':''}"></i>`).join('')}</div><div class="keys">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':`<button data-key="${k}" aria-label="${k==='⌫'?'Hapus':k}">${k}</button>`).join('')}</div><p class="muted" id="pinmsg" style="min-height:24px;margin-top:14px"></p></div>`;
+  const P=PUB||D;
+  $('#root').innerHTML=`<div class="pinbox"><div class="muted">${esc(P.co.name)}</div><h1>Halo, ${esc(P.w.name)}</h1><p class="muted">Masukkan PIN 4 angka dari admin</p><div class="pindots">${[0,1,2,3].map(i=>`<i class="${PIN.length>i?'on':''}"></i>`).join('')}</div><div class="keys">${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>k===''?'<span></span>':`<button data-key="${k}" aria-label="${k==='⌫'?'Hapus':k}">${k}</button>`).join('')}</div><p class="muted" id="pinmsg" style="min-height:24px;margin-top:14px"></p></div>`;
 }
 async function pinKey(k){
   if(Date.now()<lockUntil){$('#pinmsg').textContent='Terlalu banyak percobaan. Tunggu sebentar.';return}
@@ -154,7 +171,8 @@ async function pinKey(k){
   document.querySelectorAll('.pindots i').forEach((el,i)=>el.classList.toggle('on',PIN.length>i));
   if(PIN.length<4)return;
   const h=await sha(T+':'+PIN);PIN='';
-  if(h===D.pinHash){ls.set('zk-wp-'+T,h);PINOK=true;document.body.style.paddingBottom='';startSubs();render();return}
+  if(LEGACY&&h===D.pinHash){ls.set('zk-wp-'+T,h);PINOK=true;document.body.style.paddingBottom='';startSubs();render();return}
+  if(!LEGACY){$('#pinmsg').textContent='Memeriksa…';if(await unlock(h)){render();return}}
   fails++;if(fails>=5){lockUntil=Date.now()+60000;fails=0}
   showPin();$('#pinmsg').textContent='PIN salah. Coba lagi.';
 }
@@ -211,7 +229,7 @@ function startGeo(next){
 }
 async function sendCheck(img){
   const g=GEO;if(!g||g.state!=='ok')return;
-  try{await ref.collection('checks').add({type:g.next,date:today(),ts:TS(),lat:g.lat,lng:g.lng,acc:g.acc,dist:g.dist,far:!!g.far,pid:g.pid||'',pname:(g.pname||'').slice(0,120),selfie:img,status:'wait'});
+  try{await BASE.collection('checks').add({type:g.next,date:today(),ts:TS(),lat:g.lat,lng:g.lng,acc:g.acc,dist:g.dist,far:!!g.far,pid:g.pid||'',pname:(g.pname||'').slice(0,120),selfie:img,status:'wait'});
     GEO=null;BUSY=false;toast(`Absen ${g.next==='in'?'masuk':'pulang'} terkirim. Menunggu konfirmasi mandor.`);render()}
   catch(e){toast('Gagal mengirim absen. Periksa koneksi lalu coba lagi.')}
 }
@@ -276,7 +294,7 @@ document.addEventListener('click',async e=>{
   if('geoCancel' in el.dataset){GEO=null;BUSY=false;render();return}
   if(el.dataset.task){const id=el.dataset.task,s=el.dataset.s;
     if(s==='done'){sheet('Tugas selesai',`<form id="taskform" data-id="${esc(id)}"><label class="f">Catatan (opsional)<textarea name="note" rows="2"></textarea></label><label class="btn block" style="margin-bottom:10px">${ic('cam')} Foto hasil (opsional)<input type="file" accept="image/*" id="taskPhoto" hidden></label><div id="tph" style="margin-bottom:10px"></div><button class="btn primary block" type="submit">Tandai selesai</button></form>`);return}
-    try{await ref.collection('taskups').add({taskId:id,status:'doing',note:'',photo:'',ts:TS()});ls.set('zk-wtk-'+T+'-'+id+'-'+D.tasks.find(x=>x.id===id).status,'1');toast('Tugas dimulai');render()}catch(x){toast('Gagal mengirim. Periksa koneksi.')}return}
+    try{await BASE.collection('taskups').add({taskId:id,status:'doing',note:'',photo:'',ts:TS()});ls.set('zk-wtk-'+T+'-'+id+'-'+D.tasks.find(x=>x.id===id).status,'1');toast('Tugas dimulai');render()}catch(x){toast('Gagal mengirim. Periksa koneksi.')}return}
   if(el.dataset.req){reqForm(el.dataset.req);return}
   if(el.dataset.slip){openSlip(el.dataset.slip);return}
   if('close' in el.dataset){closeSheet();return}
@@ -293,11 +311,11 @@ document.addEventListener('change',async e=>{
 document.addEventListener('submit',async e=>{
   const f=e.target;e.preventDefault();const btn=f.querySelector('[type=submit]');if(btn)btn.disabled=true;
   try{
-    if(f.id==='chatform'){const text=(f.text.value||'').trim();if(!text&&!CIMG)return;await ref.collection('msgs').add({from:'worker',name:D.w.name.slice(0,80),text:text.slice(0,2000),img:CIMG||'',ts:TS()});f.text.value='';CIMG='';$('#cimg').innerHTML=''}
+    if(f.id==='chatform'){const text=(f.text.value||'').trim();if(!text&&!CIMG)return;await BASE.collection('msgs').add({from:'worker',name:D.w.name.slice(0,80),text:text.slice(0,2000),img:CIMG||'',ts:TS()});f.text.value='';CIMG='';$('#cimg').innerHTML=''}
     else if(f.id==='repform'){const text=(f.text.value||'').trim();if(!text)return;const pid=f.pid?f.pid.value:'',p=D.projects.find(x=>x.id===pid);
-      await ref.collection('reports').add({date:today(),pid,pname:p?p.name.slice(0,120):'',text:text.slice(0,2000),photos:RPH.slice(0,3),ts:TS(),status:'wait'});RPH=[];toast('Laporan terkirim. Terima kasih!');vTugas()}
-    else if(f.id==='taskform'){const id=f.dataset.id;await ref.collection('taskups').add({taskId:id,status:'done',note:(f.note.value||'').trim().slice(0,500),photo:TPH.img||'',ts:TS()});TPH={};ls.set('zk-wtk-'+T+'-'+id+'-'+D.tasks.find(x=>x.id===id).status,'1');closeSheet();toast('Tugas ditandai selesai');render()}
-    else if(f.id==='reqform'){const ty=f.dataset.type==='kasbon'?'kasbon':f.kind.value;await ref.collection('reqs').add({type:ty,amount:ty==='kasbon'?(+f.amount.value||0):0,date:f.date?f.date.value:today(),note:(f.note.value||'').trim().slice(0,500),ts:TS(),status:'wait'});closeSheet();toast('Pengajuan terkirim. Menunggu persetujuan.');render()}
+      await BASE.collection('reports').add({date:today(),pid,pname:p?p.name.slice(0,120):'',text:text.slice(0,2000),photos:RPH.slice(0,3),ts:TS(),status:'wait'});RPH=[];toast('Laporan terkirim. Terima kasih!');vTugas()}
+    else if(f.id==='taskform'){const id=f.dataset.id;await BASE.collection('taskups').add({taskId:id,status:'done',note:(f.note.value||'').trim().slice(0,500),photo:TPH.img||'',ts:TS()});TPH={};ls.set('zk-wtk-'+T+'-'+id+'-'+D.tasks.find(x=>x.id===id).status,'1');closeSheet();toast('Tugas ditandai selesai');render()}
+    else if(f.id==='reqform'){const ty=f.dataset.type==='kasbon'?'kasbon':f.kind.value;await BASE.collection('reqs').add({type:ty,amount:ty==='kasbon'?(+f.amount.value||0):0,date:f.date?f.date.value:today(),note:(f.note.value||'').trim().slice(0,500),ts:TS(),status:'wait'});closeSheet();toast('Pengajuan terkirim. Menunggu persetujuan.');render()}
   }catch(x){toast('Gagal mengirim. Periksa koneksi internet lalu coba lagi.')}
   finally{if(btn)btn.disabled=false}
 });

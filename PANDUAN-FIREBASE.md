@@ -96,3 +96,20 @@ Yang **tidak** dilihat: data pekerja lain, klien, invoice, biaya proyek, dan cat
 **Gaji bulanan:** ubah pekerja → Sistem pembayaran **Gaji bulanan**, isi gaji pokok, tunjangan, dan potongan tetap. Lalu buka pekerja → **Bayar gaji** setiap bulan. Slip gaji (SG/…) bisa dicetak/PDF dan otomatis muncul di halaman pekerja.
 
 **Catatan keamanan:** link pekerja adalah kunci utamanya, dan PIN melindungi kalau HP dipinjam orang lain. Kalau pekerja berhenti atau link tersebar, tekan **Matikan link**.
+
+## Pembaruan versi 10 (data uang terpisah, sinkron hemat, PIN pekerja)
+
+Lakukan berurutan:
+
+1. Unggah semua file versi baru ke GitHub (ganti file lama).
+2. Salin isi `firestore.rules` yang baru ke Firebase Console → Firestore Database → Rules, lalu **Publish**.
+3. **Buka aplikasi sebagai Pemilik** (atau Admin) dan biarkan terbuka 1–2 menit dengan internet menyala. Saat itu aplikasi otomatis:
+   - memindahkan transaksi, invoice, penawaran, tagihan vendor, gaji, dan kasbon ke tempat khusus pemilik/admin,
+   - memisahkan upah pekerja, nilai kontrak, dan anggaran dari data yang bisa dilihat staf,
+   - memindahkan setiap link pekerja ke struktur baru yang dikunci PIN.
+4. Minta semua anggota tim menutup lalu membuka ulang aplikasi.
+
+Setelah itu:
+- **Staf** dan **Hanya lihat** tidak lagi melihat menu Keuangan, Dokumen (penawaran/invoice), gaji, kasbon, upah pekerja, nilai kontrak, dan anggaran. Rincian RAB per item (harga satuan) tetap terlihat karena staf memperbarui progres di sana.
+- Link pekerja lama tetap bisa dipakai dengan PIN yang sama.
+- Data yang hanya ada di HP lama (belum terkirim) tetap ikut terkirim saat HP itu online.
