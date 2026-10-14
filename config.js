@@ -1,18 +1,26 @@
-/* =====================================================================
-   KONFIGURASI - isi nilai di bawah, lalu simpan.
-   Supabase Dashboard > Project Settings > API
-   ===================================================================== */
+/* Pengaturan Zui Kontraktor (versi Firebase).
+   Isi bagian "firebase" dengan data dari Firebase Console:
+   Project settings (ikon roda gigi) → General → Your apps → aplikasi Web → SDK setup and configuration → Config.
+   Lihat PANDUAN-FIREBASE.md untuk langkah lengkap. */
 window.MANDOR_CONFIG = {
-  // Nama yang tampil di aplikasi (boleh diganti, misalnya 'RH System')
-  appName: 'RH System',
+  firebase: {
+    apiKey: "AIzaSyCmDBwFbquqMpdadgukA7Ti1Kq3E_loLgM",
+    authDomain: "kontraktor-zui.firebaseapp.com",
+    projectId: "kontraktor-zui",
+    storageBucket: "kontraktor-zui.firebasestorage.app",
+    messagingSenderId: "520179011046",
+    appId: "1:520179011046:web:aa8a77761c008138e91a27"
+  },
 
-  // "Project URL" dari Supabase
-  supabaseUrl: 'https://ijtrffdzxszrsxxqittk.supabase.co',
+  // Tampilkan tombol "Masuk dengan Google" (aktifkan juga Google di Firebase Authentication).
+  enableGoogle: true,
 
-  // Kunci "anon public" (BUKAN service_role). Aman terlihat publik karena
-  // keamanan data dijaga aturan RLS di database.
-  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqdHJmZmR6eHN6cnN4eHFpdHRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwNTM3NDYsImV4cCI6MjEwNjYyOTc0Nn0.V_Qy_fKXxTgVdB-68vwWJSUkHaW-QkhZIrPVcKjkJxQ',
+  // Siapa saja yang boleh membuat perusahaan baru. Kosongkan [] agar semua akun boleh.
+  // Contoh: allowedCreators: ["info.zuisystem@gmail.com"],
+  allowedCreators: [],
 
-  // Ubah ke true setelah login Google diatur di Supabase
-  enableGoogle: true
+  // Bagian di bawah ini sama seperti sebelumnya. Salin dari config.js lama bila kamu sudah mengisinya.
+  tagline: "Aplikasi Kontraktor",
+  showLanding: true,
+  pricing: { trialDays: 14, yearlyMonths: 10, whatsapp: "", email: "" }
 };

@@ -397,7 +397,9 @@ else setTimeout(splEnd,10000)})()</script>
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* PWA: tanda siap, tombol instal, service worker */
@@ -414,8 +416,7 @@ setTimeout(instShow,0);setTimeout(zr,8000);
 try{var _zo=new MutationObserver(function(){var A=document.getElementById('auth'),V=document.getElementById('view');if((A&&!A.hidden&&A.innerHTML)||(V&&V.childElementCount)){zr();instShow();_zo.disconnect()}});_zo.observe(document.getElementById('auth'),{attributes:true,childList:true});_zo.observe(document.getElementById('view'),{childList:true})}catch(e){}
 /* Konfigurasi dibaca dari config.js (lihat PANDUAN-SUPABASE.md). Jangan taruh kunci service_role di sini. */
 const _CFG=window.MANDOR_CONFIG||{};
-const SUPABASE_URL=_CFG.supabaseUrl||'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON_KEY=_CFG.supabaseAnonKey||'YOUR-ANON-KEY';
+const FB_CFG=_CFG.firebase||{};
 const ENABLE_GOOGLE=!!_CFG.enableGoogle;
 const APP_NAME='Zui Kontraktor';
 document.title=APP_NAME+' – '+(_CFG.tagline||'Aplikasi Kontraktor');
@@ -550,8 +551,169 @@ const CO_DEF={id:'Nama Perusahaan Anda',en:'Your Company Name',ms:'Nama Syarikat
 const defaults=()=>({v:1,settings:{company:CO_DEF[LANG],owner:'',address:'',phone:'',email:'',npwp:'',bank:'',ppnRate:11,ppnDefault:false,quotePrefix:'QT',invoicePrefix:'INV',validDays:14,dueDays:7,currency:'IDR',quoteTerms:TERMS[LANG].q,invoiceTerms:TERMS[LANG].i,logo:''},
   projects:[],tasks:[],tx:[],quotes:[],invoices:[],vendors:[],bills:[],catalog:[],workers:[],att:[],payroll:[],clients:[],surveys:[],daily:[],po:[],mmove:[],changes:[],kasbon:[],cnt:{}});
 const COLLS=['projects','tasks','tx','quotes','invoices','vendors','bills','catalog','workers','att','payroll','clients','surveys','daily','po','mmove','changes','kasbon'];
-const SB_OK=!!(window.supabase&&!/YOUR-PROJECT|YOUR-ANON/.test(SUPABASE_URL+SUPABASE_ANON_KEY));
-const SB=SB_OK?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+const SB_OK=!!(window.firebase&&FB_CFG.apiKey&&FB_CFG.projectId&&!/^ISI|YOUR/i.test(FB_CFG.apiKey));
+const SB=SB_OK?fbClient(FB_CFG):null;
+/* ============ Penghubung Firebase (Auth + Firestore) dengan antarmuka mirip Supabase ============ */
+function fbClient(cfg){
+  const app=firebase.initializeApp(cfg),auth=firebase.auth(),db=firebase.firestore();
+  const FV=firebase.firestore.FieldValue,now=()=>FV.serverTimestamp();
+  const lower=s=>String(s||'').trim().toLowerCase();
+  const U=u=>u?{id:u.uid,email:u.email||'',user_metadata:{full_name:u.displayName||''},identities:[1]}:null;
+  const verified=u=>!!u&&(u.emailVerified||(u.providerData||[]).some(p=>p&&p.providerId==='google.com'));
+  const ERR={'auth/invalid-credential':'Invalid login credentials','auth/wrong-password':'Invalid login credentials','auth/user-not-found':'Invalid login credentials','auth/invalid-login-credentials':'Invalid login credentials','auth/email-already-in-use':'User already registered','auth/too-many-requests':'Too many requests','auth/invalid-email':'Invalid email','auth/weak-password':'Password should be at least 8 characters','auth/requires-recent-login':'RECENT_LOGIN','auth/network-request-failed':'Failed to fetch','auth/popup-closed-by-user':'POPUP_CLOSED','permission-denied':'PERMISSION'};
+  const fail=e=>({data:null,error:{message:ERR[e&&e.code]||(e&&e.message)||String(e),code:e&&e.code}});
+  const co=cid=>db.collection('companies').doc(cid);
+  const rid=(c,i)=>c+'~'+i;
+
+  /* ---- auth ---- */
+  let first=true,lastUid=null;const subs=[];
+  const ready=new Promise(res=>{auth.onAuthStateChanged(u=>{
+    const v=verified(u)?u.uid:null;
+    if(first){first=false;lastUid=v;res();return}
+    if(v&&v!==lastUid)subs.forEach(f=>f('SIGNED_IN',{user:U(u)}));
+    else if(!v&&lastUid)subs.forEach(f=>f('SIGNED_OUT',null));
+    lastUid=v;
+  })});
+  const A={
+    async getSession(){await ready;const u=auth.currentUser;if(u&&!verified(u)){try{await u.reload()}catch(e){}}return{data:{session:verified(u)?{user:U(u)}:null}}},
+    async getUser(){await ready;const u=auth.currentUser;return{data:{user:verified(u)?U(u):null}}},
+    onAuthStateChange(f){subs.push(f);return{data:{subscription:{unsubscribe(){const i=subs.indexOf(f);if(i>=0)subs.splice(i,1)}}}}},
+    async signInWithPassword({email,password}){
+      try{const c=await auth.signInWithEmailAndPassword(email,password);await c.user.reload();
+        if(!verified(auth.currentUser))return{data:null,error:{message:'Email not confirmed'}};
+        lastUid=c.user.uid;return{data:{user:U(c.user),session:{user:U(c.user)}},error:null}}catch(e){return fail(e)}
+    },
+    async signUp({email,password,options}){
+      try{const c=await auth.createUserWithEmailAndPassword(email,password);
+        const nm=options&&options.data&&options.data.full_name;if(nm)await c.user.updateProfile({displayName:nm});
+        await c.user.sendEmailVerification({url:(options&&options.emailRedirectTo)||location.href});
+        return{data:{user:U(c.user),session:null},error:null}}catch(e){return fail(e)}
+    },
+    async resend({email}){
+      const u=auth.currentUser;
+      if(!u||lower(u.email)!==lower(email))return{error:{message:'Masuk dulu dengan email dan kata sandi, lalu tekan Kirim ulang email.'}};
+      try{await u.sendEmailVerification({url:location.href});return{error:null}}catch(e){return fail(e)}
+    },
+    async resetPasswordForEmail(email){try{await auth.sendPasswordResetEmail(email);return{error:null}}catch(e){return fail(e)}},
+    async updateUser(o){
+      const u=auth.currentUser;if(!u)return{data:null,error:{message:'Not signed in'}};
+      try{if(o.password)await u.updatePassword(o.password);if(o.data&&'full_name' in o.data)await u.updateProfile({displayName:o.data.full_name});return{data:{user:U(auth.currentUser)},error:null}}catch(e){return fail(e)}
+    },
+    async signInWithOAuth(){
+      const p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
+      try{await auth.signInWithPopup(p);return{error:null}}
+      catch(e){if(/popup-blocked|operation-not-supported|web-storage/.test(e&&e.code||'')){try{await auth.signInWithRedirect(p);return{error:null}}catch(x){return fail(x)}}if(e&&e.code==='auth/popup-closed-by-user')return{error:null};return fail(e)}
+    },
+    async signOut(){lastUid=null;await auth.signOut();return{error:null}}
+  };
+
+  /* ---- data ---- */
+  const ALL={};
+  async function cascadeDeleteCompany(cid){
+    const recs=await co(cid).collection('records').get();
+    for(let i=0;i<recs.docs.length;i+=400){const b=db.batch();recs.docs.slice(i,i+400).forEach(d=>b.delete(d.ref));await b.commit()}
+    const [mem,inv]=await Promise.all([co(cid).collection('members').get(),co(cid).collection('invites').get()]);
+    const b=db.batch(),me=auth.currentUser.uid;
+    inv.docs.forEach(d=>{b.delete(d.ref);b.delete(db.collection('invites').doc(d.id).collection('companies').doc(cid))});
+    mem.docs.forEach(d=>{if(d.id!==me){b.delete(db.collection('users').doc(d.id).collection('companies').doc(cid));b.delete(d.ref)}});
+    await b.commit();
+    const b2=db.batch();b2.delete(db.collection('users').doc(me).collection('companies').doc(cid));b2.delete(co(cid).collection('members').doc(me));b2.delete(co(cid));await b2.commit();
+  }
+  async function run(q){
+    const f=q.f,me=auth.currentUser;
+    if(q.t==='records'){
+      const cid=f.company_id||(Array.isArray(q.v)&&q.v[0]&&q.v[0].company_id);if(!cid)throw{message:'Missing company'};const col=co(cid).collection('records');
+      if(q.op==='select'){
+        const from=q.range?q.range[0]:0,to=q.range?q.range[1]:1e9;
+        if(from===0||!ALL[cid]){const s=await col.get();ALL[cid]=s.docs.map(d=>{const x=d.data();let data=null;try{data=JSON.parse(x.j)}catch(e){}return{coll:x.coll,id:x.id,data}}).filter(r=>r.data)}
+        return ALL[cid].slice(from,to+1);
+      }
+      if(q.op==='upsert'){
+        const b=db.batch();let big=0;
+        for(const r of q.v){const j=JSON.stringify(r.data);if(j.length>1000000){big++;continue}b.set(col.doc(rid(r.coll,r.id)),{coll:r.coll,id:r.id,j,u:now()})}
+        await b.commit();if(big)throw{message:'DOC_TOO_BIG'};return[];
+      }
+      if(q.op==='delete'){const b=db.batch();(f.id_in||[]).forEach(i=>b.delete(col.doc(rid(f.coll,i))));await b.commit();return[]}
+    }
+    if(q.t==='members'){
+      if(q.op==='select'&&f.user_id&&!f.company_id){
+        const s=await db.collection('users').doc(f.user_id).collection('companies').get(),out=[];
+        await Promise.all(s.docs.map(async d=>{const cid=d.id;try{const [c,m]=await Promise.all([co(cid).get(),co(cid).collection('members').doc(f.user_id).get()]);if(c.exists&&m.exists)out.push({company_id:cid,role:m.data().role,companies:{name:c.data().name||''},_t:(m.data().created_at&&m.data().created_at.toMillis&&m.data().created_at.toMillis())||0});else d.ref.delete().catch(()=>{})}catch(e){}}));
+        return out.sort((a,b)=>a._t-b._t);
+      }
+      if(q.op==='select'){const s=await co(f.company_id).collection('members').get();return s.docs.map(d=>{const x=d.data();return{user_id:d.id,role:x.role,email:x.email||'',display_name:x.display_name||'',_t:(x.created_at&&x.created_at.toMillis&&x.created_at.toMillis())||0}}).sort((a,b)=>a._t-b._t)}
+      if(q.op==='delete'){const b=db.batch();b.delete(db.collection('users').doc(f.user_id).collection('companies').doc(f.company_id));b.delete(co(f.company_id).collection('members').doc(f.user_id));await b.commit();return[]}
+      if(q.op==='update'){const b=db.batch();b.update(co(f.company_id).collection('members').doc(f.user_id),{role:q.v.role});b.set(db.collection('users').doc(f.user_id).collection('companies').doc(f.company_id),{role:q.v.role},{merge:true});await b.commit();return[]}
+    }
+    if(q.t==='invites'){
+      if(q.op==='select'){const s=await co(f.company_id).collection('invites').get();return s.docs.map(d=>({id:f.company_id+'|'+d.id,email:d.id,role:d.data().role}))}
+      if(q.op==='delete'){const [cid,email]=String(f.id).split('|');const b=db.batch();b.delete(co(cid).collection('invites').doc(email));b.delete(db.collection('invites').doc(email).collection('companies').doc(cid));await b.commit();return[]}
+    }
+    if(q.t==='companies'){
+      if(q.op==='update'){await co(f.id).update({name:q.v.name});return[]}
+      if(q.op==='delete'){await cascadeDeleteCompany(f.id);return[]}
+    }
+    throw{message:'Unsupported query '+q.t+'/'+q.op};
+  }
+  function from(t){
+    const q={t,op:'select',f:{},v:null,range:null};
+    const b={
+      select(){return b},order(){return b},limit(){return b},single(){return b},maybeSingle(){return b},
+      eq(k,v){q.f[k]=v;return b},in(k,v){q.f[k+'_in']=v;return b},range(a,z){q.range=[a,z];return b},
+      upsert(v){q.op='upsert';q.v=v;return b},update(v){q.op='update';q.v=v;return b},delete(){q.op='delete';return b},insert(v){q.op='insert';q.v=v;return b},
+      then(res,rej){return run(q).then(data=>({data,error:null}),e=>fail(e)).then(res,rej)}
+    };return b;
+  }
+
+  /* ---- fungsi server (pengganti RPC Supabase) ---- */
+  const allowed=email=>{const l=(cfg.allowedCreators||window.MANDOR_CONFIG&&window.MANDOR_CONFIG.allowedCreators||[]).map(lower);return !l.length||l.includes(lower(email))};
+  const RPC={
+    async can_create_company(){const u=auth.currentUser;return !!u&&allowed(u.email)},
+    async create_company({p_name}){
+      const u=auth.currentUser;if(!u)throw{message:'Not signed in'};if(!allowed(u.email))throw{message:'NOT_ALLOWED'};
+      const ref=db.collection('companies').doc(),b=db.batch();
+      b.set(ref,{name:p_name||'Perusahaan',owner:u.uid,created_at:now()});
+      b.set(ref.collection('members').doc(u.uid),{user_id:u.uid,role:'owner',email:lower(u.email),display_name:u.displayName||'',created_at:now()});
+      b.set(db.collection('users').doc(u.uid).collection('companies').doc(ref.id),{role:'owner',created_at:now()});
+      await b.commit();return ref.id;
+    },
+    async claim_invites(){
+      const u=auth.currentUser;if(!u||!u.email)return 0;const em=lower(u.email);
+      const s=await db.collection('invites').doc(em).collection('companies').get();let n=0;
+      for(const d of s.docs){const cid=d.id,inv=d.data();
+        try{const m=await co(cid).collection('members').doc(u.uid).get();const b=db.batch();
+          if(!m.exists){b.set(co(cid).collection('members').doc(u.uid),{user_id:u.uid,role:inv.role,email:em,display_name:u.displayName||'',created_at:now()});b.set(db.collection('users').doc(u.uid).collection('companies').doc(cid),{role:inv.role,created_at:now()})}
+          b.delete(d.ref);b.delete(co(cid).collection('invites').doc(em));await b.commit();n++}catch(e){}}
+      return n;
+    },
+    async invite_member({p_company,p_email,p_role}){
+      const em=lower(p_email);if(!/^\S+@\S+\.\S+$/.test(em))throw{message:'Invalid email'};
+      const c=await co(p_company).get(),b=db.batch();
+      b.set(db.collection('invites').doc(em).collection('companies').doc(p_company),{company_id:p_company,company_name:(c.exists&&c.data().name)||'',role:p_role,email:em,created_at:now()});
+      b.set(co(p_company).collection('invites').doc(em),{email:em,role:p_role,created_at:now()});
+      await b.commit();return true;
+    },
+    async set_display_name({p_company,p_name}){const u=auth.currentUser;if(!u||!p_company)return;await co(p_company).collection('members').doc(u.uid).update({display_name:p_name||''})}
+  };
+  async function rpc(n,args){if(!RPC[n])return{data:null,error:{message:'Unknown function '+n}};try{return{data:await RPC[n](args||{}),error:null}}catch(e){return fail(e)}}
+
+  /* ---- realtime ---- */
+  function channel(){
+    const ch={cb:null,cid:null,un:null,
+      on(_e,opt,cb){ch.cb=cb;const m=/company_id=eq\.(.+)$/.exec((opt&&opt.filter)||'');ch.cid=m&&m[1];return ch},
+      subscribe(){if(!ch.cid)return ch;let init=true;
+        ch.un=co(ch.cid).collection('records').onSnapshot(s=>{if(init){init=false;return}
+          s.docChanges().forEach(c=>{if(c.doc.metadata.hasPendingWrites)return;const x=c.doc.data();
+            if(c.type==='removed')ch.cb({eventType:'DELETE',old:{coll:x.coll,id:x.id}});
+            else{let data=null;try{data=JSON.parse(x.j)}catch(e){return}ch.cb({eventType:c.type==='added'?'INSERT':'UPDATE',new:{coll:x.coll,id:x.id,data}})}})},()=>{});
+        return ch}};
+    return ch;
+  }
+  function removeChannel(ch){try{ch&&ch.un&&ch.un()}catch(e){}}
+
+  return{auth:A,from,rpc,channel,removeChannel,_fb:{app,auth,db}};
+}
+
 const REDIRECT=location.origin+location.pathname;
 let S=null,USER=null,COMPANY=null,COMPANIES=[],ROLE='viewer',CHAN=null,SNAP=new Map();
 let dirty=false,pushing=false,saveT=null,SYNC='ok',ENTERING=false,AUTHTAB='login',AUTHNOTE='',AUTHPRE='',hiddenAt=0,rT=null;
@@ -648,7 +810,12 @@ function errMsg(e){
   if(/rate limit|too many/i.test(m))return _tr('Terlalu banyak permintaan, coba lagi sebentar lagi');
   if(/valid email|invalid email/i.test(m))return _tr('Email tidak valid');
   if(/Password should be/i.test(m))return _tr('Kata sandi minimal 8 karakter');
-  if(/does not exist|schema cache|Could not find the table/i.test(m))return _tr('Tabel database belum dibuat. Jalankan supabase-setup.sql di Supabase.');
+  if(/PERMISSION|insufficient permissions/i.test(m))return _tr('Akses ditolak. Pastikan aturan keamanan Firestore sudah dipasang sesuai panduan.');
+  if(/RECENT_LOGIN/.test(m))return _tr('Demi keamanan, keluar lalu masuk lagi sebelum mengganti kata sandi.');
+  if(/NOT_ALLOWED/.test(m))return _tr('Akun ini belum diizinkan membuat perusahaan. Minta undangan dari pemilik perusahaan.');
+  if(/DOC_TOO_BIG/.test(m))return _tr('Data terlalu besar untuk disimpan (biasanya foto). Kurangi foto di laporan harian.');
+  if(/POPUP_CLOSED/.test(m))return _tr('Jendela masuk Google ditutup.');
+  if(/client is offline|unavailable/i.test(m))return _tr('Tidak ada koneksi internet');
   if(/company creation not allowed/i.test(m))return _tr('Hanya pemilik yang bisa membuat perusahaan baru. Minta diundang oleh pemilik perusahaan.');
   if(/fetch|network|Failed to/i.test(m))return _tr('Gagal terhubung ke server. Periksa koneksi internet.');
   return m||_tr('Terjadi kesalahan. Coba lagi.');
@@ -670,7 +837,7 @@ function authShell(inner,withLang){
   a.innerHTML=`<div class="authcard"><div class="toprow"><span class="brand"><i></i>${esc(APP_NAME)}</span><button type="button" class="ib inst" onclick="install()" style="display:none">⬇ Instal</button><select data-set="lang" aria-label="Language">${lg}</select></div><div class="tape" aria-hidden="true"></div>${LANDING_ON&&!S?`<button class="btn sm" data-act="landing" style="margin-top:14px">← ${_tr('Halaman depan')}</button>`:''}${inner}</div>`;
 }
 function showSetup(){
-  authShell(_h`<h1>Aplikasi belum dikonfigurasi</h1><p class="muted">Isi supabaseUrl dan supabaseAnonKey di file config.js, lalu muat ulang halaman. Langkah lengkapnya ada di PANDUAN-SUPABASE.md.</p>`);
+  authShell(_h`<h1>Aplikasi belum dikonfigurasi</h1><p class="muted">Isi data project Firebase di file config.js, lalu muat ulang halaman. Langkah lengkapnya ada di PANDUAN-FIREBASE.md.</p>`);
 }
 function showAuth(tab){zr();setTimeout(instShow,0);
   AUTHTAB=tab=tab||'login';
@@ -2455,7 +2622,7 @@ function renderDph(){
   const g=$('#dph');if(!g)return;
   g.innerHTML=DPH.length?DPH.map((s,i)=>_h`<div class="ph"><img src="${s}" alt=""><button type="button" class="phx" data-act="dph-del" data-i="${i}" aria-label="Hapus foto">${ic('x',14)}</button></div>`).join(''):_tr('<span class="muted" style="font-weight:400">Belum ada foto.</span>');
 }
-function shrinkImg(file,max=1000,q=.62){
+function shrinkImg(file,max=900,q=.6){
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(file)});
 }
 document.addEventListener('change',async e=>{
@@ -2685,6 +2852,7 @@ Object.assign(SUB,{
   daily:(f,d)=>{
     if(!d.projectId){toast(_tr('Pilih proyek'));return}
     const o={projectId:d.projectId,date:d.date,weather:d.weather,crew:d.crew===''?0:+d.crew,work:d.work.trim(),issues:(d.issues||'').trim(),photos:DPH.slice()};
+    if(JSON.stringify(o).length>950000){toast(_tr('Foto terlalu besar. Hapus 1–2 foto lalu simpan lagi.'));return}
     let x;if(f.dataset.id){x=L('daily').find(y=>y.id===f.dataset.id);Object.assign(x,o)}
     else{x={id:uid(),ts:Date.now(),by:(USER&&((USER.user_metadata&&USER.user_metadata.full_name)||USER.email))||'',...o};L('daily').push(x)}
     save();render();openDaily(x.id);toast(_tr('Laporan harian disimpan'));
@@ -2731,7 +2899,8 @@ Object.assign(SUB,{
   }
 });
 
-Object.assign(EN,{"belum diterima":"not yet received","dibutuhkan":"needed","menunggu persetujuan klien":"awaiting client approval","Laporan harian":"Daily report","Laporan hari ini belum diisi.":"Today's report hasn't been filled in.","Belum ada laporan harian.":"No daily reports yet.","Laporan harian baru":"New daily report","Ubah laporan harian":"Edit daily report","Cuaca":"Weather","Jumlah tukang":"Number of workers","Pekerjaan hari ini":"Today's work","Kendala / catatan (opsional)":"Issues / notes (optional)","Kendala / catatan":"Issues / notes","Contoh: Pasang bata ringan lantai 2 sisi timur, cor kolom":"E.g. Lay blocks on the 2nd floor east side, cast columns","Contoh: Pasir terlambat datang":"E.g. Sand delivery was late","Foto progres (maks. 6)":"Progress photos (max. 6)","Tambah foto":"Add photos","Belum ada foto.":"No photos yet.","Hapus foto":"Remove photo","Maksimal 6 foto per laporan":"Maximum 6 photos per report","Dilaporkan oleh":"Reported by","Bagikan ke klien":"Share with client","Pekerjaan:":"Work:","Cerah":"Sunny","Berawan":"Cloudy","Hujan ringan":"Light rain","Hujan lebat":"Heavy rain","Foto":"Photo","foto":"photos","orang":"people","tukang":"workers","‹ Sebelumnya":"‹ Previous","Berikutnya ›":"Next ›","Laporan harian ini akan dihapus.":"This daily report will be deleted.","Laporan dihapus":"Report deleted","Laporan harian disimpan":"Daily report saved","Laporan":"Report",
+Object.assign(EN,{"Akses ditolak. Pastikan aturan keamanan Firestore sudah dipasang sesuai panduan.":"Access denied. Make sure the Firestore security rules are installed as in the guide.","Demi keamanan, keluar lalu masuk lagi sebelum mengganti kata sandi.":"For security, sign out and sign in again before changing your password.","Akun ini belum diizinkan membuat perusahaan. Minta undangan dari pemilik perusahaan.":"This account isn't allowed to create a company yet. Ask a company owner to invite you.","Data terlalu besar untuk disimpan (biasanya foto). Kurangi foto di laporan harian.":"Data too large to save (usually photos). Use fewer photos in the daily report.","Jendela masuk Google ditutup.":"The Google sign-in window was closed.","Isi data project Firebase di file config.js, lalu muat ulang halaman. Langkah lengkapnya ada di PANDUAN-FIREBASE.md.":"Fill in the Firebase project details in config.js, then reload. Full steps are in PANDUAN-FIREBASE.md."});
+Object.assign(EN,{"Foto terlalu besar. Hapus 1–2 foto lalu simpan lagi.":"Photos are too large. Remove 1–2 photos and save again.","belum diterima":"not yet received","dibutuhkan":"needed","menunggu persetujuan klien":"awaiting client approval","Laporan harian":"Daily report","Laporan hari ini belum diisi.":"Today's report hasn't been filled in.","Belum ada laporan harian.":"No daily reports yet.","Laporan harian baru":"New daily report","Ubah laporan harian":"Edit daily report","Cuaca":"Weather","Jumlah tukang":"Number of workers","Pekerjaan hari ini":"Today's work","Kendala / catatan (opsional)":"Issues / notes (optional)","Kendala / catatan":"Issues / notes","Contoh: Pasang bata ringan lantai 2 sisi timur, cor kolom":"E.g. Lay blocks on the 2nd floor east side, cast columns","Contoh: Pasir terlambat datang":"E.g. Sand delivery was late","Foto progres (maks. 6)":"Progress photos (max. 6)","Tambah foto":"Add photos","Belum ada foto.":"No photos yet.","Hapus foto":"Remove photo","Maksimal 6 foto per laporan":"Maximum 6 photos per report","Dilaporkan oleh":"Reported by","Bagikan ke klien":"Share with client","Pekerjaan:":"Work:","Cerah":"Sunny","Berawan":"Cloudy","Hujan ringan":"Light rain","Hujan lebat":"Heavy rain","Foto":"Photo","foto":"photos","orang":"people","tukang":"workers","‹ Sebelumnya":"‹ Previous","Berikutnya ›":"Next ›","Laporan harian ini akan dihapus.":"This daily report will be deleted.","Laporan dihapus":"Report deleted","Laporan harian disimpan":"Daily report saved","Laporan":"Report",
 "Material di lokasi":"Materials on site","Pakai":"Use","Stok di lokasi":"Stock on site","Pesanan material (PO)":"Material orders (PO)","terpakai":"used","Belum ada material masuk. Terima barang dari PO atau catat material masuk.":"No materials received yet. Receive goods from a PO or record incoming materials.","Belum ada PO.":"No POs yet.","PO material baru":"New material PO","Ubah PO":"Edit PO","Dibutuhkan di lokasi tanggal":"Needed on site by","Daftar material":"Materials","Tambah material":"Add material","Total PO":"PO total","Catatan untuk vendor":"Notes for vendor","Contoh: Kirim pagi, hubungi mandor di lokasi":"E.g. Deliver in the morning, call the site foreman","Simpan PO":"Save PO","Nama material, mis. Semen 50 kg":"Material name, e.g. Cement 50 kg","Harga satuan":"Unit price","Dipesan":"Ordered","Diterima sebagian":"Partly received","Nilai diterima":"Value received","Sudah ditagihkan":"Already billed","Dibutuhkan":"Needed by","diterima":"received","Terima barang":"Receive goods","Buat tagihan vendor":"Create vendor bill","Kirim ke vendor":"Send to vendor","Terima barang – ":"Receive goods – ","Isi jumlah yang benar-benar datang. Stok di lokasi akan bertambah.":"Enter the quantity that actually arrived. Site stock will increase.","Tanggal diterima":"Date received","Simpan penerimaan":"Save receipt","Belum ada stok material di proyek ini":"No material stock in this project yet","Catat pemakaian material":"Record material use","Catat material masuk":"Record incoming material","Nama material":"Material name","Contoh: Pasir":"E.g. Sand","Keterangan (opsional)":"Description (optional)","Contoh: Cor kolom lantai 2":"E.g. Cast 2nd floor columns","Contoh: Beli tunai di toko terdekat":"E.g. Bought in cash at a nearby store","Untuk material yang dibeli tunai, catat juga pengeluarannya di Keuangan.":"For materials bought in cash, also record the expense in Finance.","Total masuk":"Total in","Total terpakai":"Total used","Sisa di lokasi":"Left on site","Riwayat":"History","Catat pemakaian":"Record use","Halo ":"Hello ","Kami ingin memesan material":"We would like to order materials","Kirim ke: ":"Deliver to: ","\nDibutuhkan: ":"\nNeeded by: ","\nCatatan: ":"\nNotes: ","Mohon konfirmasi harga dan ketersediaan. Terima kasih,":"Please confirm price and availability. Thank you,","Material ":"Materials ","Tagihan vendor dibuat":"Vendor bill created","Catatan material ini akan dihapus.":"This material record will be deleted.","PO ini akan dihapus.":"This PO will be deleted.","PO dihapus":"PO deleted","PO disimpan":"PO saved","Isi minimal satu material":"Add at least one material","Isi jumlah yang diterima":"Enter the quantity received","Barang diterima, stok bertambah":"Goods received, stock increased","Isi jumlah":"Enter a quantity","Jumlah melebihi stok":"Quantity exceeds stock","Pemakaian dicatat":"Usage recorded","Material masuk dicatat":"Incoming material recorded",
 "Pekerjaan tambah-kurang":"Variation orders","Perubahan":"Change","Kontrak awal":"Original contract","Tambah disetujui":"Approved additions","Kurang disetujui":"Approved deductions","Nilai kontrak akhir":"Final contract value","Pekerjaan tambah":"Additional work","Pekerjaan kurang":"Reduced work","pekerjaan tambah":"additional work","pekerjaan kurang":"reduced work","Belum ada perubahan pekerjaan.":"No work changes yet.","Perubahan pekerjaan baru":"New work change","Ubah perubahan pekerjaan":"Edit work change","Judul perubahan":"Change title","Contoh: Tambah kanopi carport":"E.g. Add carport canopy","Rincian pekerjaan":"Work details","Contoh: Rangka hollow 4x4, atap alderon 3 x 5 m":"E.g. 4x4 hollow frame, 3 x 5 m uPVC roof","Nilai (":"Value (","Menunggu persetujuan":"Awaiting approval","Minta persetujuan klien":"Ask client approval","Tandai disetujui":"Mark approved","Lihat invoice":"View invoice","Nilai perubahan":"Change value","Kontrak saat ini":"Current contract","Pekerjaan kurang mengurangi nilai kontrak dan sisa piutang klien.":"Reduced work lowers the contract value and the client's outstanding balance.","Berikut usulan":"Here is the proposed","untuk proyek":"for project","Nilai: ":"Value: ","Nilai kontrak awal: ":"Original contract value: ","Nilai kontrak setelah perubahan: ":"Contract value after change: ","Mohon konfirmasi persetujuan Bapak/Ibu. Terima kasih,":"Kindly confirm your approval. Thank you,"," – pekerjaan tambah":" – additional work","Perubahan pekerjaan ini akan dihapus.":"This work change will be deleted.","Perubahan dihapus":"Change deleted","Perubahan disetujui, nilai kontrak diperbarui":"Change approved, contract value updated","Status diubah":"Status changed","Perubahan pekerjaan disimpan":"Work change saved","Kontrak awal ":"Original ",
 "Kasbon":"Cash advance","Kasbon – ":"Cash advance – ","Kasbon belum lunas":"Outstanding advance","+ Kasbon":"+ Advance","Simpan kasbon":"Save advance","Contoh: Keperluan keluarga":"E.g. Family needs","Kasbon otomatis dipotong saat upah dibayar. Uang yang keluar langsung tercatat di Keuangan.":"Advances are deducted automatically when wages are paid. The cash out is recorded in Finance right away.","Potong kasbon (sisa ":"Deduct advance (balance ","Kasbon ini dan catatan pengeluarannya akan dihapus.":"This advance and its expense record will be deleted.","Kasbon dihapus":"Advance deleted","Kasbon dicatat":"Advance recorded"," (dipotong kasbon)":" (advance deducted)","potong kasbon":"advance deducted"," – upah ":" – wages ",", potong kasbon ":", advance deducted ","Upah bersih dibayar":"Net wages paid","Hapus kasbon":"Delete advance"});

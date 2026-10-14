@@ -1,9 +1,9 @@
 // Zui Kontraktor service worker
 // Naikkan angka versi ini setiap kali kamu mengubah file aplikasi.
-const VERSION = 'zui-kontraktor-v3';
+const VERSION = 'zui-kontraktor-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './config.js'];
-// File dari luar yang aman disimpan untuk offline (Supabase, jsPDF, dan font).
-const CDN = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+// File dari luar yang aman disimpan untuk offline (Firebase, jsPDF, dan font).
+const CDN = ['www.gstatic.com', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));
@@ -41,7 +41,7 @@ self.addEventListener('fetch', e => {
       }))
     );
   }
-  // Selain itu (login dan database Supabase) dibiarkan langsung ke internet.
+  // Selain itu (login dan database Firebase) dibiarkan langsung ke internet.
 });
 
 // Klik notifikasi pengingat: buka atau fokuskan aplikasi.
