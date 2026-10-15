@@ -415,6 +415,23 @@ label.btn:focus-within{outline:2px solid var(--info);outline-offset:2px}
 .slipcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
 .slipcols table{width:100%;border-collapse:collapse;font-size:13px}.slipcols th,.slipcols td{padding:6px 4px;border-bottom:1px solid #D5D9D1;text-align:left}.slipcols .r{text-align:right}
 @media (max-width:560px){.slipcols{grid-template-columns:1fr}}
+.suplist{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+.supm{max-width:82%;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:14.5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.supm.me{align-self:flex-end;background:var(--soft)}.supm.ad{align-self:flex-start;border-color:var(--accent)}
+.supm small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px;white-space:normal}
+.supm img{display:block;max-width:220px;width:100%;border-radius:8px;margin-bottom:4px}
+.supin{display:flex;gap:8px;padding:4px 16px 10px;align-items:center}.supin input[name=t]{flex:1;min-width:0}
+.suppic{cursor:pointer;flex:none}
+.supdot{display:inline-block;width:8px;height:8px;border-radius:4px;background:#E5484D;margin-left:6px;vertical-align:middle}
+/* HP: kotak angka berbaris ke bawah, label kiri angka kanan, agar angka panjang tidak keluar kotak */
+@media (max-width:759px){
+  .metrics{grid-template-columns:1fr!important}
+  .metrics>div{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 14px;padding:12px 16px;min-width:0;border-left:0!important;border-top:1px solid var(--line)!important}
+  .metrics>div:first-child{border-top:0!important}
+  .metrics .k{flex:1 1 auto;min-width:0}
+  .metrics .v{font-size:22px!important;margin-top:0!important;text-align:right;overflow-wrap:anywhere;min-width:0}
+  .metrics .s{flex-basis:100%}
+}
 </style>
 </head>
 <body>
@@ -1573,6 +1590,7 @@ function render(){
   }
   $('#view').innerHTML=(typeof subBanner==='function'&&name!=='langganan'?subBanner():'')+h;
   if(name==='pengaturan')loadTeam();
+  if(typeof supAfter==='function')supAfter(name);
   if(ROLE==='viewer')applyRO();else if(name==='pengaturan'&&!MGR())lockSettings();
   document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===name||(!name&&a.dataset.nav==='beranda'))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
 }
@@ -2421,7 +2439,7 @@ document.addEventListener('change',e=>{
   if(t.dataset&&t.dataset.set==='lang'){setLang(t.value);return}
   if(t.dataset&&t.dataset.set==='company'){switchCompany(t.value);return}
   if(t.dataset&&t.dataset.roleuser){SB.from('members').update({role:t.value}).eq('company_id',COMPANY.id).eq('user_id',t.dataset.roleuser).then(({error})=>{toast(error?errMsg(error):_tr('Peran diubah'));loadTeam()});return}
-  if(S&&READONLY()&&ROLE!=='viewer'&&!t.dataset.flt&&t.id!=='qrisFile'){toast(roMsg());if(t.type==='file')t.value='';return}
+  if(S&&READONLY()&&ROLE!=='viewer'&&!t.dataset.flt&&t.id!=='qrisFile'&&t.id!=='supImg'){toast(roMsg());if(t.type==='file')t.value='';return}
   if(S&&ROLE==='viewer'&&!t.dataset.flt){toast(_tr('Peranmu hanya bisa melihat data'));if(t.type==='file')t.value='';return}
   if(t.dataset&&t.dataset.set==='currency'){if(!MGR()){toast(_tr('Hanya pemilik atau admin yang bisa mengubah profil perusahaan'));render();return}S.settings.currency=t.value;save();render();toast(_tr('Mata uang diubah'));return}
   if('catpick' in t.dataset&&ED){const c=S.catalog.find(x=>x.id===t.value);if(c){const it={desc:c.name,qty:1,unit:c.unit||'ls',price:c.price},blank=ED.items.length===1&&!ED.items[0].desc&&!ED.items[0].price;if(blank)ED.items=[it];else ED.items.push(it);renderItems();refreshTotals()}t.value='';return}
@@ -2653,7 +2671,7 @@ const SUB={
 };
 document.addEventListener('submit',e=>{
   e.preventDefault();const f=e.target,h=SUB[f.dataset.form];
-  if(S&&READONLY()&&ROLE!=='viewer'&&!['chpw','newco','myname','subpay','zarej','zaco','zapay','invite'].includes(f.dataset.form)){toast(roMsg());return}
+  if(S&&READONLY()&&ROLE!=='viewer'&&!['chpw','newco','myname','subpay','supsend','zarej','zaco','zapay','invite'].includes(f.dataset.form)){toast(roMsg());return}
   if(S&&ROLE==='viewer'&&!['chpw','newco','myname','subpay','zarej','zaco','zapay'].includes(f.dataset.form)){toast(_tr('Peranmu hanya bisa melihat data'));return}
   if(h)Promise.resolve(h(f,Object.fromEntries(new FormData(f)))).catch(err=>{try{authErr(errMsg(err))}catch(x){}toast(errMsg(err))});
 });
@@ -4156,7 +4174,12 @@ const FEAT_PLAN={rab:'pro',terms:'pro',tax:'pro',vendors:'pro',po:'pro',changes:
 const featName=k=>({rab:W('RAB rinci, progres fisik & kurva S','Detailed BoQ, progress & S-curve','RAB terperinci, kemajuan & keluk S'),terms:W('Termin pembayaran','Payment terms','Termin bayaran'),tax:W('PPN & PPh di invoice','VAT & withholding tax on invoices','PPN & PPh dalam invois'),vendors:W('Vendor & hutang vendor','Vendors & payables','Vendor & hutang vendor'),po:W('PO material & stok di lokasi','Material POs & site stock','PO bahan & stok di tapak'),changes:W('Pekerjaan tambah-kurang','Change orders','Kerja tambah-kurang'),handover:W('Serah terima (BAST) & garansi','Handover & warranty','Serah terima & waranti'),kasbon:W('Kasbon pekerja','Worker cash advances','Pendahuluan pekerja'),reports:W('Laporan laba rugi & arus kas + Excel','Profit & loss and cash flow + Excel','Laporan untung rugi & aliran tunai + Excel'),workerlink:W('Halaman pekerja: absen selfie & lokasi, ber-PIN','Worker page: selfie & location check-in, PIN','Halaman pekerja: kehadiran swafoto & lokasi'),clientlink:W('Halaman klien: progres, chat & tanda tangan','Client page: progress, chat & signatures','Halaman pelanggan: kemajuan, sembang & tandatangan'),payroll:W('Gaji bulanan & slip gaji','Monthly salary & payslips','Gaji bulanan & slip gaji'),pphrecap:W('Rekap PPh per masa pajak','Withholding tax summary by period','Ringkasan PPh ikut tempoh'),multico:W('Beberapa perusahaan dalam satu akun','Several companies in one account','Beberapa syarikat dalam satu akaun')})[k]||k;
 const BASE_FEATS=()=>[W('Proyek, tugas & site visit dengan ukuran','Projects, tasks & site visits','Projek, tugasan & lawatan tapak'),W('Penawaran & invoice PDF, kirim via WhatsApp','Quotes & invoices as PDF via WhatsApp','Sebut harga & invois PDF'),W('Uang masuk-keluar, piutang & daftar klien','Cash in/out, receivables & clients','Wang masuk-keluar, penghutang & pelanggan'),W('Absensi & upah harian tukang','Attendance & daily wages','Kehadiran & upah harian'),W('Laporan harian, pengingat & mode offline','Daily reports, reminders & offline mode','Laporan harian, peringatan & luar talian'),W('Peran tim (data uang tertutup untuk staf)','Team roles (money hidden from staff)','Peranan pasukan'),W('3 bahasa & semua mata uang','3 languages & all currencies','3 bahasa & semua mata wang')];
 const DEF_PRICES={starter:{1:79000,6:395000,12:790000},pro:{1:149000,6:745000,12:1490000},business:{1:299000,6:1495000,12:2990000}};
+/* harga Ringgit bawaan; diatur dari Zui Admin (zconfig/pay.pricesMYR) */
+const DEF_PRICES_MYR={starter:{1:21,6:105,12:210},pro:{1:39,6:195,12:390},business:{1:79,6:395,12:790}};
+/* mata uang tagihan langganan: Ringgit bila mata uang perusahaan MYR, selain itu Rupiah */
+const payCur=()=>baseCur()==='MYR'?'MYR':'IDR';
 let CS=null,CSUN=null,PAYCFG=null;
+let SUP={msgs:[],un:null,cid:'',doc:null,dun:null,dcid:'',draft:'',busy:false};
 Object.assign(ui,{subPer:'1'});
 /* status langganan perusahaan yang sedang dibuka */
 function subState(){
@@ -4189,15 +4212,16 @@ function watchCS(){
 function stopCS(){if(CSUN){try{CSUN()}catch(e){}CSUN=null}}
 /* tombol Upgrade di bawah, dekat Pengaturan */
 function upgradeNav(){
-  const s=subState(),show=S&&(MGR()||SUPER())&&s.kind!=='unknown';
+  if(S&&MGR()&&COMPANY&&SUP.dcid!==COMPANY.id)supDocWatch();
+  const s=subState(),show=S&&(MGR()||SUPER())&&s.kind!=='unknown',sd=!!(SUP.doc&&SUP.doc.from==='a'&&SUP.doc.seen===false&&SUP.dcid===(COMPANY&&COMPANY.id));
   const lbl=s.kind==='free'?W('Bisnis · gratis','Business · free','Bisnes · percuma'):s.kind==='trial'?W('Upgrade · sisa ','Upgrade · ','Naik taraf · ')+s.left+W(' hari',' days left',' hari'):s.kind==='paid'?planName(s.plan)+' · '+fmtD(iso(new Date(s.until))):s.kind==='grace'?W('Perpanjang · ','Renew · ','Perbaharui · ')+s.left+W(' hari',' days',' hari'):W('Perpanjang','Renew','Perbaharui');
   const tone=s.kind==='expired'||s.kind==='grace'?'bad':s.kind==='trial'&&s.left<=3?'warn':'';
   const side=$('.side [data-nav="pengaturan"]');
   if(side){const nav=side.parentNode;nav.querySelectorAll('.upg,.zadm').forEach(e=>e.remove());
     if(SUPER())nav.insertAdjacentHTML('afterbegin',`<a class="nl zadm" data-nav="zadmin" href="#zadmin">${ic('gear')}${W('Admin langganan','Subscription admin','Admin langganan')}</a>`);
-    if(show)nav.insertAdjacentHTML('afterbegin',`<a class="nl upg ${tone}" data-nav="langganan" href="#langganan">${ic('chart')}<span>${esc(lbl)}</span></a>`)}
+    if(show)nav.insertAdjacentHTML('afterbegin',`<a class="nl upg ${tone}" data-nav="langganan" href="#langganan">${ic('chart')}<span>${esc(lbl)}</span>${sd?'<i class="supdot" aria-label="Pesan baru dari admin"></i>':''}</a>`)}
   const rt=$('.mtop .rt');
-  if(rt){rt.querySelectorAll('.upgm').forEach(e=>e.remove());if(show||SUPER())rt.insertAdjacentHTML('afterbegin',`<a class="upgm ${tone}" href="${SUPER()&&!show?'#zadmin':'#langganan'}">${esc(show?(s.kind==='trial'?W('Upgrade','Upgrade','Naik taraf')+' · '+s.left+W('h','d','h'):s.kind==='paid'||s.kind==='free'?planName(s.plan):W('Perpanjang','Renew','Perbaharui')):'Admin')}</a>`)}
+  if(rt){rt.querySelectorAll('.upgm').forEach(e=>e.remove());if(show||SUPER())rt.insertAdjacentHTML('afterbegin',`<a class="upgm ${tone}" href="${SUPER()&&!show?'#zadmin':'#langganan'}">${esc(show?(s.kind==='trial'?W('Upgrade','Upgrade','Naik taraf')+' · '+s.left+W('h','d','h'):s.kind==='paid'||s.kind==='free'?planName(s.plan):W('Perpanjang','Renew','Perbaharui')):'Admin')}${sd?'<i class="supdot"></i>':''}</a>`)}
 }
 function subBanner(){
   const s=subState();if(!S)return '';
@@ -4225,7 +4249,7 @@ const ACT_FEAT={'new-rabitem':'rab','edit-rabitem':'rab','del-rabitem':'rab','te
 const SUB_OK=new Set(['upgrade','sub-per','sub-pick','sub-wa','za-act','za-rej','za-co','za-tab','close-modal','logout','pv-close','copy-text']);
 /* ---------- halaman Langganan ---------- */
 async function loadPay(){if(PAYCFG)return PAYCFG;try{const d=await SB._fb.db.collection('zconfig').doc('pay').get();PAYCFG=d.exists?d.data():{}}catch(e){PAYCFG={}}return PAYCFG}
-const priceOf=(p,m)=>{const pr=(PAYCFG&&PAYCFG.prices)||DEF_PRICES;return +((pr[p]||{})[m]||(DEF_PRICES[p]||{})[m]||0)};
+const priceOf=(p,m,c)=>{c=c||payCur();const my=c==='MYR',pr=(PAYCFG&&(my?PAYCFG.pricesMYR:PAYCFG.prices))||(my?DEF_PRICES_MYR:DEF_PRICES),df=my?DEF_PRICES_MYR:DEF_PRICES;return +((pr[p]||{})[m]||(df[p]||{})[m]||0)};
 let MYREQ=null;
 async function loadMyReq(){try{const s=await SB._fb.db.collection('subreqs').where('cid','==',COMPANY.id).get();MYREQ=s.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>tsMs0(b.at)-tsMs0(a.at))}catch(e){MYREQ=[]}if(location.hash==='#langganan')render()}
 function viewLangganan(){
@@ -4238,22 +4262,23 @@ function viewLangganan(){
   const card=p=>{const pr=priceOf(p,mo),cur=s.kind==='paid'&&s.plan===p,lim=PLANS[p];
     const feats=p==='starter'?BASE_FEATS():Object.keys(FEAT_PLAN).filter(k=>FEAT_PLAN[k]===p).map(featName);
     return `<div class="plan${p==='pro'?' pop':''}">${p==='pro'?`<span class="chip ok" style="align-self:flex-start;margin-bottom:8px">${W('Paling pas','Best fit','Paling sesuai')}</span>`:''}<h3 style="font-size:26px;margin:0">${planName(p)}</h3>
-      <div class="price num">${money(pr,'IDR')}<small>/${mo===1?W('bulan','month','bulan'):mo+W(' bulan',' months',' bulan')}</small></div>${mo>1?`<div class="muted" style="font-size:13px">${W('setara ','about ','bersamaan ')}${money(Math.round(pr/mo),'IDR')}${W('/bulan','/month','/bulan')}</div>`:'<div style="height:18px"></div>'}
+      <div class="price num">${money(pr,payCur())}<small>/${mo===1?W('bulan','month','bulan'):mo+W(' bulan',' months',' bulan')}</small></div>${mo>1?`<div class="muted" style="font-size:13px">${W('setara ','about ','bersamaan ')}${money(payCur()==='MYR'?Math.round(pr/mo*100)/100:Math.round(pr/mo),payCur())}${W('/bulan','/month','/bulan')}</div>`:'<div style="height:18px"></div>'}
       <ul><li><b>${lim.users} ${W('pengguna','users','pengguna')}</b></li><li><b>${lim.projects===Infinity?W('Proyek berjalan tanpa batas','Unlimited active projects','Projek tanpa had'):lim.projects+W(' proyek berjalan',' active projects',' projek berjalan')}</b></li>${prev[p]?`<li class="muted">${W('Semua fitur ','Everything in ','Semua ciri ')}${planName(prev[p])}${W(', plus:',', plus:',', tambah:')}</li>`:''}${feats.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>
       ${MGR()?`<button class="btn ${p==='pro'?'primary':''} block" data-act="sub-pick" data-plan="${p}">${cur?W('Perpanjang','Renew','Perbaharui'):W('Pilih ','Choose ','Pilih ')+planName(p)}</button>`:''}</div>`};
-  const reqs=(MYREQ||[]).slice(0,6).map(r=>`<div class="item" style="cursor:default"><div class="main2"><div class="t">${planName(r.plan)} · ${r.months} ${W('bulan','months','bulan')} · ${money(r.amount,'IDR')}</div><div class="s">${fmtD(iso(new Date(tsMs0(r.at)||Date.now())))} · Ref ${esc(r.ref||'')}${r.note?' · '+esc(r.note):''}</div></div>${chip(r.status==='ok'?W('Aktif','Activated','Aktif'):r.status==='no'?W('Ditolak','Rejected','Ditolak'):W('Menunggu','Pending','Menunggu'),r.status==='ok'?'ok':r.status==='no'?'bad':'warn')}</div>`).join('');
+  const reqs=(MYREQ||[]).slice(0,6).map(r=>`<div class="item" style="cursor:default"><div class="main2"><div class="t">${planName(r.plan)} · ${r.months} ${W('bulan','months','bulan')} · ${money(r.amount,r.cur||'IDR')}</div><div class="s">${fmtD(iso(new Date(tsMs0(r.at)||Date.now())))} · Ref ${esc(r.ref||'')}${r.note?' · '+esc(r.note):''}</div></div>${chip(r.status==='ok'?W('Aktif','Activated','Aktif'):r.status==='no'?W('Ditolak','Rejected','Ditolak'):W('Menunggu','Pending','Menunggu'),r.status==='ok'?'ok':r.status==='no'?'bad':'warn')}</div>`).join('');
   return pageHead(W('Langganan','Subscription','Langganan'),esc(st))+`<div class="filters">${segP}</div><div class="plans">${['starter','pro','business'].map(card).join('')}</div>
-  <p class="muted rep-note">${W('Harga per perusahaan. Setelah membayar lewat QRIS, kirim nomor referensinya; paket aktif setelah dicek admin. Jika masa langganan habis, data tetap aman dan bisa dilihat, tetapi tidak bisa diubah sampai diperpanjang.','Prices are per company. After paying via QRIS, submit the reference number; the plan is activated after admin review. If the subscription ends, your data stays safe and viewable but cannot be changed until renewed.','Harga bagi setiap syarikat. Selepas bayar melalui QRIS, hantar nombor rujukan.')}</p>
-  ${reqs?`<div class="panel section"><div class="ph"><h2>${W('Riwayat permintaan','Request history','Sejarah permintaan')}</h2></div><div class="list">${reqs}</div></div>`:''}`;
+  <p class="muted rep-note">${payCur()==='MYR'?W('Harga per perusahaan. Setelah membayar lewat DuitNow, kirim nomor referensinya; paket aktif setelah dicek admin. Jika masa langganan habis, data tetap aman dan bisa dilihat, tetapi tidak bisa diubah sampai diperpanjang.','Prices are per company. After paying via DuitNow, submit the reference number; the plan is activated after admin review. If the subscription ends, your data stays safe and viewable but cannot be changed until renewed.','Harga bagi setiap syarikat. Selepas bayar melalui DuitNow, hantar nombor rujukan. Pakej aktif selepas disemak admin.'):W('Harga per perusahaan. Setelah membayar lewat QRIS, kirim nomor referensinya; paket aktif setelah dicek admin. Jika masa langganan habis, data tetap aman dan bisa dilihat, tetapi tidak bisa diubah sampai diperpanjang.','Prices are per company. After paying via QRIS, submit the reference number; the plan is activated after admin review. If the subscription ends, your data stays safe and viewable but cannot be changed until renewed.','Harga bagi setiap syarikat. Selepas bayar melalui QRIS, hantar nombor rujukan.')}</p>
+  ${reqs?`<div class="panel section"><div class="ph"><h2>${W('Riwayat permintaan','Request history','Sejarah permintaan')}</h2></div><div class="list">${reqs}</div></div>`:''}
+  ${MGR()?supPanel():''}`;
 }
 function payModal(plan){
-  const mo=+ui.subPer,amt=priceOf(plan,mo),pc=PAYCFG||{};
-  modal(W('Bayar paket ','Pay for ','Bayar pakej ')+planName(plan),`<form data-form="subpay" data-plan="${plan}" data-mo="${mo}" data-amt="${amt}">
-    <div class="paybox"><div class="k">${mo} ${W('bulan','months','bulan')}</div><div class="amt num">${money(amt,'IDR')}</div></div>
-    ${pc.qris?`<img class="qris" src="${esc(pc.qris)}" alt="QRIS">`:`<p class="muted">${W('QRIS belum diatur admin. Hubungi admin lewat WhatsApp.','QRIS not set up yet. Contact admin via WhatsApp.','QRIS belum ditetapkan.')}</p>`}
-    ${pc.note?`<p style="white-space:pre-line;font-size:14px">${esc(pc.note)}</p>`:''}
-    <ol style="padding-left:20px;line-height:1.6;font-size:14.5px"><li>${W('Scan QRIS di atas dan bayar sesuai jumlah.','Scan the QRIS and pay the exact amount.','Imbas QRIS dan bayar.')}</li><li>${W('Isi nomor referensi/resi dari bukti bayar.','Enter the reference number from the receipt.','Isi nombor rujukan.')}</li><li>${W('Admin mengecek pembayaran lalu mengaktifkan paket.','Admin checks the payment and activates the plan.','Admin semak lalu aktifkan.')}</li></ol>
-    ${fld(W('Nomor referensi / resi','Reference number','Nombor rujukan'),`<input name="ref" required maxlength="80" autocomplete="off">`)}
+  const mo=+ui.subPer,cur=payCur(),my=cur==='MYR',amt=priceOf(plan,mo,cur),pc=PAYCFG||{},qr=my?pc.duitnow:pc.qris,nm=my?'DuitNow QR':'QRIS',note=my?pc.noteMYR:pc.note;
+  modal(W('Bayar paket ','Pay for ','Bayar pakej ')+planName(plan),`<form data-form="subpay" data-plan="${plan}" data-mo="${mo}" data-amt="${amt}" data-cur="${cur}">
+    <div class="paybox"><div class="k">${mo} ${W('bulan','months','bulan')} · ${nm}</div><div class="amt num">${money(amt,cur)}</div></div>
+    ${qr?`<img class="qris" src="${esc(qr)}" alt="${nm}">`:`<p class="muted">${W(nm+' belum diatur admin. Tanyakan lewat chat di halaman Langganan.',nm+' is not set up yet. Ask through the chat on the Subscription page.',nm+' belum ditetapkan. Tanya melalui sembang di halaman Langganan.')}</p>`}
+    ${note?`<p style="white-space:pre-line;font-size:14px">${esc(note)}</p>`:''}
+    <ol style="padding-left:20px;line-height:1.6;font-size:14.5px"><li>${W('Scan '+nm+' di atas dan bayar sesuai jumlah.','Scan the '+nm+' and pay the exact amount.','Imbas '+nm+' dan bayar jumlah tepat.')}</li><li>${W('Isi nomor referensi dari bukti bayar. Foto bukti bayar boleh dikirim lewat chat.','Enter the reference number from the receipt. You can also send a photo of it in the chat.','Isi nombor rujukan. Foto resit boleh dihantar melalui sembang.')}</li><li>${W('Admin mengecek pembayaran lalu mengaktifkan paket.','Admin checks the payment and activates the plan.','Admin semak lalu aktifkan.')}</li></ol>
+    ${fld(W('Nomor referensi','Reference number','Nombor rujukan'),`<input name="ref" required maxlength="80" autocomplete="off">`)}
     <div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel','Batal')}</button><button class="btn primary" type="submit">${W('Kirim bukti bayar','Submit payment','Hantar bukti')}</button></div></form>`);
 }
 const adminWa=()=>String((PAYCFG&&PAYCFG.wa)||PCFG.whatsapp||'').replace(/[^\d]/g,'').replace(/^0/,'62');
@@ -4279,7 +4304,7 @@ function viewZAdmin(){
   const seg=`<div class="filters"><div class="seg" role="group">${[['req',W('Permintaan','Requests','Permintaan')+(wait.length?` (${wait.length})`:'')],['co',W('Perusahaan','Companies','Syarikat')],['pay',W('Harga & QRIS','Prices & QRIS','Harga & QRIS')]].map(([k,l])=>`<button data-act="za-tab" data-v="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div><button class="btn sm" data-act="za-reload">${W('Muat ulang','Reload','Muat semula')}</button></div>`;
   const coName=id=>(ZA.cos.find(c=>c.id===id)||{}).name||id;
   let body='';
-  if(tab==='req')body=`<div class="panel"><div class="list">${ZA.reqs.length?ZA.reqs.slice(0,80).map(r=>`<div class="item" style="cursor:default;flex-wrap:wrap"><div class="main2"><div class="t">${esc(r.coName||coName(r.cid))} · ${planName(r.plan)} ${r.months} ${W('bln','mo','bln')} · ${money(r.amount,'IDR')}</div><div class="s">${fmtD(iso(new Date(tsMs0(r.at)||Date.now())))} · ${esc(r.byEmail||'')} · Ref <b>${esc(r.ref||'')}</b></div></div>${r.status==='wait'?`<div class="btns" style="margin:0"><button class="btn sm" data-act="za-rej" data-id="${r.id}">${W('Tolak','Reject','Tolak')}</button><button class="btn sm primary" data-act="za-act" data-id="${r.id}">${W('Aktifkan','Activate','Aktifkan')}</button></div>`:chip(r.status==='ok'?W('Aktif','Activated','Aktif'):W('Ditolak','Rejected','Ditolak'),r.status==='ok'?'ok':'bad')}</div>`).join(''):`<div class="empty">${W('Belum ada permintaan.','No requests yet.','Tiada permintaan.')}</div>`}</div></div>`;
+  if(tab==='req')body=`<div class="panel"><div class="list">${ZA.reqs.length?ZA.reqs.slice(0,80).map(r=>`<div class="item" style="cursor:default;flex-wrap:wrap"><div class="main2"><div class="t">${esc(r.coName||coName(r.cid))} · ${planName(r.plan)} ${r.months} ${W('bln','mo','bln')} · ${money(r.amount,r.cur||'IDR')}</div><div class="s">${fmtD(iso(new Date(tsMs0(r.at)||Date.now())))} · ${esc(r.byEmail||'')} · Ref <b>${esc(r.ref||'')}</b></div></div>${r.status==='wait'?`<div class="btns" style="margin:0"><button class="btn sm" data-act="za-rej" data-id="${r.id}">${W('Tolak','Reject','Tolak')}</button><button class="btn sm primary" data-act="za-act" data-id="${r.id}">${W('Aktifkan','Activate','Aktifkan')}</button></div>`:chip(r.status==='ok'?W('Aktif','Activated','Aktif'):W('Ditolak','Rejected','Ditolak'),r.status==='ok'?'ok':'bad')}</div>`).join(''):`<div class="empty">${W('Belum ada permintaan.','No requests yet.','Tiada permintaan.')}</div>`}</div></div>`;
   if(tab==='co')body=`<div class="panel"><div class="scrollx"><table class="tbl"><thead><tr><th>${W('Perusahaan','Company','Syarikat')}</th><th class="tl">${W('Pemilik','Owner','Pemilik')}</th><th class="tl">Status</th><th>${W('Sampai','Until','Hingga')}</th><th></th></tr></thead><tbody>${ZA.cos.map(c=>{const s=coState(c);return `<tr><td>${esc(c.name)}<div class="muted" style="font-size:12px">${W('dibuat ','created ','dicipta ')}${c.created?fmtD(iso(new Date(c.created))):'-'}</div></td><td class="tl">${esc(c.email)}</td><td class="tl">${chip(s.kind==='free'?W('Gratis','Free','Percuma'):s.kind==='trial'?W('Percobaan','Trial','Percubaan'):s.kind==='paid'?planName(s.plan):s.kind==='grace'?W('Tenggang','Grace','Tangguh'):W('Habis','Expired','Tamat'),s.kind==='expired'?'bad':s.kind==='grace'?'warn':s.kind==='trial'?'info':'ok')}</td><td>${s.until?fmtD(iso(new Date(s.until))):'-'}</td><td><button class="btn sm" data-act="za-co" data-id="${c.id}">${W('Atur','Edit','Ubah')}</button></td></tr>`}).join('')}</tbody></table></div></div>`;
   if(tab==='pay'){const pc=PAYCFG||{};body=`<form class="panel" data-form="zapay" style="padding:16px"><h2 style="font-size:22px;margin-bottom:10px">${W('Harga paket (Rp)','Plan prices (IDR)','Harga pakej (Rp)')}</h2>
     <div class="scrollx"><table class="tbl"><thead><tr><th>${W('Paket','Plan','Pakej')}</th><th>1 ${W('bulan','month','bulan')}</th><th>6 ${W('bulan','months','bulan')}</th><th>12 ${W('bulan','months','bulan')}</th></tr></thead><tbody>${PLAN_ORDER.map(p=>`<tr><td>${planName(p)}</td>${[1,6,12].map(m=>`<td><input name="p_${p}_${m}" type="number" min="0" step="1000" value="${priceOf(p,m)}" style="max-width:140px"></td>`).join('')}</tr>`).join('')}</tbody></table></div>
@@ -4311,11 +4336,54 @@ Object.assign(A,{
       <div class="btns"><button type="button" class="btn" data-act="close-modal">${W('Batal','Cancel','Batal')}</button><button class="btn primary" type="submit">${W('Simpan','Save','Simpan')}</button></div></form>`)}
 });
 ['upgrade','sub-per','za-tab','za-reload','za-act','za-rej','za-co','sub-pick'].forEach(a=>RO_OK.add(a));
+/* ---------- chat Langganan dengan admin ZUI (support/{cid} + support/{cid}/msgs) ---------- */
+function supDocWatch(){
+  if(SUP.dun){try{SUP.dun()}catch(e){}SUP.dun=null}SUP.doc=null;if(!COMPANY||!SB)return;const cid=COMPANY.id;SUP.dcid=cid;
+  SUP.dun=SB._fb.db.collection('support').doc(cid).onSnapshot(d=>{if(!COMPANY||COMPANY.id!==cid)return;SUP.doc=d.exists?d.data():null;if(S)upgradeNav();if(location.hash==='#langganan')supSeen()},()=>{});
+}
+function supStop(){if(SUP.un){try{SUP.un()}catch(e){}SUP.un=null}SUP.cid='';SUP.msgs=[]}
+function supStart(){
+  if(!COMPANY||!SB)return;const cid=COMPANY.id;if(SUP.un&&SUP.cid===cid)return;supStop();SUP.cid=cid;
+  SUP.un=SB._fb.db.collection('support').doc(cid).collection('msgs').orderBy('at','desc').limit(60).onSnapshot(s=>{if(SUP.cid!==cid)return;
+    SUP.msgs=s.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>tsMs0(a.at)-tsMs0(b.at));supDraw();supSeen()},()=>{});
+}
+function supAfter(name){if(name==='langganan'&&MGR()){supStart();supDraw();supSeen()}else supStop()}
+function supSeen(){const d=SUP.doc;if(!d||d.from!=='a'||d.seen!==false||!COMPANY||location.hash!=='#langganan')return;
+  SB._fb.db.collection('support').doc(COMPANY.id).update({seen:true}).catch(()=>{})}
+function supPanel(){
+  return `<div class="panel section" id="supPanel"><div class="ph"><h2>${W('Chat dengan admin ZUI','Chat with ZUI admin','Sembang dengan admin ZUI')}</h2></div>
+  <div class="suplist" id="supList" aria-live="polite"><div class="muted">${W('Memuat…','Loading…','Memuatkan…')}</div></div>
+  <form class="supin" data-form="supsend"><input name="t" id="supT" maxlength="2000" autocomplete="off" placeholder="${W('Tulis pesan','Write a message','Tulis mesej')}" aria-label="${W('Tulis pesan','Write a message','Tulis mesej')}" value="${esc(SUP.draft)}">
+  <label class="btn suppic" title="${W('Kirim foto bukti bayar','Send a photo of your receipt','Hantar foto resit')}" aria-label="${W('Kirim foto','Send a photo','Hantar foto')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg><input type="file" id="supImg" accept="image/*" hidden></label>
+  <button class="btn primary" type="submit">${W('Kirim','Send','Hantar')}</button></form>
+  <p class="muted" style="font-size:13px;margin:0;padding:0 16px 14px">${W('Tanya soal paket atau kirim foto bukti bayar. Balasan admin muncul di sini.','Ask about plans or send a photo of your receipt. Replies appear here.','Tanya tentang pakej atau hantar foto resit. Balasan admin dipaparkan di sini.')}</p></div>`;
+}
+function supDraw(){
+  const el=$('#supList');if(!el)return;const atEnd=el.scrollHeight-el.scrollTop-el.clientHeight<40||!el.dataset.n;
+  el.innerHTML=SUP.msgs.length?SUP.msgs.map(m=>{const t=tsMs0(m.at)||Date.now(),d=new Date(t);
+    return `<div class="supm ${m.from==='a'?'ad':'me'}">${m.img?`<img src="${esc(m.img)}" alt="${W('Foto','Photo','Foto')}">`:''}${m.text?`<div>${esc(m.text)}</div>`:''}<small>${esc(m.from==='a'?'Tim ZUI':(m.name||W('Anda','You','Anda')))} · ${fmtD(iso(d))} ${String(d.getHours()).padStart(2,'0')}.${String(d.getMinutes()).padStart(2,'0')}</small></div>`}).join('')
+    :`<div class="muted">${W('Belum ada pesan. Tulis pertanyaan Anda, admin ZUI akan membalas di sini.','No messages yet. Ask your question and the ZUI admin will reply here.','Belum ada mesej.')}</div>`;
+  el.dataset.n=SUP.msgs.length;if(atEnd)el.scrollTop=el.scrollHeight;
+}
+async function supSend(text,img){
+  if(!COMPANY||!MGR()||SUP.busy)return false;SUP.busy=true;
+  const db=SB._fb.db,cid=COMPANY.id,ts=firebase.firestore.FieldValue.serverTimestamp(),B=db.batch();
+  B.set(db.collection('support').doc(cid).collection('msgs').doc(),{from:'u',name:String(USER.email||'').slice(0,80),text:String(text||'').slice(0,2000),img:img||'',at:ts,uid:USER.id});
+  B.set(db.collection('support').doc(cid),{cid,coName:String(S.settings.company||COMPANY.name||'').slice(0,120),byEmail:String(USER.email||'').toLowerCase().slice(0,120),last:(text?String(text):W('[Foto]','[Photo]','[Foto]')).slice(0,120),at:ts,from:'u',unread:true,seen:true});
+  try{await B.commit();return true}catch(e){toast(errMsg(e));return false}finally{SUP.busy=false}
+}
+Object.assign(SUB,{supsend:async(f,d)=>{const t=String(d.t||'').trim();if(!t)return;if(await supSend(t,'')){SUP.draft='';const i=$('#supT');if(i){i.value='';i.focus()}}}});
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='supT')SUP.draft=e.target.value});
+document.addEventListener('change',async e=>{const t=e.target;if(!t||t.id!=='supImg'||!t.files||!t.files[0])return;const f=t.files[0];t.value='';
+  let img='';try{img=await shrinkImg(f,1000,.7);if(img.length>400000)img=await shrinkImg(f,700,.55)}catch(x){toast(W('Gambar tidak bisa dibaca','Cannot read image','Imej tidak dapat dibaca'));return}
+  if(img.length>400000){toast(W('Gambar terlalu besar','Image too large','Imej terlalu besar'));return}
+  if(await supSend('',img))toast(W('Foto terkirim','Photo sent','Foto dihantar'))});
+
 Object.assign(SUB,{
   subpay:async(f,d)=>{
-    const plan=f.dataset.plan,months=+f.dataset.mo,amount=+f.dataset.amt,ref=String(d.ref||'').trim();if(!ref)return;
-    try{await SB._fb.db.collection('subreqs').add({cid:COMPANY.id,coName:(S.settings.company||COMPANY.name||'').slice(0,120),plan,months,amount,ref:ref.slice(0,80),by:USER.id,byEmail:USER.email||'',status:'wait',at:firebase.firestore.FieldValue.serverTimestamp()})}catch(e){return toast(errMsg(e))}
-    MYREQ=null;const wa=adminWa(),msg=`Halo admin ZUI, saya sudah membayar paket ${planName(plan)} ${months} bulan (${money(amount,'IDR')}) untuk ${S.settings.company||COMPANY.name}. No. referensi: ${ref}. Email: ${USER.email}`;
+    const plan=f.dataset.plan,months=+f.dataset.mo,amount=+f.dataset.amt,cur=f.dataset.cur==='MYR'?'MYR':'IDR',ref=String(d.ref||'').trim();if(!ref)return;
+    try{await SB._fb.db.collection('subreqs').add({cid:COMPANY.id,coName:(S.settings.company||COMPANY.name||'').slice(0,120),plan,months,amount,cur,ref:ref.slice(0,80),by:USER.id,byEmail:USER.email||'',status:'wait',at:firebase.firestore.FieldValue.serverTimestamp()})}catch(e){return toast(errMsg(e))}
+    MYREQ=null;const wa=adminWa(),msg=`Halo admin ZUI, saya sudah membayar paket ${planName(plan)} ${months} bulan (${money(amount,cur)}) untuk ${S.settings.company||COMPANY.name}. No. referensi: ${ref}. Email: ${USER.email}`;
     modal(W('Bukti bayar terkirim','Payment submitted','Bukti dihantar'),`<p style="margin-top:0">${W('Terima kasih. Paket aktif setelah admin mengecek pembayaran, biasanya di hari yang sama.','Thank you. The plan is activated after the admin checks the payment, usually the same day.','Terima kasih. Pakej aktif selepas disemak admin.')}</p><div class="btns">${wa?`<a class="btn primary" href="https://wa.me/${wa}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${ic('send',16)}${W('Kabari admin via WhatsApp','Notify admin via WhatsApp','Maklumkan admin')}</a>`:''}<button class="btn" data-act="close-modal">${W('Tutup','Close','Tutup')}</button></div>`);
     render();
   },
